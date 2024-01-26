@@ -65,13 +65,13 @@ struct ConcreteBlock <: AbstractConcreteBlock
     pulse :: Union{ConcreteRFPulse, Nothing}
     gradient :: Union{ConcreteGradient, Nothing}
     readout_times :: Vector{Float64}
-    rotate_gradients :: Bool
+    rotate_gradient :: Bool
 end
 
 ConcreteBlock(args...; kwargs...) = BuildingBlockPlaceholder{ConcreteBlock}(args...; kwargs...)
 
-function ConcreteBlock(builder::AbstractSequence, duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[], rotate_gradients=false)
-    ConcreteBlock(builder, duration, ConcreteRFPulse(pulse), ConcreteGradient(gradient), Float64.(readout_times), rotate_gradients)
+function ConcreteBlock(builder::AbstractSequence, duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[], rotate_gradient=false)
+    ConcreteBlock(builder, duration, ConcreteRFPulse(pulse), ConcreteGradient(gradient), Float64.(readout_times), rotate_gradient)
 end
 
 
@@ -125,6 +125,7 @@ end
 
 TR(seq::Sequence) = seq.TR
 get_blocks(seq::Sequence) = seq.blocks
+has_values(seq::Sequence) = true
 
 function Sequence(builder::SequenceBuilder)
     if !has_values(builder)
@@ -132,6 +133,7 @@ function Sequence(builder::SequenceBuilder)
     end
     seq = Sequence(AbstractConcreteBlock[], value(TR(builder)))
     for block in builder.blocks
+        @show block
         push!(seq.blocks, ConcreteBlock(seq, block))
     end
     return seq
