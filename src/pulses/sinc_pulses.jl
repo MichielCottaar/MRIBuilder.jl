@@ -107,8 +107,7 @@ function to_concrete_block(s::AbstractSequence, block::SincPulse)
     phases = (value(frequency(block)) .* value(lobe_duration(block))) .* normed_times * 360
     return ConcreteBlock(
         s, value(duration(block)); 
-        pulse_amplitude=Shape(times, amplitudes), 
-        pulse_phase=Shape(times, phases),
+        pulse=(times, amplitudes, phases)
     )
 end
 
