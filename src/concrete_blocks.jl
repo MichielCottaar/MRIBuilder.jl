@@ -1,7 +1,7 @@
 module ConcreteBlocks
-import JuMP: has_values, optimize!
+import JuMP: has_values, optimize!, value
 import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, properties, duration
-import ..SequenceBuilders: SequenceBuilder, to_block, AbstractSequence
+import ..SequenceBuilders: SequenceBuilder, to_block, AbstractSequence, TR, get_blocks
 
 abstract type AbstractConcreteBlock <: BuildingBlock end
 
@@ -40,7 +40,17 @@ function ConcreteGradient(arr::Vector)
     )
 end
 
+function ConcreteGradient(times, gradients)
+    ConcreteGradient(
+        times,
+        [g[1] for g in gradients],
+        [g[2] for g in gradients],
+        [g[3] for g in gradients],
+    )
+end
+
 ConcreteGradient(::Nothing) = nothing
+ConcreteGradient(values::Tuple{<:Vector, <:Vector}) = ConcreteGradient(values...)
 ConcreteGradient(values::Tuple{<:Vector, <:Vector, <:Vector, <:Vector}) = ConcreteGradient(values...)
 
 
@@ -55,12 +65,13 @@ struct ConcreteBlock <: AbstractConcreteBlock
     pulse :: Union{ConcreteRFPulse, Nothing}
     gradient :: Union{ConcreteGradient, Nothing}
     readout_times :: Vector{Float64}
+    rotate_gradients :: Bool
 end
 
 ConcreteBlock(args...; kwargs...) = BuildingBlockPlaceholder{ConcreteBlock}(args...; kwargs...)
 
-function ConcreteBlock(builder::AbstractSequence, duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[])
-    ConcreteBlock(builder, duration, ConcreteRFPulse(pulse), ConcreteGradient(gradient), Float64.(readout_times))
+function ConcreteBlock(builder::AbstractSequence, duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[], rotate_gradients=false)
+    ConcreteBlock(builder, duration, ConcreteRFPulse(pulse), ConcreteGradient(gradient), Float64.(readout_times), rotate_gradients)
 end
 
 
@@ -112,11 +123,14 @@ struct Sequence <: AbstractSequence
     TR :: Number
 end
 
+TR(seq::Sequence) = seq.TR
+get_blocks(seq::Sequence) = seq.blocks
+
 function Sequence(builder::SequenceBuilder)
     if !has_values(builder)
         optimize!(builder.model)
     end
-    seq = Sequence(AbstractConcreteBlock[], value(TR))
+    seq = Sequence(AbstractConcreteBlock[], value(TR(builder)))
     for block in builder.blocks
         push!(seq.blocks, ConcreteBlock(seq, block))
     end

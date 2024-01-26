@@ -132,7 +132,7 @@ function to_concrete_block(s::AbstractSequence, block::PulsedGradient)
     t_start = value(start_time(block))
     t_rise = value(rise_time(block))
     t_d = value(δ(block))
-    return ConcreteBlock(s, t_start + t_d + t_rise, gradients=[
+    return ConcreteBlock(s, t_start + t_d + t_rise, gradient=[
         (t_start, zeros(3)),
         (t_start + t_rise, qvec),
         (t_start + t_d, qvec),
