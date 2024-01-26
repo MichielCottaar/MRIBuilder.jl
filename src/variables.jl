@@ -32,8 +32,9 @@ symbol_to_func = Dict{Symbol, Function}()
 for (func_symbol, (block_symbol, description)) in all_variables_symbols
     as_string = "    $func_symbol($block_symbol)\n\n$description\n\nThis represents a variable within the sequence. Variables can be set during the construction of a [`BuildingBlock`](@ref) or used to create constraints after the fact."
     new_func = @eval begin
-        $as_string
         function $func_symbol end
+        @doc $as_string $func_symbol
+        $func_symbol
     end
     symbol_to_func[func_symbol] = new_func
 end
