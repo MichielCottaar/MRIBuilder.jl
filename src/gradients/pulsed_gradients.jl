@@ -129,14 +129,13 @@ function to_concrete_block(s::AbstractSequence, block::PulsedGradient)
     else
         error("Gradient orientation should be :bvec, :neg_bvec or a length-3 vector, not $(block.orienation)")
     end
-    t_start = value(start_time(block))
     t_rise = value(rise_time(block))
     t_d = value(δ(block))
-    return ConcreteBlock(s, t_start + t_d + t_rise, gradient=[
-        (t_start, zeros(3)),
-        (t_start + t_rise, qvec),
-        (t_start + t_d, qvec),
-        (t_start + t_d + t_rise, zeros(3)),
+    return ConcreteBlock(s, t_d + t_rise, gradient=[
+        (0., zeros(3)),
+        (t_rise, qvec),
+        (t_d, qvec),
+        (t_d + t_rise, zeros(3)),
     ], rotate_gradient=rotate)
 end
 
