@@ -47,7 +47,7 @@ frequency(pulse::ConstantPulse) = pulse.frequency
 flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
 bandwidth(pulse::ConstantPulse) = 3.79098854 / duration(pulse)
 
-properties(::Type{<:ConstantPulse}) = [amplitude, duration, phase, frequency, flip_angle, bandwidth]
+variables(::Type{<:ConstantPulse}) = [amplitude, duration, phase, frequency, flip_angle, bandwidth]
 
 function to_concrete_block(s::AbstractSequence, block::ConstantPulse)
     d = value(duration(block))

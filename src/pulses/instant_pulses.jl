@@ -27,7 +27,7 @@ end
 flip_angle(instant::InstantRFPulseBlock) = instant.flip_angle
 phase(instant::InstantRFPulseBlock) = instant.phase
 duration(instant::InstantRFPulseBlock) = 0.
-properties(::Type{<:InstantRFPulseBlock}) = [flip_angle, phase]
+variables(::Type{<:InstantRFPulseBlock}) = [flip_angle, phase]
 
 
 """

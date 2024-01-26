@@ -113,7 +113,7 @@ function bval(g::PulsedGradient, qstart=0.)
     )
 end
 
-properties(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time, slew_rate]
+variables(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time, slew_rate]
 
 
 function to_concrete_block(s::AbstractSequence, block::PulsedGradient)

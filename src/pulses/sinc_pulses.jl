@@ -98,7 +98,7 @@ frequency(pulse::SincPulse) = pulse.frequency
 flip_angle(pulse::SincPulse) = (pulse.nlobe_integral(N_left(pulse)) + pulse.nlobe_integral(N_right(pulse))) * amplitude(pulse) * lobe_duration(pulse) * 360
 lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 bandwidth(pulse::SincPulse) = 1 / lobe_duration(pulse)
-properties(::Type{<:SincPulse}) = [amplitude, N_left, N_right, duration, phase, frequency, flip_angle, lobe_duration, bandwidth]
+variables(::Type{<:SincPulse}) = [amplitude, N_left, N_right, duration, phase, frequency, flip_angle, lobe_duration, bandwidth]
 
 function to_concrete_block(s::AbstractSequence, block::SincPulse)
     normed_times = -value(N_left(block)):0.1:value(N_right(block)) + 1e-5

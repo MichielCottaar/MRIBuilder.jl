@@ -36,7 +36,7 @@ WaitBlock(duration_constraint=nothing) = BuildingBlockPlaceholder{WaitBlock}(dur
 to_block(builder::SequenceBuilder, time::Union{Number, Symbol, Nothing, Val{:min}, Val{:max}}) = WaitBlock(builder, time)
 
 
-properties(::Type{WaitBlock}) = [duration]
+variables(::Type{WaitBlock}) = [duration]
 
 duration(wb::WaitBlock) = wb.duration
 

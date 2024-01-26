@@ -8,8 +8,8 @@ Parent type for all individual components out of which a sequence can be built.
 
 Required methods:
 - [`duration`](@ref)(block, parameters): returns block duration in ms.
-- [`to_concrete_block`](@ref)(builder, block): converts the block into a `ConcreteBlock`, which will be part of given `SequenceBuilder`.
-- [`properties`](@ref): A list of all functions that are used to compute properties of the building block. Any of these can be used in constraints or objective functions.
+- [`to_concrete_block`](@ref)(sequence, block): converts the block into a `ConcreteBlock`, which will be part of given `Sequence`.
+- [`variables`](@ref): A list of all functions that are used to compute variables of the building block. Any of these can be used in constraints or objective functions.
 """
 abstract type BuildingBlock end
 
@@ -52,18 +52,18 @@ end
 
 function scanner_constraints!(model::Model, building_block::BuildingBlock, scanner::Scanner)
     for func in [gradient_strength, slew_rate]
-        if (func in properties(building_block)) && isfinite(func(scanner))
+        if (func in variables(building_block)) && isfinite(func(scanner))
             @constraint model func(building_block) <= func(scanner)
         end
     end
 end
 
 """
-    properties(building_block)
+    variables(building_block)
 
 Returns a list of function that can be called to constrain the `building_block`.
 """
-properties(bb::BuildingBlock) = properties(typeof(bb))
+variables(bb::BuildingBlock) = variables(typeof(bb))
 
 struct _BuildingBlockPrinter
     bb :: BuildingBlock
@@ -85,14 +85,14 @@ function Base.show(io::IO, block::BuildingBlock)
     end
     for name in propertynames(block)
         value = getproperty(block, name)
-        if value isa GenericVariableRef || name == :builder || string(name)[1] == '_'
+        if value isa GenericVariableRef || name == :parent || string(name)[1] == '_'
             continue
         end
         print(io, name, "=", repr(value), ", ")
     end
 
     if has_values(block)
-        for fn in properties(block)
+        for fn in variables(block)
             if fn == duration
                 continue
             end
@@ -112,14 +112,14 @@ function end_time end
 """
     set_simple_constraints!(model, block, kwargs)
 
-Add any constraints or objective functions to the properties of a [`BuildingBlock`](@ref) in the JuMP `model`.
+Add any constraints or objective functions to the variables of a [`BuildingBlock`](@ref) in the JuMP `model`.
 
-Each keyword argument has to match one of the functions in [`properties`](@ref)(block).
+Each keyword argument has to match one of the functions in [`variables`](@ref)(block).
 If set to a numeric value, a constraint will be added to fix the function value to that numeric value.
 If set to `:min` or `:max`, minimising or maximising this function will be added to the cost function.
 """
 function set_simple_constraints!(model::Model, block::BuildingBlock, kwargs)
-    to_funcs = Dict(nameof(fn) => fn for fn in properties(block))
+    to_funcs = Dict(nameof(fn) => fn for fn in variables(block))
     for (key, value) in kwargs
         apply_simple_constraint!(model, to_funcs[key](block), value)
     end
@@ -142,8 +142,8 @@ apply_simple_constraint!(model::Model, variable, value::Number) = @constraint mo
 """
     match_blocks!(block1, block2[, property_list])
 
-Matches the listed properties between two [`BuildingBlock`](@ref) objects.
-By default all shared properties (i.e., those with the same name) are matched.
+Matches the listed variables between two [`BuildingBlock`](@ref) objects.
+By default all shared variables (i.e., those with the same name) are matched.
 """
 function match_blocks!(block1::BuildingBlock, block2::BuildingBlock, property_list)
     model = owner_model(block1)
@@ -154,7 +154,7 @@ function match_blocks!(block1::BuildingBlock, block2::BuildingBlock, property_li
 end
 
 function match_blocks!(block1::BuildingBlock, block2::BuildingBlock)
-    property_list = intersect(properties(block1), properties(block2))
+    property_list = intersect(variables(block1), variables(block2))
     match_blocks!(block1, block2, property_list)
 end
 

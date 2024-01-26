@@ -41,7 +41,7 @@ end
 qval(instant::InstantGradientBlock) = instant.qval
 bval(instant::InstantGradientBlock) = 0.
 duration(instant::InstantGradientBlock) = 0.
-properties(::Type{<:InstantGradientBlock}) = [qval]
+variables(::Type{<:InstantGradientBlock}) = [qval]
 
 """
     ConcreteInstantGradient(orientation, qval)

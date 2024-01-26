@@ -16,7 +16,7 @@ end
 
 InstantReadout() = BuildingBlockPlaceholder{InstantReadout}()
 
-properties(::Type{<:InstantReadout}) = []
+variables(::Type{<:InstantReadout}) = []
 to_block(builder::SequenceBuilder, cls::Type{<:InstantReadout}) = cls(builder)
 to_concrete_block(builder::AbstractSequence, ::InstantReadout) = InstantReadout(builder)
 
