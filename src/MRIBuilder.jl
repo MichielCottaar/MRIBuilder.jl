@@ -33,4 +33,7 @@ export InstantRFPulseBlock, ConstantPulse, SincPulse, flip_angle, phase, frequen
 import .Readouts: InstantReadout
 export InstantReadout
 
+import .Scanners: Scanner, B0, max_gradient, max_slew_rate, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
+export Scanner, B0, max_gradient, max_slew_rate, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
+
 end
