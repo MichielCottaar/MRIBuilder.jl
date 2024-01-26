@@ -19,5 +19,4 @@ InstantReadout() = BuildingBlockPlaceholder{InstantReadout}()
 properties(::Type{<:InstantReadout}) = []
 to_block(builder::SequenceBuilder, cls::Type{<:InstantReadout}) = cls(builder)
 
-to_mcmr_components(readout::InstantReadout) = Readout(value(start_time(readout)))
 end
