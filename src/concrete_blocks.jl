@@ -117,7 +117,7 @@ function to_concrete_block(sequence::AbstractSequence, cb::ConcreteBlock)
     return ConcreteBlock(sequence, cb.duration, cb.pulse, cb.gradient, cb.readout_times)
 end
 
-properties(::Type{<:ConcreteBlock}) = []
+properties(::Type{<:AbstractConcreteBlock}) = []
 
 
 """
