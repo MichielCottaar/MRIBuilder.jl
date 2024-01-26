@@ -3,7 +3,6 @@ import JuMP: Model
 import ...GlobalModel: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType
 import ...BuildingBlocks: BuildingBlock
-import ...InsertedBuildingBlocks: InsertedBuildingBlock
 
 """
     Sequence(building_blocks...)
