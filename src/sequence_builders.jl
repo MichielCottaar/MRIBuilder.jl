@@ -93,7 +93,7 @@ TR(sb::SequenceBuilder) = sb.TR
 
 Returns the index of the [`BuildingBlock`](@ref) in the parent [`SequenceBuilder`](@ref).
 """
-index(sb::SequenceBuilder, bb::BuildingBlock) = findfirst(isequal(bb), sb.blocks)
+index(sb::AbstractSequence, bb::BuildingBlock) = findfirst(isequal(bb), get_blocks(sb))
 index(bb::BuildingBlock) = index(builder(bb), bb)
 
 
@@ -114,7 +114,7 @@ function duration(bb1::BuildingBlock, bb2::BuildingBlock)
     return duration(sb, index(sb, bb1), index(sb, bb2))
 end
 
-function duration(sb::SequenceBuilder, index1::Integer, index2::Integer)
+function duration(sb::AbstractSequence, index1::Integer, index2::Integer)
     if index2 == index1
         return duration(sb[index1])
     elseif index2 == index1 - 1
@@ -126,8 +126,8 @@ function duration(sb::SequenceBuilder, index1::Integer, index2::Integer)
     end
 end
 
-duration(sb::SequenceBuilder) = duration(sb, 1, length(sb))
-duration(sb::SequenceBuilder, index::Integer) = duration(sb[index])
+duration(sb::AbstractSequence) = duration(sb, 1, length(sb))
+duration(sb::AbstractSequence, index::Integer) = duration(sb[index])
 
 
 """
@@ -139,14 +139,14 @@ You can pass on the actual [`BuildingBlock`](@ref) object or the [`SequenceBuild
 """
 start_time(bb::BuildingBlock) = start_time(builder(bb), bb)
 
-function start_time(sb::SequenceBuilder, bb::BuildingBlock)
+function start_time(sb::AbstractSequence, bb::BuildingBlock)
     if builder(bb) != sb
         error("No start time of $bb within $sb, because this BuildingBlock is not part of that sequence.")
     end
     return start_time(sb, index(bb))
 end
 
-start_time(sb::SequenceBuilder, index::Integer) = index == 1 ? 0. : duration(sb, 1, index - 1)
+start_time(sb::AbstractSequence, index::Integer) = index == 1 ? 0. : duration(sb, 1, index - 1)
 
 """
     end_time(building_block::BuildingBlock)
@@ -157,14 +157,14 @@ You can pass on the actual [`BuildingBlock`](@ref) object or the [`SequenceBuild
 """
 end_time(bb::BuildingBlock) = end_time(builder(bb), bb)
 
-function end_time(sb::SequenceBuilder, bb::BuildingBlock)
+function end_time(sb::AbstractSequence, bb::BuildingBlock)
     if builder(bb) != sb
         error("No end time of $bb within $sb, because this BuildingBlock is not part of that sequence.")
     end
     return end_time(sb, index(bb))
 end
 
-end_time(sb::SequenceBuilder, index::Integer) = duration(sb, 1, index)
+end_time(sb::AbstractSequence, index::Integer) = duration(sb, 1, index)
 
 
 end
