@@ -80,6 +80,7 @@ builder(bb::BuildingBlock) = bb.builder
 owner_model(bb::BuildingBlock) = owner_model(builder(bb))
 owner_model(sb::SequenceBuilder) = sb.model
 has_values(object::Union{BuildingBlock, SequenceBuilder}) = has_values(owner_model(object))
+optimize!(sb::SequenceBuilder) = optimize!(owner_model(sb))
 
 """
     TR(sequence::SequenceBuilder)
