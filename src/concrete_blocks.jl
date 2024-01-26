@@ -5,6 +5,45 @@ import ..SequenceBuilders: SequenceBuilder
 
 abstract type AbstractConcreteBlock end
 
+struct ConcreteRFPulse
+    time :: Vector{Number}
+    amplitude :: Vector{Number}
+    phase :: Vector{Number}
+end
+
+function ConcreteRFPulse(arr::Vector)
+    @assert all(length.(arr) .== 3)
+    ConcreteRFPulse(
+        [a[1] for a in arr],
+        [a[2] for a in arr],
+        [a[3] for a in arr],
+    )
+end
+
+ConcreteRFPulse(::Nothing) = nothing
+ConcreteRFPulse(values::Tuple{<:Vector, <:Vector, <:Vector}) = ConcreteRFPulse(values...)
+
+struct ConcreteGradient
+    time :: Vector{Number}
+    Gx :: Vector{Number}
+    Gy :: Vector{Number}
+    Gz :: Vector{Number}
+end
+
+function ConcreteGradient(arr::Vector)
+    @assert all(length.(arr) .== 4)
+    ConcreteGradient(
+        [a[1] for a in arr],
+        [a[2] for a in arr],
+        [a[3] for a in arr],
+        [a[4] for a in arr],
+    )
+end
+
+ConcreteGradient(::Nothing) = nothing
+ConcreteGradient(values::Tuple{<:Vector, <:Vector, <:Vector, <:Vector}) = ConcreteGradient(values...)
+
+
 """
     ConcreteBlock(duration; pulse=nothing, gradient=nothing, rotate_bvec=false, readout_times=nothing)
 
@@ -13,15 +52,15 @@ A [`BuildingBlock`](@ref) that is fully defined (i.e., there are no variables to
 struct ConcreteBlock <: AbstractConcreteBlock
     builder :: SequenceBuilder
     duration :: Float64
-    pulse :: ConcreteShape{Float64}
-    gradient :: ConcreteShape{SVector{3, Float64}}
+    pulse :: Union{ConcreteRFPulse, Nothing}
+    gradient :: Union{ConcreteGradient, Nothing}
     readout_times :: Vector{Float64}
 end
 
 ConcreteBlock(args...; kwargs...) = BuildingBlockPlaceholder{ConcreteBlock}(args...; kwargs...)
 
 function ConcreteBlock(builder::SequenceBuilder, duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[])
-    ConcreteBlock(builder, duration, ConcreteShape{Float64}(pulse), ConcreteShape(SVector{3, Float64})(gradient), Float64.(readout_times))
+    ConcreteBlock(builder, duration, ConcreteRFPulse(pulse), ConcreteGradient(gradient), Float64.(readout_times))
 end
 
 
