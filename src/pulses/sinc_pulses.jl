@@ -100,13 +100,13 @@ lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 bandwidth(pulse::SincPulse) = 1 / lobe_duration(pulse)
 properties(::Type{<:SincPulse}) = [amplitude, N_left, N_right, duration, phase, frequency, flip_angle, lobe_duration, bandwidth]
 
-function to_concrete_block(builder::SequenceBuilder, block::SincPulse)
+function to_concrete_block(block::SincPulse)
     normed_times = -value(N_left(block)):0.1:value(N_right(block)) + 1e-5
     times = ((normed_times .+ value(N_left(block))) .* value(lobe_duration(block)))
     amplitudes = value(amplitude(block)) .* (normalised_function.(normed_times; apodise=block.apodise))
     phases = (value(frequency(block)) .* value(lobe_duration(block))) .* normed_times * 360
     return ConcreteBlock(
-        builder, value(duration(block)); 
+        value(duration(block)); 
         pulse_amplitude=Shape(times, amplitudes), 
         pulse_phase=Shape(times, phases),
     )
