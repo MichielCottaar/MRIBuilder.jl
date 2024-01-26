@@ -21,7 +21,7 @@ function ConcreteRFPulse(arr::Vector)
 end
 
 ConcreteRFPulse(::Nothing) = nothing
-ConcreteRFPulse(values::Tuple{<:Vector, <:Vector, <:Vector}) = ConcreteRFPulse(values...)
+ConcreteRFPulse(values::Tuple{<:AbstractVector, <:AbstractVector, <:AbstractVector}) = ConcreteRFPulse(values...)
 
 struct ConcreteGradient
     time :: Vector{Number}
@@ -113,7 +113,7 @@ Internal function used to create [`ConcreteBlock`](@ref) from any [`BuildingBloc
 
 This needs to be defined for every [`BuildingBlock`](@ref)
 """
-function to_concrete_block(sequence, cb::ConcreteBlock)
+function to_concrete_block(sequence::AbstractSequence, cb::ConcreteBlock)
     return ConcreteBlock(sequence, cb.duration, cb.pulse, cb.gradient, cb.readout_times)
 end
 
