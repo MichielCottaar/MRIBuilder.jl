@@ -1,6 +1,6 @@
 module ConcreteBlocks
 import JuMP: has_values, optimize!, model
-import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, properties
+import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, properties, duration
 import ..SequenceBuilders: SequenceBuilder, to_block, AbstractSequence
 
 abstract type AbstractConcreteBlock <: BuildingBlock end
@@ -62,6 +62,8 @@ end
 
 to_block(::SequenceBuilder, concrete::AbstractConcreteBlock) = concrete
 has_values(::AbstractConcreteBlock) = true
+duration(c::AbstractConcreteBlock) = 0.
+duration(c::ConcreteBlock) = c.duration
 
 
 """
