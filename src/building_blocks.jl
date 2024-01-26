@@ -1,7 +1,7 @@
 module BuildingBlocks
 import JuMP: has_values, GenericVariableRef, value, Model, @constraint, @objective, owner_model, objective_function
 import Printf: @sprintf
-import ..Scanners: Scanner
+import ..Scanners: Scanner, gradient_strength, slew_rate
 
 """
 Parent type for all individual components out of which a sequence can be built.
@@ -51,12 +51,9 @@ function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner)
 end
 
 function scanner_constraints!(model::Model, building_block::BuildingBlock, scanner::Scanner)
-    for (func, property_name) in [
-        (gradient_strength, :gradient)
-        (slew_rate, :slew_rate)
-    ]
-        if (func in properties(building_block)) && isfinite(getproperty(scanner, property_name))
-            @constraint model func(building_block) <= getproperty(scanner, property_name)
+    for func in [gradient_strength, slew_rate]
+        if (func in properties(building_block)) && isfinite(func(scanner))
+            @constraint model func(building_block) <= func(scanner)
         end
     end
 end
