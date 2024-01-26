@@ -3,40 +3,48 @@ Builds and optimises NMR/MRI sequences.
 """
 module MRIBuilder
 
+include("global_model.jl")
 include("scanners.jl")
+include("variables.jl")
 include("building_blocks.jl")
-include("sequence_builders.jl")
 include("concrete_blocks.jl")
 include("wait.jl")
+include("containers/containers.jl")
 include("gradients/gradients.jl")
 include("pulses/pulses.jl")
 include("readouts/readouts.jl")
 
-import .BuildingBlocks: BuildingBlock, scanner_constraints!
-export BuildingBlock, scanner_constraints!
+import .GlobalModel: set_model
+export set_model
 
-import .SequenceBuilders: SequenceBuilder, start_time, end_time, duration, TR
-export SequenceBuilder, start_time, end_time, duration, TR
+import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
+export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 
-import .ConcreteBlocks: ConcreteBlock, Sequence
-export ConcreteBlock, Sequence
+import .Variables: variables, duration, start_time, end_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, area_under_curve, δ, rise_time, flat_time, slew_rate, gradient_strength
+export variables, duration, start_time, end_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, area_under_curve, δ, rise_time, flat_time, slew_rate, gradient_strength
+
+import .BuildingBlocks: BuildingBlock
+export BuildingBlocks
+
+import .ConcreteBlocks: ConcreteBlock, AbstractConcreteBlock
+export ConcreteBlocks, AbstractConcreteBlock
 
 import .Wait: WaitBlock
 export WaitBlock
 
-import .Gradients: PulsedGradient, InstantGradientBlock, qval, rise_time, flat_time, slew_rate, gradient_strength, bval
-export PulsedGradient, InstantGradientBlock, qval, rise_time, flat_time, slew_rate, gradient_strength, bval
+import .Containers: Sequence
+export Sequence
 
-import .Pulses: InstantRFPulseBlock, ConstantPulse, SincPulse, flip_angle, phase, frequency, bandwidth, N_left, N_right
-export InstantRFPulseBlock, ConstantPulse, SincPulse, flip_angle, phase, frequency, bandwidth, N_left, N_right
+import .Gradients: PulsedGradient, InstantGradientBlock
+export PulsedGradient, InstantGradientBlock
+
+import .Pulses: InstantRFPulseBlock, ConstantPulse, SincPulse
+export InstantRFPulseBlock, ConstantPulse, SincPulse
 
 import .Readouts: InstantReadout
 export InstantReadout
 
-import .Scanners: Scanner, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
-export Scanner, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
-
-using JuMP
+import JuMP: @constraint, @objective, objective_function, optimize!, has_values, value
 export @constraint, @objective, objective_function, optimize!, has_values, value
 
 end

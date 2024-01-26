@@ -5,10 +5,10 @@ module PulsedGradients
 
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
-import ...BuildingBlocks: BuildingBlock, duration, properties, set_simple_constraints!, BuildingBlockPlaceholder, gradient_strength, slew_rate
-import ...SequenceBuilders: SequenceBuilder, start_time
-import ...ConcreteBlocks: ConcreteBlock, to_concrete_block, AbstractSequence
-import ..IntegrateGradients: qval, bval
+import ...Variables: qval, bval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
+import ...BuildingBlocks: BuildingBlock, duration, set_simple_constraints!
+import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
+import ...GlobalModel: @global_model_constructor
 
 
 """
@@ -36,66 +36,36 @@ If not set, they will be determined during the sequence optimisation.
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
 mutable struct PulsedGradient <: BuildingBlock
-    builder::SequenceBuilder
+    model :: Model
     orientation :: Any
-    slew_rate :: VariableRef
-    rise_time :: VariableRef
-    flat_time :: VariableRef
+    slew_rate :: VariableType
+    rise_time :: VariableType
+    flat_time :: VariableType
 end
 
-function PulsedGradient(; kwargs...)
-    return BuildingBlockPlaceholder{PulsedGradient}(; kwargs...)
-end
+@global_model_constructor PulsedGradient
 
-function PulsedGradient(builder::SequenceBuilder; orientation=:bvec, kwargs...)
+function PulsedGradient(model::Model; orientation=:bvec, slew_rate=nothing, rise_time=nothing, flat_time=nothing, kwargs...)
     model = owner_model(builder)
     res = PulsedGradient(
         builder,
         orientation,
-        @variable(model),
-        @variable(model),
-        @variable(model)
+        [get_free_variable(model, value) for value in (slew_rate, rise_time, flat_time)]...
     )
 
     set_simple_constraints!(model, res, kwargs)
-    @constraint model flat_time(res) >= 0
-    @constraint model rise_time(res) >= 0
-    @constraint model slew_rate(res) >= 0
+    @constraint model res.flat_time >= 0
+    @constraint model res.rise_time >= 0
+    @constraint model res.slew_rate >= 0
     return res
 end
 
-"""
-    rise_time(pulsed_gradient)
-
-The time from 0 till the maximum gradient strength in ms.
-"""
 rise_time(pg::PulsedGradient) = pg.rise_time
-
-"""
-    flat_time(pulsed_gradient)
-
-The time spent at the maximum gradient strength in ms.
-"""
 flat_time(pg::PulsedGradient) = pg.flat_time
-
 gradient_strength(g::PulsedGradient) = rise_time(g) * slew_rate(g)
-
 slew_rate(g::PulsedGradient) = g.slew_rate
-
-"""
-    δ(pulsed_gradient)
-
-Pulse gradient duration (`rise_time + `flat_time`).  This is the effective duration of the gradient. The real duration is longer (and given by [`duration`](@ref)).
-"""
 δ(g::PulsedGradient) = rise_time(g) + flat_time(g)
-
 duration(g::PulsedGradient) = 2 * rise_time(g) + flat_time(g)
-
-"""
-    qval(gradient)
-
-q-value at the end of the gradient (rad/um).
-"""
 qval(g::PulsedGradient) = (g.orientation == :neg_bvec ? -1 : 1) * gradient_strength(g) * δ(g)
 
 
@@ -116,7 +86,7 @@ end
 variables(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time, slew_rate]
 
 
-function to_concrete_block(s::AbstractSequence, block::PulsedGradient)
+function to_concrete_block(block::PulsedGradient)
     if block.orientation == :bvec
         rotate = true
         qvec = [value(qval(block)), 0., 0.]
@@ -131,7 +101,7 @@ function to_concrete_block(s::AbstractSequence, block::PulsedGradient)
     end
     t_rise = value(rise_time(block))
     t_d = value(δ(block))
-    return ConcreteBlock(s, t_d + t_rise, gradient=[
+    return ConcreteBlock(t_d + t_rise, gradient=[
         (0., zeros(3)),
         (t_rise, qvec),
         (t_d, qvec),

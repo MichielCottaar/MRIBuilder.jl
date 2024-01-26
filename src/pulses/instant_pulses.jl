@@ -1,25 +1,25 @@
 module InstantPulses
-import JuMP: @constraint, @variable, VariableRef, value
-import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
-import ...SequenceBuilders: SequenceBuilder, owner_model, start_time
-import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock, Sequence, AbstractSequence
-import ..Properties: flip_angle, phase
+import JuMP: @constraint, @variable, VariableRef, value, Model
+import ...BuildingBlocks: BuildingBlock
+import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
+import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType
+import ...GlobalModel: @global_model_constructor
 
 struct InstantRFPulseBlock <: BuildingBlock
-    builder :: SequenceBuilder
-    flip_angle :: VariableRef
-    phase :: VariableRef
+    model :: Model
+    flip_angle :: VariableType
+    phase :: VariableType
 end
 
-InstantRFPulseBlock(; kwargs...) = BuildingBlockPlaceholder{InstantRFPulseBlock}(; kwargs...)
-function InstantRFPulseBlock(builder::SequenceBuilder; kwargs...) 
-    model = owner_model(builder)
+@global_model_constructor InstantRFPulseBlock
+
+function InstantRFPulseBlock(model::Model; flip_angle=nothing, phase=nothing) 
     res = InstantRFPulseBlock(
-        builder,
-        @variable(model),
-        @variable(model)
+        model,
+        get_free_variable(model, flip_angle),
+        get_free_variable(model, phase)
     )
-    @constraint model flip_angle(res) >= 0
+    @constraint model res.flip_angle >= 0
     set_simple_constraints!(model, res, kwargs)
     return res
 end
@@ -38,13 +38,12 @@ Instantaneous RF pulse with no free variables.
 See [`InstantRFPulseBlock`](@ref) for a version where [`flip_angle`](@ref) and [`phase`](@ref) are variables.
 """
 struct ConcreteInstantRFPulse <: AbstractConcreteBlock
-    builder :: AbstractSequence
     flip_angle :: Number
     phase :: Number
 end
 
-function to_concrete_block(builder::Sequence, block::InstantRFPulseBlock)
-    return ConcreteInstantRFPulse(builder, value(flip_angle(block)), value(phase(block)))
+function to_concrete_block(block::InstantRFPulseBlock)
+    return ConcreteInstantRFPulse(value(flip_angle(block)), value(phase(block)))
 end
 
 end

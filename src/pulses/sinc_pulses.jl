@@ -1,12 +1,12 @@
 module SincPulses
 
-import JuMP: VariableRef, @constraint, @variable, value
+import JuMP: VariableRef, @constraint, @variable, value, Model
 import QuadGK: quadgk
 import Polynomials: fit, Polynomial
-import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
-import ...SequenceBuilders: SequenceBuilder, owner_model, start_time, end_time, AbstractSequence
+import ...BuildingBlocks: BuildingBlock, set_simple_constraints!
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
-import ..Properties: flip_angle, phase, amplitude, frequency, bandwidth
+import ...Variables: flip_angle, phase, amplitude, frequency, bandwidth, VariableType, variables, get_free_variable, duration
+import ...GlobalModel: @global_model_constructor
 
 """
     SincPulse(; symmetric=true, max_Nlobes=nothing, apodise=true, variables...)
@@ -29,27 +29,32 @@ Represents an radio-frequency pulse with a constant amplitude and frequency.
 - [`bandwidth`](@ref): width of the rectangular function in frequency space (in kHz). If the `duration` is short (compared with 1/`bandwidth`), this bandwidth will only be approximate.
 """
 struct SincPulse <: BuildingBlock
-    builder :: SequenceBuilder
+    model :: Model
     symmetric :: Bool
     apodise :: Bool
     nlobe_integral :: Polynomial
-    N_left :: VariableRef
-    N_right :: VariableRef
-    amplitude :: VariableRef
-    phase :: VariableRef
-    frequency :: VariableRef
-    lobe_duration :: VariableRef
+    N_left :: VariableType
+    N_right :: VariableType
+    amplitude :: VariableType
+    phase :: VariableType
+    frequency :: VariableType
+    lobe_duration :: VariableType
 end
 
-SincPulse(; kwargs...) = BuildingBlockPlaceholder{SincPulse}(; kwargs...)
-function SincPulse(builder::SequenceBuilder; symmetric=true, max_Nlobes=nothing, apodise=true, kwargs...) 
-    model = owner_model(builder)
+@global_model_constructor SincPulse
+
+function SincPulse(model::Model; 
+    symmetric=true, max_Nlobes=nothing, apodise=true, N_lobes=nothing, N_left=nothing, N_right=nothing, 
+    amplitude=nothing, phase=nothing, frequency=nothing, lobe_duration=nothing, kwargs...
+) 
     if symmetric
-        N_lobes = @variable(model, integer=true)
+        N_lobes = get_free_variable(model, N_lobes)
+        @assert isnothing(N_left) && isnothing(N_right) "N_left and N_right cannot be set if symmetric=true (default)"
         N_left_var = N_right_var = N_lobes
     else
-        N_left_var = @variable(model, integer=true)
-        N_right_var = @variable(model, integer=true)
+        @assert isnothing(N_lobes) "N_lobes cannot be set if symmetric=true (default)"
+        N_left_var = get_free_variable(model, N_left)
+        N_right_var = get_free_variable(model, N_right)
     end
     res = SincPulse(
         builder,
@@ -58,15 +63,12 @@ function SincPulse(builder::SequenceBuilder; symmetric=true, max_Nlobes=nothing,
         nlobe_integral_params(max_Nlobes, apodise),
         N_left_var,
         N_right_var,
-        @variable(model),
-        @variable(model),
-        @variable(model),
-        @variable(model)
+        [get_free_variable(model, value) for value in (amplitude, phase, frequeny, lobe_duration)]...
     )
-    @constraint model amplitude(res) >= 0
-    @constraint model N_left(res) >= 1
+    @constraint model res.amplitude >= 0
+    @constraint model res.N_left >= 1
     if !symmetric
-        @constraint model N_right(res) >= 1
+        @constraint model res.N_right >= 1
     end
     set_simple_constraints!(model, res, kwargs)
     return res
@@ -100,13 +102,13 @@ lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 bandwidth(pulse::SincPulse) = 1 / lobe_duration(pulse)
 variables(::Type{<:SincPulse}) = [amplitude, N_left, N_right, duration, phase, frequency, flip_angle, lobe_duration, bandwidth]
 
-function to_concrete_block(s::AbstractSequence, block::SincPulse)
+function to_concrete_block(block::SincPulse)
     normed_times = -value(N_left(block)):0.1:value(N_right(block)) + 1e-5
     times = ((normed_times .+ value(N_left(block))) .* value(lobe_duration(block)))
     amplitudes = value(amplitude(block)) .* (normalised_function.(normed_times; apodise=block.apodise))
     phases = (value(frequency(block)) .* value(lobe_duration(block))) .* normed_times * 360
     return ConcreteBlock(
-        s, value(duration(block)); 
+        value(duration(block)); 
         pulse=(times, amplitudes, phases)
     )
 end

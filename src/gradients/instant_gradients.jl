@@ -1,9 +1,9 @@
 module InstantGradients
-import JuMP: @constraint, @variable, VariableRef
-import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
-import ...SequenceBuilders: SequenceBuilder, owner_model, start_time
-import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock, Sequence, AbstractSequence
-import ..IntegrateGradients: qval, bval
+import JuMP: @constraint, @variable, Model, owner_model
+import ...Variables: qval, bval, start_time, duration, variables, get_free_variable, VariableType
+import ...BuildingBlocks: BuildingBlock
+import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
+import ...GlobalModel: @global_model_constructor
 
 """
     InstantGradientBlock(; orientation=:bvec, qval=nothing)
@@ -19,21 +19,20 @@ This is a [`BuildingBlock`](@ref) for the [`SequenceBuilder`](@ref).
 - [`qval`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um.
 """
 struct InstantGradientBlock <: BuildingBlock
-    builder::SequenceBuilder
+    model::Model
     orientation :: Any
-    qval :: VariableRef
+    qval :: VariableType
 end
 
-InstantGradientBlock(; kwargs...) = BuildingBlockPlaceholder{InstantGradientBlock}(; kwargs...)
+@global_model_constructor InstantGradientBlock
 
-function InstantGradientBlock(builder::SequenceBuilder; orientation=:bvec, kwargs...)
-    model = owner_model(builder)
+function InstantGradientBlock(model::Model; orientation=:bvec, qval=nothing)
     res = InstantGradientBlock(
-        builder,
+        model,
         orientation,
-        @variable(model)
+        get_free_variable(model, qval),
     )
-    set_simple_constraints!(model, res, kwargs)
+    @constraint model model.qval >= 0
     return res
 end
 
@@ -51,13 +50,12 @@ Instantaneous MR gradient with no free variables.
 See [`InstantGradientBlock`](@ref) for a version where [`qval`](@ref) is variable.
 """
 struct ConcreteInstantGradient <: AbstractConcreteBlock
-    builder :: AbstractSequence
     orientation :: Any
     qval :: Number
 end
 
-function to_concrete_block(builder::Sequence, block::InstantGradientBlock)
-    return ConcreteInstantGradient(builder, block.orientation, value(qval(block)))
+function to_concrete_block(block::InstantGradientBlock)
+    return ConcreteInstantGradient(block.orientation, value(qval(block)))
 end
 
 

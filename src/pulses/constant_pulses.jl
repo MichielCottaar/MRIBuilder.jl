@@ -1,9 +1,9 @@
 module ConstantPulses
-import JuMP: VariableRef, @constraint, @variable, value
-import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
-import ...SequenceBuilders: SequenceBuilder, owner_model, start_time, end_time, AbstractSequence
+import JuMP: VariableRef, @constraint, @variable, value, Model
+import ...BuildingBlocks: BuildingBlock, set_simple_constraints!
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
-import ..Properties: flip_angle, phase, amplitude, frequency, bandwidth
+import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, bandwidth, start_time, end_time, VariableType, duration
+import ...GlobalModel: @global_model_constructor
 
 """
     ConstantPulse(; variables...)
@@ -18,24 +18,21 @@ Represents an radio-frequency pulse with a constant amplitude and frequency (i.e
 - [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
 """
 struct ConstantPulse <: BuildingBlock
-    builder :: SequenceBuilder
-    amplitude :: VariableRef
-    duration :: VariableRef
-    phase :: VariableRef
-    frequency :: VariableRef
+    model :: Model
+    amplitude :: VariableType
+    duration :: VariableType
+    phase :: VariableType
+    frequency :: VariableType
 end
 
-ConstantPulse(; kwargs...) = BuildingBlockPlaceholder{ConstantPulse}(; kwargs...)
-function ConstantPulse(builder::SequenceBuilder; kwargs...) 
-    model = owner_model(builder)
+@global_model_constructor ConstantPulse
+
+function ConstantPulse(model::Model; amplitude=nothing, duration=nothing, phase=nothing, frequency=nothing, kwargs...) 
     res = ConstantPulse(
-        builder,
-        @variable(model),
-        @variable(model),
-        @variable(model),
-        @variable(model)
+        model,
+        [get_free_variable(model, value) for value in (amplitude, duration, phase, frequency)]...
     )
-    @constraint model amplitude(res) >= 0
+    @constraint model res.amplitude >= 0
     set_simple_constraints!(model, res, kwargs)
     return res
 end
@@ -49,10 +46,10 @@ bandwidth(pulse::ConstantPulse) = 3.79098854 / duration(pulse)
 
 variables(::Type{<:ConstantPulse}) = [amplitude, duration, phase, frequency, flip_angle, bandwidth]
 
-function to_concrete_block(s::AbstractSequence, block::ConstantPulse)
+function to_concrete_block(block::ConstantPulse)
     d = value(duration(block))
     final_phase = value(phase(block)) + d * value(frequency(block)) * 360
-    return ConcreteBlock(s, value(duration(block)), pulse=[
+    return ConcreteBlock(value(duration(block)), pulse=[
         ([0., d]),
         value.([amplitude(block), amplitude(block)]),
         value.([phase(block), final_phase])

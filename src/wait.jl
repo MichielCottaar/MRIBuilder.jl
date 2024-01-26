@@ -1,8 +1,9 @@
 module Wait
 import JuMP: Model, @constraint, @variable, VariableRef, owner_model, value
-import ..BuildingBlocks: BuildingBlock, duration, properties, apply_simple_constraint!, BuildingBlockPlaceholder
-import ..SequenceBuilders: SequenceBuilder, to_block, AbstractSequence
+import ..Variables: VariableType, variables, duration, get_free_variable
+import ..BuildingBlocks: BuildingBlock
 import ..ConcreteBlocks: to_concrete_block, ConcreteBlock
+import ..GlobalModel: @global_model_constructor
 import ...Scanners: Scanner
 
 """
@@ -17,31 +18,29 @@ Duration can be set to one of:
 - `nothing` to make it fully determined by external constraints and objectives
 """
 struct WaitBlock <: BuildingBlock
-    builder :: SequenceBuilder
-    duration :: VariableRef
+    model :: Model
+    duration :: VariableType
 end
 
-function WaitBlock(builder::SequenceBuilder, duration_constraint=nothing)
-    model = owner_model(builder)
-    res = WaitBlock(builder, @variable(model))
+@global_model_constructor WaitBlock
+
+function WaitBlock(model::Model, duration=nothing)
+    res = WaitBlock(
+        model, 
+        get_free_variable(model, duration),
+        VariableType[]
+    )
     @constraint model duration(res) >= 0
-    if !isnothing(duration_constraint)
-        apply_simple_constraint!(model, duration(res), duration_constraint)
-    end
     return res
 end
 
-WaitBlock(duration_constraint=nothing) = BuildingBlockPlaceholder{WaitBlock}(duration_constraint)
-
-to_block(builder::SequenceBuilder, time::Union{Number, Symbol, Nothing, Val{:min}, Val{:max}}) = WaitBlock(builder, time)
+to_block(time::Union{VariableType, Symbol, Nothing, Val{:min}, Val{:max}}) = WaitBlock(time)
 
 
 variables(::Type{WaitBlock}) = [duration]
 
 duration(wb::WaitBlock) = wb.duration
 
-scanner_constraints!(::Model, ::WaitBlock, ::Scanner) = nothing
-
-to_concrete_block(builder::AbstractSequence, wb::WaitBlock) = ConcreteBlock(builder, value(duration(wb)))
+to_concrete_block(wb::WaitBlock) = ConcreteBlock(value(duration(wb)))
 
 end

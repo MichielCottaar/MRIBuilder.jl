@@ -1,11 +1,11 @@
 module IntegrateGradients
+import ...Variables: qval, bval
 import ...BuildingBlocks: BuildingBlock
-import ...SequenceBuilders: SequenceBuilder, TR, duration, builder, index
+import ...Containers: Sequence
 
 
 """
-    qval(blocks)
-    qval(builder::SequenceBuilder, indices)
+    qval(container, indices)
 
 Computes the total q-value summed over multiple gradient [`BuildingBlock`](@ref) objects.
 
@@ -19,12 +19,10 @@ In addition, in this interface one can provide negative indices to indicate that
 
 The integral can occur over multiple repetition times by including [`BuildingBlock`](@ref) objects out of order (or by using :TR).
 """
-qval(builder::SequenceBuilder, indices::AbstractVector) = full_integral(builder, indices)[1]
-qval(indices::AbstractVector) = full_integral(indices)[1]
+qval(builder::Sequence, indices::AbstractVector) = full_integral(builder, indices)[1]
 
 """
-    bval(blocks)
-    bval(builder::SequenceBuilder, indices)
+    bval(container, indices)
 
 Computes the total b-value combined over multiple gradient [`BuildingBlock`](@ref) objects.
 
@@ -38,20 +36,9 @@ In addition, in this interface one can provide negative indices to indicate that
 
 The integral can occur over multiple repetition times by including [`BuildingBlock`](@ref) objects out of order (or by using :TR).
 """
-bval(builder::SequenceBuilder, indices::AbstractVector) = full_integral(builder, indices)[2]
-bval(indices::AbstractVector) = full_integral(indices)[2]
+bval(builder::Sequence, indices::AbstractVector) = full_integral(builder, indices)[2]
 
-function full_integral(blocks::AbstractVector)
-    actual_blocks = filter(b -> b isa BuildingBlock)
-    if length(actual_blocks) == 0
-        return (0., 0.)
-    end
-    sb = builder(blocks[1])
-
-    return full_integral(sb, map(b -> b isa BuildingBlock ? index(sb, b) : b))
-end
-
-function full_integral(builder::SequenceBuilder, indices::AbstractVector)
+function full_integral(builder::Sequence, indices::AbstractVector)
     qval_current = 0.
     current_index = 0
     bval_current = 0.

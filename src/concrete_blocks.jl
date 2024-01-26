@@ -1,9 +1,8 @@
 module ConcreteBlocks
 import JuMP: has_values, optimize!, value
-import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, properties, duration
-import ..SequenceBuilders: SequenceBuilder, to_block, AbstractSequence, TR, get_blocks
+import ..Variables: variables, duration
+import ..BuildingBlocks: BuildingBlock
 
-abstract type AbstractConcreteBlock <: BuildingBlock end
 
 struct ConcreteRFPulse
     time :: Vector{Number}
@@ -64,13 +63,14 @@ ConcreteGradient(values::Tuple{<:Vector, <:Vector}) = ConcreteGradient(values...
 ConcreteGradient(values::Tuple{<:Vector, <:Vector, <:Vector, <:Vector}) = ConcreteGradient(values...)
 
 
+abstract type AbstractConcreteBlock <: BuildingBlock end
+
 """
     ConcreteBlock(duration; pulse=nothing, gradient=nothing, rotate_bvec=false, readout_times=nothing)
 
 A [`BuildingBlock`](@ref) that is fully defined (i.e., there are no variables to be optimised).
 """
 struct ConcreteBlock <: AbstractConcreteBlock
-    builder :: AbstractSequence
     duration :: Float64
     pulse :: Union{ConcreteRFPulse, Nothing}
     gradient :: Union{ConcreteGradient, Nothing}
@@ -78,31 +78,29 @@ struct ConcreteBlock <: AbstractConcreteBlock
     rotate_gradient :: Bool
 end
 
-ConcreteBlock(args...; kwargs...) = BuildingBlockPlaceholder{ConcreteBlock}(args...; kwargs...)
-
-function ConcreteBlock(builder::AbstractSequence, duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[], rotate_gradient=false)
-    ConcreteBlock(builder, duration, ConcreteRFPulse(pulse), ConcreteGradient(gradient), Float64.(readout_times), rotate_gradient)
+function ConcreteBlock(duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[], rotate_gradient=false)
+    ConcreteBlock(duration, ConcreteRFPulse(pulse), ConcreteGradient(gradient), Float64.(readout_times), rotate_gradient)
 end
 
 
-has_values(c::AbstractConcreteBlock) = has_values(c.builder)
+has_values(c::AbstractConcreteBlock) = true
 duration(c::AbstractConcreteBlock) = 0.
 duration(c::ConcreteBlock) = c.duration
 
 
 """
-    ConcreteBlock(sequence, other_building_block)
+    ConcreteBlock(other_building_block)
 
 Creates a [`ConcreteBlock`](@ref) from another [`BuildingBlock`](@ref).
 
 This will raise an error if the other [`BuildingBlock`](@ref) has not been optimised yet.
 If it has been optimised, then [`to_concrete_block`](@ref) will be called.
 """
-function ConcreteBlock(sequence::AbstractSequence, block::BuildingBlock)
+function ConcreteBlock(block::BuildingBlock)
     if !has_values(block)
         error("Making `BuildingBlock` objects concrete is only possible after optimisation.")
     end
-    return to_concrete_block(sequence, block)
+    return to_concrete_block(block)
 end
 
 
@@ -113,40 +111,11 @@ Internal function used to create [`ConcreteBlock`](@ref) from any [`BuildingBloc
 
 This needs to be defined for every [`BuildingBlock`](@ref)
 """
-function to_concrete_block(sequence::AbstractSequence, cb::ConcreteBlock)
-    return ConcreteBlock(sequence, cb.duration, cb.pulse, cb.gradient, cb.readout_times)
+function to_concrete_block(cb::ConcreteBlock)
+    return ConcreteBlock(cb.duration, cb.pulse, cb.gradient, cb.readout_times, cb.rotate_gradient, value.(cb.start_time))
 end
 
 variables(::Type{<:AbstractConcreteBlock}) = []
 
-
-"""
-    Sequence(builder::SequenceBuilder)
-
-A fully defined sequence with no free variables.
-
-When created from a [`SequenceBuilder`](@ref), all non-fixed variables are optimised given any constraints
-and the resulting sequence is returned.
-"""
-struct Sequence <: AbstractSequence
-    blocks :: Vector{<:AbstractConcreteBlock}
-    TR :: Number
-end
-
-TR(seq::Sequence) = seq.TR
-get_blocks(seq::Sequence) = seq.blocks
-has_values(seq::Sequence) = true
-
-function Sequence(builder::SequenceBuilder)
-    if !has_values(builder)
-        optimize!(builder.model)
-    end
-    seq = Sequence(AbstractConcreteBlock[], value(TR(builder)))
-    for block in builder.blocks
-        @show block
-        push!(seq.blocks, ConcreteBlock(seq, block))
-    end
-    return seq
-end
 
 end

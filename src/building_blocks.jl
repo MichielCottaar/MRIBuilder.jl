@@ -1,44 +1,36 @@
 module BuildingBlocks
 import JuMP: has_values, GenericVariableRef, value, Model, @constraint, @objective, owner_model, objective_function
 import Printf: @sprintf
-import ..Scanners: Scanner, gradient_strength, slew_rate
+import ..Scanners: Scanner
+import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate
 
 """
 Parent type for all individual components out of which a sequence can be built.
 
 Required methods:
 - [`duration`](@ref)(block, parameters): returns block duration in ms.
-- [`to_concrete_block`](@ref)(sequence, block): converts the block into a `ConcreteBlock`, which will be part of given `Sequence`.
+- `to_concrete_block`(sequence, block): converts the block into a `ConcreteBlock`, which will be part of given `Sequence`.
 - [`variables`](@ref): A list of all functions that are used to compute variables of the building block. Any of these can be used in constraints or objective functions.
 """
 abstract type BuildingBlock end
 
 
 """
-    duration(building_block)
+    start_time(container, args...)
 
-The duration of the building block in ms.
+Returns the starting time of the specific [`BuildingBlock`](@ref) within the container.
+The [`BuildingBlock`](@ref) is defined by one or more indices as defined below.
 """
-function duration end
-
-
-"""
-    gradient_strength(gradient)
-
-Maximum gradient strength in kHz/um.
-
-If a [`Scanner`](@ref) is provided, this will be constrained to be lower than the maximum scanner gradient strength.
-"""
-function gradient_strength end
+start_time(bb) = 0.
 
 """
-    slew_rate(gradient)
+    end_time(container, args...)
 
-Maximum rate of increase (and decrease) of the gradient strength in kHz/um/ms.
-
-If a [`Scanner`](@ref) is provided, this will be constrained to be lower than the maximum scanner slew rate.
+Returns the end time of the specific [`BuildingBlock`](@ref) within the container.
+The [`BuildingBlock`](@ref) is defined by one or more indices as defined below.
 """
-function slew_rate end
+end_time(bb) = duration(bb)
+
 
 """
     scanner_constraints!([model, ]building_block, scanner)
@@ -65,24 +57,14 @@ Returns a list of function that can be called to constrain the `building_block`.
 """
 variables(bb::BuildingBlock) = variables(typeof(bb))
 
-struct _BuildingBlockPrinter
-    bb :: BuildingBlock
-    number :: Integer
-end
 
 function Base.show(io::IO, block::BuildingBlock)
     print(io, string(typeof(block)), "(")
-    if has_values(block)
-        if iszero(value(duration(block)))
-            print(io, "time=", @sprintf("%.3f", value(start_time(block))), ", ")
-        else
-            print(
-                io, "time=", 
-                @sprintf("%.3f", value(start_time(block))), " - ",
-                @sprintf("%.3f", value(end_time(block))), ", "
-            )
-        end
-    end
+    internal_print(io, block)
+    print(io, ")")
+end
+
+function internal_print(io::IO, block::BuildingBlock)
     for name in propertynames(block)
         value = getproperty(block, name)
         if value isa GenericVariableRef || name == :parent || string(name)[1] == '_'
@@ -101,13 +83,11 @@ function Base.show(io::IO, block::BuildingBlock)
             print(io, "$(nameof(fn))=$(printed_value), ")
         end
     end
-    print(io, ")")
 end
 
 # The `start_time` and `end_time` functions are properly defined in "sequence_builders.jl"
 function start_time end
 function end_time end
-
 
 """
     set_simple_constraints!(model, block, kwargs)
@@ -157,43 +137,5 @@ function match_blocks!(block1::BuildingBlock, block2::BuildingBlock)
     property_list = intersect(variables(block1), variables(block2))
     match_blocks!(block1, block2, property_list)
 end
-
-
-"""
-Stores the parameters passed on a [`BuildingBlock`](@ref) constructor (of type `T`).
-
-The parameters are temporarily stored in this format, until they can be added to a `SequenceBuilder`.
-
-For example, the following
-```julia
-pg = PulsedGradient(qval=2)
-```
-will return a `BuildingBlockPlaceholder` object rather than a `PulsedGradient` object.
-Only when this object is added to a `SequenceBuilder`, is the `PulsedGradient` actually initialised using the JuMP model of that `SequenceBuilder`:
-```julia
-sb = SequenceBuilder([pg])
-```
-You can access the initialised `PulsedGradient` through the `BuildingBlockPlaceholder` (`pg.concrete[]`) or directly through the `SequenceBuilder` (`sb[1]`)
-
-Each Placeholder can be added to only a single `SequenceBuilder`, but it can be added multiple times to the same `SequenceBuilder`.
-If added multiple times to the same `SequenceBuilder`, all variables will be matched between them.
-"""
-struct BuildingBlockPlaceholder{T<:BuildingBlock}
-    args
-    kwargs
-    concrete :: Ref{T}
-    BuildingBlockPlaceholder{T}(args...; kwargs...) where {T<:BuildingBlock} = new{T}(args, kwargs, Ref{T}())
-end
-
-function Base.show(io::IO, placeholder::BuildingBlockPlaceholder{T}) where {T}
-    if isassigned(placeholder.concrete)
-        print(io, "Assigned BuildingBlockPlaceholder for $(placeholder.concrete[])")
-    else
-        args = join(placeholder.args, ", ")
-        kwargs = join(["$key=$value" for (key, value) in pairs(placeholder.kwargs)], ", ")
-        print(io, "Unassigned BuildingBlockPlaceholder{$T}($args; $kwargs)")
-    end
-end
-
 
 end
