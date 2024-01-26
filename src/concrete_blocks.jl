@@ -1,5 +1,5 @@
 module ConcreteBlocks
-import JuMP: has_values, optimize!, model
+import JuMP: has_values, optimize!
 import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, properties, duration
 import ..SequenceBuilders: SequenceBuilder, to_block, AbstractSequence
 
