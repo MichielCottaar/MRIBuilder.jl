@@ -6,6 +6,11 @@ import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, match_blocks!,
 import ...Scanners: Scanner
 
 """
+Parent type for a sequence with free variables ([`SequenceBuilder`](@ref)) or without free variables (`ConcreteSequence`).
+"""
+abstract type AbstractSequence end
+
+"""
     SequenceBuilder(blocks...)
 
 Defines a sequence as a series of [`BuildingBlock`](@ref) objects.
@@ -13,7 +18,7 @@ Defines a sequence as a series of [`BuildingBlock`](@ref) objects.
 After defining the blocks, the user can add one or more constraints and an objective function to the properties of the [`BuildingBlock`](@ref) objects.
 A sequence matching these constraints will be produced by calling [`solve`](@ref)(builder) or [`Sequence`](@ref)(builder).
 """
-struct SequenceBuilder
+struct SequenceBuilder <: AbstractSequence
     model :: Model
     scanner :: Scanner
     blocks :: Vector{<:BuildingBlock}
@@ -35,6 +40,8 @@ struct SequenceBuilder
     end
 end
 
+get_blocks(seq::SequenceBuilder) = seq.blocks
+
 function to_block(model::SequenceBuilder, placeholder::BuildingBlockPlaceholder{T}) where {T}
     block = T(model, placeholder.args...; placeholder.kwargs...)
     if isassigned(placeholder.concrete)
@@ -45,7 +52,7 @@ function to_block(model::SequenceBuilder, placeholder::BuildingBlockPlaceholder{
     return block
 end
 
-Base.getindex(model::SequenceBuilder, i::Integer)  = model.blocks[i]
+Base.getindex(model::AbstractSequence, i::Integer)  = get_blocks(model)[i]
 
 function SequenceBuilder(blocks...; kwargs...)
     ipopt_opt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
@@ -68,12 +75,11 @@ function Base.show(io::IO, builder::SequenceBuilder)
 end
 
 
-Base.length(sb::SequenceBuilder) = length(sb.blocks)
+Base.length(sb::AbstractSequence) = length(get_blocks(sb))
 builder(bb::BuildingBlock) = bb.builder
 owner_model(bb::BuildingBlock) = owner_model(builder(bb))
 owner_model(sb::SequenceBuilder) = sb.model
 has_values(object::Union{BuildingBlock, SequenceBuilder}) = has_values(owner_model(object))
-optimize!(sb::SequenceBuilder) = optimize!(owner_model(sb))
 
 """
     TR(sequence::SequenceBuilder)

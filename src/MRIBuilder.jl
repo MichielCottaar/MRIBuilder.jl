@@ -18,8 +18,8 @@ export BuildingBlock, scanner_constraints!
 import .SequenceBuilders: SequenceBuilder, start_time, end_time, duration, TR
 export SequenceBuilder, start_time, end_time, duration, TR
 
-import .ConcreteBlocks: ConcreteBlock
-export ConcreteBlock
+import .ConcreteBlocks: ConcreteBlock, Sequence
+export ConcreteBlock, Sequence
 
 import .Wait: WaitBlock
 export WaitBlock
@@ -35,5 +35,8 @@ export InstantReadout
 
 import .Scanners: Scanner, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 export Scanner, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
+
+using JuMP
+export @constraint, @objective, objective_function, optimize!, has_values, value
 
 end
