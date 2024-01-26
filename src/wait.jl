@@ -1,6 +1,6 @@
 module Wait
 import JuMP: Model, @constraint, @variable, VariableRef, owner_model
-import ..BuildingBlocks: BuildingBlock, duration, properties, apply_simple_constraint!, BuildingBlockPlaceholderj
+import ..BuildingBlocks: BuildingBlock, duration, properties, apply_simple_constraint!, BuildingBlockPlaceholder
 import ..SequenceBuilders: SequenceBuilder, to_block
 import ..ConcreteBlocks: to_concrete_block, ConcreteBlock
 import ...Scanners: Scanner
