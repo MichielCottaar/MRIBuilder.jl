@@ -3,6 +3,7 @@ Builds and optimises NMR/MRI sequences.
 """
 module MRIBuilder
 
+include("scanners.jl")
 include("building_blocks.jl")
 include("sequence_builders.jl")
 include("concrete_blocks.jl")
