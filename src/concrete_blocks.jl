@@ -31,13 +31,23 @@ struct ConcreteGradient
 end
 
 function ConcreteGradient(arr::Vector)
-    @assert all(length.(arr) .== 4)
-    ConcreteGradient(
-        [a[1] for a in arr],
-        [a[2] for a in arr],
-        [a[3] for a in arr],
-        [a[4] for a in arr],
-    )
+    if length(arr[1]) == 4
+        @assert all(length.(arr) .== 4)
+        ConcreteGradient(
+            [a[1] for a in arr],
+            [a[2] for a in arr],
+            [a[3] for a in arr],
+            [a[4] for a in arr],
+        )
+    elseif length(arr[1]) == 2
+        @assert all(length.(arr) .== 2)
+        ConcreteGradient(
+            [a[1] for a in arr],
+            [a[2] for a in arr],
+        )
+    else
+        error()
+    end
 end
 
 function ConcreteGradient(times, gradients)
