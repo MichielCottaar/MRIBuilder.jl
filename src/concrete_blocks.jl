@@ -64,7 +64,7 @@ function ConcreteBlock(builder::AbstractSequence, duration::Number; pulse=nothin
 end
 
 
-has_values(::AbstractConcreteBlock) = true
+has_values(c::AbstractConcreteBlock) = has_values(c.builder)
 duration(c::AbstractConcreteBlock) = 0.
 duration(c::ConcreteBlock) = c.duration
 
@@ -97,8 +97,6 @@ function to_concrete_block(sequence, cb::ConcreteBlock)
 end
 
 properties(::Type{<:ConcreteBlock}) = []
-
-has_values(c::AbstractConcreteBlock) = has_values(c.builder)
 
 
 """
