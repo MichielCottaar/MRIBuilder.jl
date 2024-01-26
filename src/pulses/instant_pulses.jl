@@ -2,7 +2,7 @@ module InstantPulses
 import JuMP: @constraint, @variable, VariableRef, value
 import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
 import ...SequenceBuilders: SequenceBuilder, owner_model, start_time
-import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
+import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock, Sequence, AbstractSequence
 import ..Properties: flip_angle, phase
 
 struct InstantRFPulseBlock <: BuildingBlock
@@ -38,12 +38,13 @@ Instantaneous RF pulse with no free variables.
 See [`InstantRFPulseBlock`](@ref) for a version where [`flip_angle`](@ref) and [`phase`](@ref) are variables.
 """
 struct ConcreteInstantRFPulse <: AbstractConcreteBlock
+    builder :: AbstractSequence
     flip_angle :: Number
     phase :: Number
 end
 
-function to_concrete_block(block::InstantRFPulseBlock)
-    return ConcreteInstantRFPulse(value(flip_angle(block)), value(phase(block)))
+function to_concrete_block(builder::Sequence, block::InstantRFPulseBlock)
+    return ConcreteInstantRFPulse(builder, value(flip_angle(block)), value(phase(block)))
 end
 
 end

@@ -7,7 +7,7 @@ import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
 import ...BuildingBlocks: BuildingBlock, duration, properties, set_simple_constraints!, BuildingBlockPlaceholder, gradient_strength, slew_rate
 import ...SequenceBuilders: SequenceBuilder, start_time
-import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
+import ...ConcreteBlocks: ConcreteBlock, to_concrete_block, AbstractSequence
 import ..IntegrateGradients: qval, bval
 
 
@@ -116,7 +116,7 @@ end
 properties(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time, slew_rate]
 
 
-function to_concrete_block(block::PulsedGradient)
+function to_concrete_block(s::AbstractSequence, block::PulsedGradient)
     if block.orientation == :bvec
         rotate = true
         qvec = [value(qval(block)), 0., 0.]
@@ -132,7 +132,7 @@ function to_concrete_block(block::PulsedGradient)
     t_start = value(start_time(block))
     t_rise = value(rise_time(block))
     t_d = value(δ(block))
-    return ConcreteBlock(t_start + t_d + t_rise, gradients=[
+    return ConcreteBlock(s, t_start + t_d + t_rise, gradients=[
         (t_start, zeros(3)),
         (t_start + t_rise, qvec),
         (t_start + t_d, qvec),

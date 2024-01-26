@@ -50,35 +50,38 @@ ConcreteGradient(values::Tuple{<:Vector, <:Vector, <:Vector, <:Vector}) = Concre
 A [`BuildingBlock`](@ref) that is fully defined (i.e., there are no variables to be optimised).
 """
 struct ConcreteBlock <: AbstractConcreteBlock
+    builder :: AbstractSequence
     duration :: Float64
     pulse :: Union{ConcreteRFPulse, Nothing}
     gradient :: Union{ConcreteGradient, Nothing}
     readout_times :: Vector{Float64}
 end
 
-function ConcreteBlock(duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[])
+ConcreteBlock(args...; kwargs...) = BuildingBlockPlaceholder{ConcreteBlock}(args...; kwargs...)
+
+function ConcreteBlock(builder::AbstractSequence, duration::Number; pulse=nothing, gradient=nothing, readout_times=Number[])
     ConcreteBlock(builder, duration, ConcreteRFPulse(pulse), ConcreteGradient(gradient), Float64.(readout_times))
 end
 
-to_block(::SequenceBuilder, concrete::AbstractConcreteBlock) = concrete
+
 has_values(::AbstractConcreteBlock) = true
 duration(c::AbstractConcreteBlock) = 0.
 duration(c::ConcreteBlock) = c.duration
 
 
 """
-    ConcreteBlock(other_building_block)
+    ConcreteBlock(sequence, other_building_block)
 
 Creates a [`ConcreteBlock`](@ref) from another [`BuildingBlock`](@ref).
 
 This will raise an error if the other [`BuildingBlock`](@ref) has not been optimised yet.
 If it has been optimised, then [`to_concrete_block`](@ref) will be called.
 """
-function ConcreteBlock(block::BuildingBlock)
+function ConcreteBlock(sequence::AbstractSequence, block::BuildingBlock)
     if !has_values(block)
         error("Making `BuildingBlock` objects concrete is only possible after optimisation.")
     end
-    return to_concrete_block(block)
+    return to_concrete_block(sequence, block)
 end
 
 
@@ -89,13 +92,13 @@ Internal function used to create [`ConcreteBlock`](@ref) from any [`BuildingBloc
 
 This needs to be defined for every [`BuildingBlock`](@ref)
 """
-function to_concrete_block(cb::AbstractConcreteBlock)
-    return cb
+function to_concrete_block(sequence, cb::ConcreteBlock)
+    return ConcreteBlock(sequence, cb.duration, cb.pulse, cb.gradient, cb.readout_times)
 end
 
 properties(::Type{<:ConcreteBlock}) = []
 
-has_values(c::ConcreteBlock) = true
+has_values(c::AbstractConcreteBlock) = has_values(c.builder)
 
 
 """
@@ -111,11 +114,15 @@ struct Sequence <: AbstractSequence
     TR :: Number
 end
 
-function Sequence(seq::SequenceBuilder)
-    if !has_values(seq)
-        optimize!(seq.model)
+function Sequence(builder::SequenceBuilder)
+    if !has_values(builder)
+        optimize!(builder.model)
     end
-    return Sequence(ConcreteBlock.(seq.blocks), value(seq.TR))
+    seq = Sequence(AbstractConcreteBlock[], value(TR))
+    for block in builder.blocks
+        push!(seq.blocks, ConcreteBlock(seq, block))
+    end
+    return seq
 end
 
 end

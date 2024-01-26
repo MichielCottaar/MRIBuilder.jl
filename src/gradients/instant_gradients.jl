@@ -2,7 +2,7 @@ module InstantGradients
 import JuMP: @constraint, @variable, VariableRef
 import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
 import ...SequenceBuilders: SequenceBuilder, owner_model, start_time
-import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
+import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock, Sequence, AbstractSequence
 import ..IntegrateGradients: qval, bval
 
 """
@@ -51,12 +51,13 @@ Instantaneous MR gradient with no free variables.
 See [`InstantGradientBlock`](@ref) for a version where [`qval`](@ref) is variable.
 """
 struct ConcreteInstantGradient <: AbstractConcreteBlock
+    builder :: AbstractSequence
     orientation :: Any
     qval :: Number
 end
 
-function to_concrete_block(block::InstantGradientBlock)
-    return ConcreteInstantGradient(block.orientation, value(qval(block)))
+function to_concrete_block(builder::Sequence, block::InstantGradientBlock)
+    return ConcreteInstantGradient(builder, block.orientation, value(qval(block)))
 end
 
 

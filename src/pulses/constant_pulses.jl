@@ -1,7 +1,7 @@
 module ConstantPulses
 import JuMP: VariableRef, @constraint, @variable, value
 import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
-import ...SequenceBuilders: SequenceBuilder, owner_model, start_time, end_time
+import ...SequenceBuilders: SequenceBuilder, owner_model, start_time, end_time, AbstractSequence
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ..Properties: flip_angle, phase, amplitude, frequency, bandwidth
 
@@ -49,10 +49,10 @@ bandwidth(pulse::ConstantPulse) = 3.79098854 / duration(pulse)
 
 properties(::Type{<:ConstantPulse}) = [amplitude, duration, phase, frequency, flip_angle, bandwidth]
 
-function to_concrete_block(block::ConstantPulse)
+function to_concrete_block(s::AbstractSequence, block::ConstantPulse)
     d = value(duration(block))
     final_phase = value(phase(block)) + d * value(frequency(block)) * 360
-    return ConcreteBlock(value(duration(block)), pulse=[
+    return ConcreteBlock(s, value(duration(block)), pulse=[
         ([0., d]),
         value.([amplitude(block), amplitude(block)]),
         value.([phase(block), final_phase])
