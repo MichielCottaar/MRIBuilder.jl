@@ -3,7 +3,6 @@ import JuMP: Model, owner_model, index, VariableRef, @constraint, @variable, has
 import Juniper
 import Ipopt
 import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, match_blocks!, duration, apply_simple_constraint!, scanner_constraints!, to_mcmr_components, start_time, end_time
-import ...Sequences: Sequence
 import ...Scanners: Scanner
 
 """
@@ -75,28 +74,6 @@ owner_model(bb::BuildingBlock) = owner_model(builder(bb))
 owner_model(sb::SequenceBuilder) = sb.model
 has_values(object::Union{BuildingBlock, SequenceBuilder}) = has_values(owner_model(object))
 optimize!(sb::SequenceBuilder) = optimize!(owner_model(sb))
-
-"""
-    Sequence(builder::SequenceBuilder)
-
-Creates a sequence that can be run in MCMR from the [`SequenceBuilder`](@ref).
-If the `builder` has not been optimised yet, `optimize!(builder)` will be called first.
-"""
-function Sequence(sb::SequenceBuilder)
-    if !has_values(sb)
-        optimize!(sb)
-    end
-    components = []
-    for block in sb.blocks
-        new_components = to_mcmr_components(block)
-        if new_components isa AbstractVector
-            append!(components, new_components)
-        else
-            push!(components, new_components)
-        end
-    end
-    return Sequence(scanner=sb.scanner, components=components, TR=value(TR(sb)))
-end
 
 """
     TR(sequence::SequenceBuilder)

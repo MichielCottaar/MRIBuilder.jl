@@ -1,15 +1,14 @@
 module BuildingBlocks
 import JuMP: has_values, GenericVariableRef, value, Model, @constraint, @objective, owner_model, objective_function
 import Printf: @sprintf
-import ...Sequences: RFPulse, InstantRFPulse, MRGradients, InstantGradient
-import ...Scanners: Scanner
+import ..Scanners: Scanner
 
 """
 Parent type for all individual components out of which a sequence can be built.
 
 Required methods:
-- [`duration`](@ref)(block, parameters): returns block duration in ms
-- [`to_mcmr_components`](@ref)(block, parameters): converts the block into components recognised by the MCMR simulator
+- [`duration`](@ref)(block, parameters): returns block duration in ms.
+- [`to_concrete_block`](@ref)(builder, block): converts the block into a `ConcreteBlock`, which will be part of given `SequenceBuilder`.
 - [`properties`](@ref): A list of all functions that are used to compute properties of the building block. Any of these can be used in constraints or objective functions.
 """
 abstract type BuildingBlock end
@@ -21,17 +20,6 @@ abstract type BuildingBlock end
 The duration of the building block in ms.
 """
 function duration end
-
-"""
-    to_mcmr_components(building_block, parameters)
-
-Converts the building block into components recognised by the MCMR simulator. These components are:
-- [`RFPulse`](@ref)
-- [`InstantRFPulse`](@ref)
-- [`MRGradients`](@ref)
-- [`InstantGradient`](@ref)
-"""
-function to_mcmr_components end
 
 
 """

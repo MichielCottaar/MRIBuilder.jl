@@ -1,8 +1,8 @@
 module InstantGradients
 import JuMP: @constraint, @variable, VariableRef
-import ....Sequences: InstantGradient
-import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration, to_mcmr_components
+import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
 import ...SequenceBuilders: SequenceBuilder, owner_model, start_time
+import ...ConcreteBlocks: to_concrete_block
 import ..IntegrateGradients: qval, bval
 
 """
@@ -21,7 +21,7 @@ This is a [`BuildingBlock`](@ref) for the [`SequenceBuilder`](@ref).
 struct InstantGradientBlock <: BuildingBlock
     builder::SequenceBuilder
     orientation :: Any
-    qval :: VariableRef
+    qval :: Union{VariableRef, Number}
 end
 
 InstantGradientBlock(; kwargs...) = BuildingBlockPlaceholder{InstantGradientBlock}(; kwargs...)
@@ -44,20 +44,8 @@ duration(instant::InstantGradientBlock) = 0.
 properties(::Type{<:InstantGradientBlock}) = [qval]
 
 
-function to_mcmr_components(block::InstantGradientBlock)
-    if block.orientation == :bvec
-        rotate = true
-        qvec = [value(qval(block)), 0., 0.]
-    elseif block.orientation == :neg_bvec
-        rotate = true
-        qvec = [-value(qval(block)), 0., 0.]
-    elseif block.orientation isa AbstractVector && size(block.orientation) == (3, )
-        rotate = false
-        qvec = block.orientation .* (value(qval(block)) / norm(block.orientation))
-    else
-        error("Gradient orientation should be :bvec, :neg_bvec or a length-3 vector, not $(block.orienation)")
-    end
-    return InstantGradient(qvec, zeros(3), value(start_time(block)), rotate)
+function to_concrete_block(builder::SequenceBuilder, block::InstantGradientBlock)
+    InstantGradientBlock(builder, block.orientation, value(qval(block)))
 end
 
 

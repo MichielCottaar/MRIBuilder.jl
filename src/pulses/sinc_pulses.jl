@@ -3,9 +3,9 @@ module SincPulses
 import JuMP: VariableRef, @constraint, @variable, value
 import QuadGK: quadgk
 import Polynomials: fit, Polynomial
-import ....Sequences: RFPulse
-import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration, to_mcmr_components
+import ...BuildingBlocks: BuildingBlock, properties, BuildingBlockPlaceholder, set_simple_constraints!, duration
 import ...SequenceBuilders: SequenceBuilder, owner_model, start_time, end_time
+import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ..Properties: flip_angle, phase, amplitude, frequency, bandwidth
 
 """
@@ -100,12 +100,16 @@ lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 bandwidth(pulse::SincPulse) = 1 / lobe_duration(pulse)
 properties(::Type{<:SincPulse}) = [amplitude, N_left, N_right, duration, phase, frequency, flip_angle, lobe_duration, bandwidth]
 
-function to_mcmr_components(block::SincPulse)
+function to_concrete_block(builder::SequenceBuilder, block::SincPulse)
     normed_times = -value(N_left(block)):0.1:value(N_right(block)) + 1e-5
-    times = ((normed_times .+ value(N_left(block))) .* value(lobe_duration(block))) .+ value(start_time(block))
+    times = ((normed_times .+ value(N_left(block))) .* value(lobe_duration(block)))
     amplitudes = value(amplitude(block)) .* (normalised_function.(normed_times; apodise=block.apodise))
     phases = (value(frequency(block)) .* value(lobe_duration(block))) .* normed_times * 360
-    return RFPulse(times, amplitudes, phases)
+    return ConcreteBlock(
+        builder, value(duration(block)); 
+        pulse_amplitude=Shape(times, amplitudes), 
+        pulse_phase=Shape(times, phases),
+    )
 end
 
 end

@@ -5,9 +5,9 @@ module PulsedGradients
 
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
-import ....Sequences: MRGradients
-import ...BuildingBlocks: BuildingBlock, duration, properties, set_simple_constraints!, BuildingBlockPlaceholder, gradient_strength, slew_rate, to_mcmr_components
+import ...BuildingBlocks: BuildingBlock, duration, properties, set_simple_constraints!, BuildingBlockPlaceholder, gradient_strength, slew_rate
 import ...SequenceBuilders: SequenceBuilder, start_time
+import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ..IntegrateGradients: qval, bval
 
 
@@ -116,7 +116,7 @@ end
 properties(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time, slew_rate]
 
 
-function to_mcmr_components(block::PulsedGradient)
+function to_concrete_block(builder::SequenceBuilder, block::PulsedGradient)
     if block.orientation == :bvec
         rotate = true
         qvec = [value(qval(block)), 0., 0.]
@@ -132,12 +132,12 @@ function to_mcmr_components(block::PulsedGradient)
     t_start = value(start_time(block))
     t_rise = value(rise_time(block))
     t_d = value(δ(block))
-    return MRGradients([
+    return ConcreteBlock(builder, t_start + t_d + t_rise, gradients=[
         (t_start, zeros(3)),
         (t_start + t_rise, qvec),
         (t_start + t_d, qvec),
         (t_start + t_d + t_rise, zeros(3)),
-    ])
+    ], rotate_gradient=rotate)
 end
 
 
