@@ -2,7 +2,7 @@ module SequenceBuilders
 import JuMP: Model, owner_model, index, VariableRef, @constraint, @variable, has_values, optimize!, value, optimizer_with_attributes
 import Juniper
 import Ipopt
-import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, match_blocks!, duration, apply_simple_constraint!, scanner_constraints!, to_mcmr_components, start_time, end_time
+import ..BuildingBlocks: BuildingBlock, BuildingBlockPlaceholder, match_blocks!, duration, apply_simple_constraint!, scanner_constraints!, start_time, end_time
 import ...Scanners: Scanner
 
 """
