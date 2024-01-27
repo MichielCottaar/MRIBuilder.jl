@@ -1,5 +1,5 @@
 module BuildingBlocks
-import JuMP: has_values, GenericVariableRef, value, Model, @constraint, @objective, owner_model, objective_function, optimize!, AbstractJuMPScalar
+import JuMP: has_values, value, Model, @constraint, @objective, owner_model, objective_function, optimize!, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Scanners: Scanner
 import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate
@@ -74,7 +74,7 @@ end
 function internal_print(io::IO, block::BuildingBlock)
     for name in propertynames(block)
         value = getproperty(block, name)
-        if value isa GenericVariableRef || name == :parent || string(name)[1] == '_'
+        if value isa AbstractJuMPScalar || value isa Model || string(name)[1] == '_'
             continue
         end
         print(io, name, "=", repr(value), ", ")
