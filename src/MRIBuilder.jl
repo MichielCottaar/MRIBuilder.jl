@@ -14,8 +14,8 @@ include("gradients/gradients.jl")
 include("pulses/pulses.jl")
 include("readouts/readouts.jl")
 
-import .BuildSequences: define_sequence
-export define_sequence
+import .BuildSequences: build_sequence
+export build_sequence
 
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
