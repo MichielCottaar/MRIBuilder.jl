@@ -8,9 +8,9 @@ include("scanners.jl")
 include("variables.jl")
 include("building_blocks.jl")
 include("wait.jl")
-include("containers/containers.jl")
 include("gradients/gradients.jl")
 include("pulses/pulses.jl")
+include("containers/containers.jl")
 include("readouts/readouts.jl")
 
 import .BuildSequences: build_sequence
@@ -28,9 +28,6 @@ export BuildingBlocks, fixed
 import .Wait: WaitBlock
 export WaitBlock
 
-import .Containers: Sequence, FixedBlock, FixedSequence
-export Sequence, FixedBlock, FixedSequence
-
 import .Gradients: PulsedGradient, InstantGradientBlock, FixedGradient
 export PulsedGradient, InstantGradientBlock, FixedGradient
 
@@ -39,6 +36,9 @@ export InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
 
 import .Readouts: InstantReadout
 export InstantReadout
+
+import .Containers: Sequence, FixedBlock, FixedSequence
+export Sequence, FixedBlock, FixedSequence
 
 import JuMP: @constraint, @objective, objective_function, optimize!, has_values, value
 export @constraint, @objective, objective_function, optimize!, has_values, value
