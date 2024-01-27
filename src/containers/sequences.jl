@@ -4,7 +4,7 @@ Define the [`Sequence`](@ref) building block.
 module Sequences
 import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
-import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR
+import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR, end_time
 import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_blocks, scanner_constraints!, fixed, BuildingBlockPrinter
 import ..FixedBlocks: FixedBlock
 
