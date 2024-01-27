@@ -43,8 +43,6 @@ end
 
 FixedGradient(time::AbstractVector{<:Number}, Gx::AbstractVector{<:Number}) = FixedGradient(time, Gx, zeros(length(time)), zeros(length(time)))
 
-FixedGradient(single_arg::Tuple) = FixedGradient(single_arg...)
-
 variables(::Type{<:FixedGradient}) = []
 
 duration(fg::FixedGradient) = maximum(fg.time)
