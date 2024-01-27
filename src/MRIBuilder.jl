@@ -40,7 +40,7 @@ export InstantReadout
 import .Containers: Sequence, FixedBlock, FixedSequence
 export Sequence, FixedBlock, FixedSequence
 
-import JuMP: @constraint, @objective, objective_function, optimize!, has_values, value
-export @constraint, @objective, objective_function, optimize!, has_values, value
+import JuMP: @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
+export @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
 
 end
