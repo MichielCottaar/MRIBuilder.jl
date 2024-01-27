@@ -10,6 +10,6 @@ include("fixed_blocks.jl")
 include("sequences.jl")
 import ..BuildingBlocks: ContainerBlock, get_children_blocks
 
-import ..FixedBlocks: FixedBlock
+import .FixedBlocks: FixedBlock
 import .Sequences: Sequence, FixedSequence
 end

@@ -5,7 +5,7 @@ import ...BuildingBlocks: ContainerBlock
 import ...Gradients: FixedGradient
 import ...Pulses: FixedPulse
 import ...Variables: duration, variables
-import ...WaitBlocks: WaitBlock
+import ...Wait: WaitBlock
 
 """
     FixedBlock(duration=nothing; pulse_delay=0., pulse=nothing, gradient_delay=0., gradient=nothing, readout_times=[])
