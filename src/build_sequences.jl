@@ -35,7 +35,7 @@ function build_sequence(f::Function, model::Model)
     prev_model = GLOBAL_MODEL[]
     GLOBAL_MODEL[] = model
     try
-        sequence = f()
+        sequence = f(model)
         optimize!(model)
         return sequence
     finally
