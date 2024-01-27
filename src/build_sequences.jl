@@ -1,5 +1,7 @@
 module BuildSequences
-import JuMP: Model
+import JuMP: Model, optimizer_with_attributes
+import Ipopt
+import Juniper
 
 const GLOBAL_MODEL = Ref(Model())
 const IGNORE_MODEL = GLOBAL_MODEL[]
@@ -30,14 +32,14 @@ You can also add any arbitrary constraints or objectives using the same syntax a
 As soon as the code block is the optimal sequence matching all your constraints and objectives will be returned.
 """
 function build_sequence(f::Function, model::Model)
-    prev_model = global_model[]
-    global_model[] = model
+    prev_model = GLOBAL_MODEL[]
+    GLOBAL_MODEL[] = model
     try
         sequence = f()
         optimize!(model)
         return sequence
     finally
-        global_model[] = prev_model
+        GLOBAL_MODEL[] = prev_model
     end
 end
 
