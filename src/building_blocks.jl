@@ -37,7 +37,7 @@ end_time(bb) = duration(bb)
 
 Function used internally to convert a wide variety of objects into [`BuildingBlock`](@ref) objects.
 """
-function to_block end
+to_block(bb::BuildingBlock) = bb
 
 
 """
