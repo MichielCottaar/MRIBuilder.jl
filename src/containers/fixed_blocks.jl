@@ -1,7 +1,7 @@
 
 module FixedBlocks
 
-import ...BuildingBlocks: ContainerBlock
+import ...BuildingBlocks: BuildingBlock, ContainerBlock
 import ...Gradients: FixedGradient
 import ...Pulses: FixedPulse
 import ...Variables: duration, variables
@@ -44,11 +44,30 @@ struct FixedBlock <: ContainerBlock
     end
 end
 
+Base.getindex(fb::FixedBlock, index::Symbol) = fb[Val(index)]
+Base.getindex(fb::FixedBlock, ::Val{:pulse}) = fb.pulse
+Base.getindex(fb::FixedBlock, ::Val{:gradient}) = fb.gradient
+
 duration(fb::FixedBlock) = fb.duration
 
 variables(::Type{<:FixedBlock}) = []
 
 fixed(wb::WaitBlock) = FixedBlock(value(duration(wb)))
+
+start_time(fb::FixedBlock, index::Symbol) = start_time(fb, Val(index))
+start_time(fb::FixedBlock, ::Val{:pulse}) = fb.pulse_delay
+start_time(fb::FixedBlock, ::Val{:gradient}) = fb.gradient_delay
+
+function get_children_blocks(fb::FixedBlock)
+    res = Tuple{Symbol, BuildingBlock}[]
+    if !isnothing(fb.pulse)
+        push!((:pulse, fb.pulse))
+    end
+    if !isnothing(fb. gradient)
+        push!((:gradient, fb.gradient))
+    end
+    return res
+end
 
 
 end
