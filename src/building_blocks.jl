@@ -30,7 +30,9 @@ abstract type GradientBlock <: BuildingBlock end
 Parent type for all types combining one or more pulses/gradients.
 
 Required methods:
-- [`get_children_blocks`](@ref): return all the [`BuildingBlock`](@ref) objects includes in this container with their indices.
+- [`get_children_blocks`](@ref)(container): return all the [`BuildingBlock`](@ref) objects includes in this container with their indices.
+- [`start_time`](@ref)(container, index): returns the starting time of the child corresponding to `index` relative to the start of the `container` in ms.
+- `Base.getindex`(container, index): get child [`BuildingBlock`](@ref) corresponding to `index`.
 """
 abstract type ContainerBlock <: BuildingBlock end
 
@@ -50,6 +52,7 @@ Returns the starting time of the specific [`BuildingBlock`](@ref) within the con
 The [`BuildingBlock`](@ref) is defined by one or more indices as defined below.
 """
 start_time(bb) = 0.
+start_time(container, index1, index2, more_indices...) = start_time(container, index1) + start_time(container[index1], index2, more_indices)
 
 """
     end_time(container, args...)
@@ -58,6 +61,7 @@ Returns the end time of the specific [`BuildingBlock`](@ref) within the containe
 The [`BuildingBlock`](@ref) is defined by one or more indices as defined below.
 """
 end_time(bb) = duration(bb)
+end_time(container, index1, index2, more_indices...) = start_time(container, index1) + end_time(container[index1], index2, more_indices)
 
 
 """
@@ -109,36 +113,78 @@ Returns a list of function that can be called to constrain the `building_block`.
 variables(bb::BuildingBlock) = variables(typeof(bb))
 
 
-function Base.show(io::IO, block::BuildingBlock)
-    print(io, string(typeof(block)), "(")
-    internal_print(io, block)
-    print(io, ")")
+struct BuildingBlockPrinter{T<:BuildingBlock}
+    bb::T
+    index::Any
+    start_time::Union{Nothing, Number}
+    spaces::Int
 end
 
-function internal_print(io::IO, block::BuildingBlock)
+
+
+Base.show(io::IO, block::BuildingBlock) = print(io, BuildingBlockPrinter(block, nothing, nothing, 0))
+
+function _robust_value(possible_number)
+    try
+        return value(possible_number)
+    catch
+        return nothing
+    end
+end
+
+function Base.show(io::IO, printer::BuildingBlockPrinter)
+    block = printer.bb
+    if !isnothing(printer.index)
+        print(io, printer.index, ": ")
+    end
+    print(io, string(typeof(block)), "(")
+    variable_names = nameof.(variables(block))
+    printed_duration = false
+    if !isnothing(printer.start_time)
+        print(io, "t=", @sprintf("%.3g", printer.start_time))
+
+        dur = _robust_value(duration(block))
+        if !isnothing(dur) && !iszero(dur)
+            print(io, "-", @sprintf("%.3g", printer.start_time + dur))
+            printed_duration = true
+        end
+        print(io, ", ")
+    end
     for name in propertynames(block)
         value = getproperty(block, name)
-        if value isa AbstractJuMPScalar || value isa Model || string(name)[1] == '_'
+        if name in variable_names || value isa Model || value isa BuildingBlock || string(name)[1] == '_'
             continue
         end
         print(io, name, "=", repr(value), ", ")
     end
 
-    if has_values(block)
-        for fn in variables(block)
-            if fn == duration
-                continue
-            end
-            numeric_value = value(fn(block))
-            printed_value = @sprintf("%.3g", numeric_value)
-            print(io, "$(nameof(fn))=$(printed_value), ")
+    for fn in variables(block)
+        if printed_duration && fn == duration
+            continue
+        end
+        numeric_value = _robust_value(fn(block))
+        if isnothing(numeric_value)
+            continue
+        end
+        printed_value = @sprintf("%.3g", numeric_value)
+        print(io, "$(nameof(fn))=$(printed_value), ")
+    end
+    print(io, ")")
+
+    if block isa ContainerBlock
+        use_start_time = isnothing(printer.start_time) ? 0. : printer.start_time
+        print(io, ":")
+        for (child_index, child_block) in get_children_blocks(block)
+            child_printer = BuildingBlockPrinter(
+                child_block, child_index,
+                _robust_value(start_time(block, child_index) + use_start_time),
+                printer.spaces + 2
+            )
+            print(io, "\n", repeat(' ', printer.spaces), child_printer)
         end
     end
 end
 
-# The `start_time` and `end_time` functions are properly defined in "sequence_builders.jl"
-function start_time end
-function end_time end
 
 """
     set_simple_constraints!(model, block, kwargs)
