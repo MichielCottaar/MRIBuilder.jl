@@ -10,8 +10,6 @@ import ...BuildSequences: @global_model_constructor
 
 Defines an instantaneous gradient.
 
-This is a [`BuildingBlock`](@ref) for the [`SequenceBuilder`](@ref).
-
 ## Parameters
 - `orientation` sets the gradient orienation. Can be set to a vector for a fixed orientation. Alternatively, can be set to :bvec (default) to rotate with the user-provided `bvecs` or to :neg_bvec to always be the reverse of the `bvecs`.
 

@@ -15,7 +15,6 @@ import ...BuildSequences: @global_model_constructor
     PulsedGradient(; orientation=:bvec, variables...)
 
 Defines a trapezoidal pulsed gradient
-
 This is a [`BuildingBlock`](@ref) for a [`SequenceBuilder`](@ref).
 
 ## Parameters

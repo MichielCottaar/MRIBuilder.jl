@@ -36,7 +36,6 @@ end_time(bb) = duration(bb)
     scanner_constraints!([model, ]building_block, scanner)
 
 Adds any constraints from a specific scanner to a [`BuildingBlock`]{@ref}.
-If a [`Scanner`](@ref) is provided to the `SequenceBuilder`, this will be called under the hood on every [`BuildingBlock`]@(ref).
 """
 function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner)
     scanner_constraints!(owner_model(building_block), building_block, scanner)
