@@ -35,11 +35,11 @@ export WaitBlock
 import .Containers: Sequence
 export Sequence
 
-import .Gradients: PulsedGradient, InstantGradientBlock
-export PulsedGradient, InstantGradientBlock
+import .Gradients: PulsedGradient, InstantGradientBlock, FixedGradient
+export PulsedGradient, InstantGradientBlock, FixedGradient
 
-import .Pulses: InstantRFPulseBlock, ConstantPulse, SincPulse
-export InstantRFPulseBlock, ConstantPulse, SincPulse
+import .Pulses: InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
+export InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
 
 import .Readouts: InstantReadout
 export InstantReadout
