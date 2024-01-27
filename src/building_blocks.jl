@@ -33,6 +33,14 @@ end_time(bb) = duration(bb)
 
 
 """
+    to_block(object)
+
+Function used internally to convert a wide variety of objects into [`BuildingBlock`](@ref) objects.
+"""
+function to_block end
+
+
+"""
     scanner_constraints!([model, ]building_block, scanner)
 
 Adds any constraints from a specific scanner to a [`BuildingBlock`]{@ref}.

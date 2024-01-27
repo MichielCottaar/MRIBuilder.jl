@@ -2,7 +2,7 @@ module Sequences
 import JuMP: Model
 import ...BuildSequences: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType
-import ...BuildingBlocks: BuildingBlock
+import ...BuildingBlocks: BuildingBlock, to_block
 
 """
     Sequence(building_blocks...)
@@ -17,7 +17,7 @@ end
 
 @global_model_constructor Sequence
 
-Sequence(model::Model, blocks...) = Sequence(model, blocks)
+Sequence(model::Model, blocks::BuildingBlock...) = Sequence(model, to_block.(blocks))
 
 Base.length(seq::Sequence) = length(seq)
 Base.getindex(seq::Sequence, index) = seq[index]

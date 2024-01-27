@@ -1,5 +1,5 @@
 module BuildSequences
-import JuMP: Model, optimizer_with_attributes
+import JuMP: Model, optimizer_with_attributes, optimize!
 import Ipopt
 import Juniper
 

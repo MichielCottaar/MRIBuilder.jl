@@ -1,5 +1,5 @@
 module InstantReadouts
-import ...BuildingBlocks: BuildingBlock
+import ...BuildingBlocks: BuildingBlock, to_block
 import ...ConcreteBlocks: AbstractConcreteBlock, to_concrete_block
 import ...Variables: variables
 
@@ -15,4 +15,5 @@ end
 
 variables(::Type{<:InstantReadout}) = []
 to_concrete_block(::InstantReadout) = InstantReadout()
+to_block(::Type{<:InstantReadout}) = InstantReadout()
 end
