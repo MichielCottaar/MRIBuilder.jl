@@ -1,9 +1,10 @@
 module InstantGradients
 import JuMP: @constraint, @variable, Model, owner_model
 import ...Variables: qval, bval, start_time, duration, variables, get_free_variable, VariableType
-import ...BuildingBlocks: GradientBlock
+import ...BuildingBlocks: GradientBlock, fixed
 import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
 import ...BuildSequences: @global_model_constructor
+import ..FixedGradients: FixedInstantGradient
 
 """
     InstantGradientBlock(; orientation=:bvec, qval=nothing)
@@ -40,20 +41,8 @@ bval(instant::InstantGradientBlock) = 0.
 duration(instant::InstantGradientBlock) = 0.
 variables(::Type{<:InstantGradientBlock}) = [qval]
 
-"""
-    ConcreteInstantGradient(orientation, qval)
-
-Instantaneous MR gradient with no free variables.
-
-See [`InstantGradientBlock`](@ref) for a version where [`qval`](@ref) is variable.
-"""
-struct ConcreteInstantGradient <: AbstractConcreteBlock
-    orientation :: Any
-    qval :: Number
-end
-
-function to_concrete_block(block::InstantGradientBlock)
-    return ConcreteInstantGradient(block.orientation, value(qval(block)))
+function fixed(block::InstantGradientBlock)
+    return FixedInstantGradient(block.orientation, value(qval(block)))
 end
 
 

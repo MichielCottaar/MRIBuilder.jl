@@ -6,9 +6,10 @@ module PulsedGradients
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
 import ...Variables: qval, bval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
-import ...BuildingBlocks: GradientBlock, duration, set_simple_constraints!
+import ...BuildingBlocks: GradientBlock, duration, set_simple_constraints!, fixed
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...BuildSequences: @global_model_constructor
+import ..FixedGradients: FixedGradient
 
 
 """
@@ -83,7 +84,7 @@ end
 variables(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time, slew_rate]
 
 
-function to_concrete_block(block::PulsedGradient)
+function fixed(block::PulsedGradient)
     if block.orientation == :bvec
         rotate = true
         qvec = [value(qval(block)), 0., 0.]
@@ -98,12 +99,11 @@ function to_concrete_block(block::PulsedGradient)
     end
     t_rise = value(rise_time(block))
     t_d = value(δ(block))
-    return ConcreteBlock(t_d + t_rise, gradient=[
-        (0., zeros(3)),
-        (t_rise, qvec),
-        (t_d, qvec),
-        (t_d + t_rise, zeros(3)),
-    ], rotate_gradient=rotate)
+    return FixedBlock(
+        [0., t_rise, t_d, td + t_rise],
+        [zeros(3), qvec, qvec, zeros(3)]; 
+        rotate=rotate
+    )
 end
 
 
