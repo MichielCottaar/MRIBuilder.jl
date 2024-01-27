@@ -1,6 +1,6 @@
 module FixedPulses
 
-import ...BuildingBlock: PulseBlock, fixed
+import ...BuildingBlocks: PulseBlock, fixed
 import ...Variables: variables, duration
 
 
