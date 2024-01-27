@@ -1,6 +1,6 @@
 module FixedPulses
 
-import ...BuildingBlock: PulseBlock
+import ...BuildingBlock: PulseBlock, fixed
 import ...Variables: variables, duration
 
 
@@ -32,8 +32,24 @@ end
 
 variables(::Type{<:FixedPulse}) = []
 
-duration(fg::FixedPulse) = maximum(fg.time)
+duration(fp::FixedPulse) = maximum(fp.time)
 
-Base.show(io::IO, fb::FixedPulse) = print(io, "FixedPulse for $(duration(fb)) ms")
+Base.show(io::IO, fp::FixedPulse) = print(io, "FixedPulse for $(duration(fp)) ms")
+
+
+"""
+    FixedInstantPulse(flip_angle, phase)
+
+Fixed version of `InstantRFPulseBlock`, where both `flip_angle` and `phase` are actual numbers.
+"""
+struct FixedInstantPulse <: PulseBlock
+    flip_angle :: Number
+    phase :: Number
+end
+
+duration(fip::FixedInstantPulse) = 0.
+
+fixed(fp::Union{FixedPulse, FixedInstantPulse}) = fp
+
 
 end

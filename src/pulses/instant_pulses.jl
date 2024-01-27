@@ -1,9 +1,10 @@
 module InstantPulses
 import JuMP: @constraint, @variable, VariableRef, value, Model
-import ...BuildingBlocks: RFPulseBlock
+import ...BuildingBlocks: RFPulseBlock, fixed
 import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
 import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType
 import ...BuildSequences: @global_model_constructor
+import ..FixedPulses: FixedInstantPulse
 
 struct InstantRFPulseBlock <: RFPulseBlock
     model :: Model
@@ -29,20 +30,8 @@ duration(instant::InstantRFPulseBlock) = 0.
 variables(::Type{<:InstantRFPulseBlock}) = [flip_angle, phase]
 
 
-"""
-    ConcreteInstantRFPulse(flip_angle, phase)
-
-Instantaneous RF pulse with no free variables.
-
-See [`InstantRFPulseBlock`](@ref) for a version where [`flip_angle`](@ref) and [`phase`](@ref) are variables.
-"""
-struct ConcreteInstantRFPulse <: AbstractConcreteBlock
-    flip_angle :: Number
-    phase :: Number
-end
-
-function to_concrete_block(block::InstantRFPulseBlock)
-    return ConcreteInstantRFPulse(value(flip_angle(block)), value(phase(block)))
+function fixed(block::InstantRFPulseBlock)
+    return FixedInstantPulse(value(flip_angle(block)), value(phase(block)))
 end
 
 end

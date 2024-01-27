@@ -1,6 +1,6 @@
 module FixedGradients
 
-import ...BuildingBlock: GradientBlock
+import ...BuildingBlock: GradientBlock, fixed
 import ...Variables: variables, duration, qval
 
 

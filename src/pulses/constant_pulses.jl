@@ -1,9 +1,10 @@
 module ConstantPulses
 import JuMP: VariableRef, @constraint, @variable, value, Model
-import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!
+import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!, fixed
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, bandwidth, start_time, end_time, VariableType, duration
 import ...BuildSequences: @global_model_constructor
+import ..FixedPulses: FixedPulse
 
 """
     ConstantPulse(; variables...)
@@ -46,14 +47,14 @@ bandwidth(pulse::ConstantPulse) = 3.79098854 / duration(pulse)
 
 variables(::Type{<:ConstantPulse}) = [amplitude, duration, phase, frequency, flip_angle, bandwidth]
 
-function to_concrete_block(block::ConstantPulse)
+function fixed(block::ConstantPulse)
     d = value(duration(block))
-    final_phase = value(phase(block)) + d * value(frequency(block)) * 360
-    return ConcreteBlock(value(duration(block)), pulse=[
-        ([0., d]),
+    final_phase = phase(block) + d * frequency(block) * 360
+    return FixedPulse(
+        [0., d], 
         value.([amplitude(block), amplitude(block)]),
-        value.([phase(block), final_phase])
-    ])
+        value.([phase(block), final_phase]),
+    )
 end
 
 
