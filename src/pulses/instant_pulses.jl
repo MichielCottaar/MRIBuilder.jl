@@ -3,7 +3,7 @@ import JuMP: @constraint, @variable, VariableRef, value, Model
 import ...BuildingBlocks: BuildingBlock
 import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
 import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType
-import ...GlobalModel: @global_model_constructor
+import ...SolveModel: @global_model_constructor
 
 struct InstantRFPulseBlock <: BuildingBlock
     model :: Model

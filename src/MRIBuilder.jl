@@ -3,7 +3,7 @@ Builds and optimises NMR/MRI sequences.
 """
 module MRIBuilder
 
-include("global_model.jl")
+include("solve_model.jl")
 include("scanners.jl")
 include("variables.jl")
 include("building_blocks.jl")
@@ -14,7 +14,7 @@ include("gradients/gradients.jl")
 include("pulses/pulses.jl")
 include("readouts/readouts.jl")
 
-import .GlobalModel: set_model
+import .SolveModel: set_model
 export set_model
 
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra

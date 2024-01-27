@@ -6,7 +6,7 @@ import Polynomials: fit, Polynomial
 import ...BuildingBlocks: BuildingBlock, set_simple_constraints!
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...Variables: flip_angle, phase, amplitude, frequency, bandwidth, VariableType, variables, get_free_variable, duration
-import ...GlobalModel: @global_model_constructor
+import ...SolveModel: @global_model_constructor
 
 """
     SincPulse(; symmetric=true, max_Nlobes=nothing, apodise=true, variables...)

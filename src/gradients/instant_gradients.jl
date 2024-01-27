@@ -3,7 +3,7 @@ import JuMP: @constraint, @variable, Model, owner_model
 import ...Variables: qval, bval, start_time, duration, variables, get_free_variable, VariableType
 import ...BuildingBlocks: BuildingBlock
 import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
-import ...GlobalModel: @global_model_constructor
+import ...SolveModel: @global_model_constructor
 
 """
     InstantGradientBlock(; orientation=:bvec, qval=nothing)

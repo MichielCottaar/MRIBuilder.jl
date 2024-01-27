@@ -1,4 +1,4 @@
-module GlobalModel
+module SolveModel
 import JuMP: Model
 
 const GLOBAL_MODEL = Ref(Model())

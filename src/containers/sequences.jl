@@ -1,6 +1,6 @@
 module Sequences
 import JuMP: Model
-import ...GlobalModel: @global_model_constructor
+import ...SolveModel: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType
 import ...BuildingBlocks: BuildingBlock
 
