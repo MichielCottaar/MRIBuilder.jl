@@ -9,7 +9,7 @@ Parent type for all individual components out of which a sequence can be built.
 
 Required methods:
 - [`duration`](@ref)(block, parameters): Return block duration in ms.
-- [`fixed`](block): Return an equivalent fixed BuildingBlock (i.e., `FixedBlock`, `FixedPulse`, `FixedGradient`, `FixedInstantPulse`, `FixedInstantGradient`, or `InstantReadout`). These all have in common that they have no free variables and explicitly set any gradient and RF pulse profiles.
+- [`fixed`](block): Return the equivalent fixed BuildingBlock (i.e., `FixedBlock`, `FixedPulse`, `FixedGradient`, `FixedInstantPulse`, `FixedInstantGradient`, or `InstantReadout`). These all have in common that they have no free variables and explicitly set any gradient and RF pulse profiles.
 - [`variables`](@ref): A list of all functions that are used to compute variables of the building block. Any of these can be used in constraints or objective functions.
 """
 abstract type BuildingBlock end
@@ -71,9 +71,9 @@ to_block(bb::BuildingBlock) = bb
 """
     fixed(block::BuildingBlock)
 
-Return an equivalent fixed BuildingBlock.
+Return the fixed equivalent of the `BuildingBlock`
 
-Possible return types are `FixedBlock`, `FixedPulse`, `FixedGradient`, `FixedInstantPulse`, `FixedInstantGradient`, or `InstantReadout`. 
+Possible return types are `FixedSequence`, `FixedBlock`, `FixedPulse`, `FixedGradient`, `FixedInstantPulse`, `FixedInstantGradient`, or `InstantReadout`. 
 These all have in common that they have no free variables and explicitly set any gradient and RF pulse profiles.
 """
 function fixed end

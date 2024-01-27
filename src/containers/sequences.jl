@@ -5,7 +5,10 @@ module Sequences
 import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_blocks, scanner_constraints!
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_blocks, scanner_constraints!, fixed
+import ..FixedBlocks: FixedBlock
+
+abstract type AbstractSequence <: ContainerBlock end
 
 """
     Sequence(building_blocks...; TR=nothing, scanner=nothing)
@@ -21,7 +24,7 @@ or be embedded as a [`BuildingBlock`](@ref) into higher-order `Sequence` or othe
 ## Variables
 - [`TR`](@ref): repetition time of sequence in ms.
 """
-struct Sequence <: ContainerBlock
+struct Sequence <: AbstractSequence
     model :: Model
     blocks :: Vector{<:BuildingBlock}
     TR :: VariableType
@@ -43,9 +46,9 @@ end
 
 Sequence(model::Model, blocks...; TR=nothing, scanner=nothing) = Sequence(model, [blocks...]; TR=TR, scanner=scanner)
 
-Base.length(seq::Sequence) = length(seq.blocks)
-Base.getindex(seq::Sequence, index) = seq.blocks[index]
-get_children_blocks(seq::Sequence) = enumerate(seq.blocks)
+Base.length(seq::AbstractSequence) = length(seq.blocks)
+Base.getindex(seq::AbstractSequence, index) = seq.blocks[index]
+get_children_blocks(seq::AbstractSequence) = enumerate(seq.blocks)
 
 """
     start_time(sequence::Sequence, index::Integer, args...)
@@ -54,9 +57,9 @@ Returns the starting time of the [`BuildingBlock`](@ref) with index `index`.
 Additional `args` can be used to select a sub-block of that [`BuildingBlock`](@ref).
 The starting time is returned with respect to the start of this sequence.
 """
-start_time(seq::Sequence) = 0.
-start_time(seq::Sequence, index::Integer) = iszero(index) ? start_time(seq) : (start_time(seq, index-1) + duration(seq[index]))
-start_time(seq::Sequence, index::Integer, args...) = start_time(seq, index) + start_time(seq[index], args...)
+start_time(seq::AbstractSequence) = 0.
+start_time(seq::AbstractSequence, index::Integer) = iszero(index) ? start_time(seq) : (start_time(seq, index-1) + duration(seq[index]))
+start_time(seq::AbstractSequence, index::Integer, args...) = start_time(seq, index) + start_time(seq[index], args...)
 
 """
     end_time(sequence::Sequence, index::Integer, args...)
@@ -65,14 +68,28 @@ Returns the end time of the [`BuildingBlock`](@ref) with index `index`.
 Additional `args` can be used to select a sub-block of that [`BuildingBlock`](@ref).
 The end time is returned with respect to the start of this sequence.
 """
-end_time(seq::Sequence, index::Integer) = start_time(seq, index) + duration(seq[index])
-end_time(seq::Sequence, index::Integer, args...) = start_time(seq, index) + end_time(seq[index], args...)
+end_time(seq::AbstractSequence, index::Integer) = start_time(seq, index) + duration(seq[index])
+end_time(seq::AbstractSequence, index::Integer, args...) = start_time(seq, index) + end_time(seq[index], args...)
 
-duration(seq::Sequence) = end_time(seq, length(seq))
+duration(seq::AbstractSequence) = end_time(seq, length(seq))
 
-TR(seq::Sequence) = seq.TR
+TR(seq::AbstractSequence) = seq.TR
 variables(::Type{<:Sequence}) = [TR]
 
+
+struct FixedSequence <: AbstractSequence
+    blocks :: Vector{<:BuildingBlock}
+    TR :: Number
+end
+
+function fixed(seq::Sequence)
+    FixedSequence(
+        fixed.(seq.blocks),
+        value(TR(seq))
+    )
+end
+
+variables(::Type{<:FixedSequence}) = []
 
 end
 

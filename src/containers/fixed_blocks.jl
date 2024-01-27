@@ -5,6 +5,7 @@ import ...BuildingBlocks: ContainerBlock
 import ...Gradients: FixedGradient
 import ...Pulses: FixedPulse
 import ...Variables: duration, variables
+import ...WaitBlocks: WaitBlock
 
 """
     FixedBlock(duration=nothing; pulse_delay=0., pulse=nothing, gradient_delay=0., gradient=nothing, readout_times=[])
@@ -47,6 +48,7 @@ duration(fb::FixedBlock) = fb.duration
 
 variables(::Type{<:FixedBlock}) = []
 
+fixed(wb::WaitBlock) = FixedBlock(value(duration(wb)))
 
 
 end

@@ -11,5 +11,5 @@ include("sequences.jl")
 import ..BuildingBlocks: ContainerBlock, get_children_blocks
 
 import ..FixedBlocks: FixedBlock
-import .Sequences: Sequence
+import .Sequences: Sequence, FixedSequence
 end
