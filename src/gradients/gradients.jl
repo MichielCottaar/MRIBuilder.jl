@@ -6,12 +6,13 @@ Module defining sub-types of the [`GradientBlock`](@ref), i.e., any [`BuildingBl
 - [`FixedGradient`](@ref)
 """
 module Gradients
-include("integrate_gradients.jl")
+
+#include("integrate_gradients.jl")
 include("fixed_gradients.jl")
 include("pulsed_gradients.jl")
 include("instant_gradients.jl")
 
-import ..BuildingBlock: GradientBlock
+import ..BuildingBlocks: GradientBlock
 
 import .PulsedGradients: PulsedGradient
 import .InstantGradients: InstantGradientBlock
