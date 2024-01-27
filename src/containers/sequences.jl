@@ -1,5 +1,5 @@
 module Sequences
-import JuMP: Model
+import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR
 import ...BuildingBlocks: BuildingBlock, to_block
@@ -15,11 +15,13 @@ struct Sequence <: BuildingBlock
     blocks :: Vector{<:BuildingBlock}
     TR :: VariableType
     function Sequence(model::Model, blocks::Vector; TR=nothing)
-        new(
+        seq = new(
             model,
             to_block.(blocks),
             get_free_variable(model, TR),
         )
+        @constraint model seq.TR >= duration(seq)
+        return seq
     end
 end
 
@@ -27,8 +29,8 @@ end
 
 Sequence(model::Model, blocks...; TR=nothing) = Sequence(model, [blocks...]; TR=TR)
 
-Base.length(seq::Sequence) = length(seq)
-Base.getindex(seq::Sequence, index) = seq[index]
+Base.length(seq::Sequence) = length(seq.blocks)
+Base.getindex(seq::Sequence, index) = seq.blocks[index]
 
 """
     start_time(sequence::Sequence, index::Integer, args...)
