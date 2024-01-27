@@ -14,7 +14,7 @@ include("gradients/gradients.jl")
 include("pulses/pulses.jl")
 include("readouts/readouts.jl")
 
-import .SolveModel: set_model
+import .BuildSequences: set_model
 export set_model
 
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra

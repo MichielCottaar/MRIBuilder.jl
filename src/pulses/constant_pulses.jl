@@ -3,7 +3,7 @@ import JuMP: VariableRef, @constraint, @variable, value, Model
 import ...BuildingBlocks: BuildingBlock, set_simple_constraints!
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, bandwidth, start_time, end_time, VariableType, duration
-import ...SolveModel: @global_model_constructor
+import ...BuildSequences: @global_model_constructor
 
 """
     ConstantPulse(; variables...)

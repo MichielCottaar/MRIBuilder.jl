@@ -3,7 +3,7 @@ import JuMP: Model, @constraint, @variable, VariableRef, owner_model, value
 import ..Variables: VariableType, variables, duration, get_free_variable
 import ..BuildingBlocks: BuildingBlock
 import ..ConcreteBlocks: to_concrete_block, ConcreteBlock
-import ..SolveModel: @global_model_constructor
+import ..BuildSequences: @global_model_constructor
 import ...Scanners: Scanner
 
 """

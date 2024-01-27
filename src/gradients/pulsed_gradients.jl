@@ -8,7 +8,7 @@ import StaticArrays: SVector
 import ...Variables: qval, bval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
 import ...BuildingBlocks: BuildingBlock, duration, set_simple_constraints!
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
-import ...SolveModel: @global_model_constructor
+import ...BuildSequences: @global_model_constructor
 
 
 """

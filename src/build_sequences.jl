@@ -1,39 +1,51 @@
-module SolveModel
+module BuildSequences
 import JuMP: Model
 
 const GLOBAL_MODEL = Ref(Model())
 const IGNORE_MODEL = GLOBAL_MODEL[]
 
 """
-Sets a global JuMP `Model`.
+Wrapper to build a sequence.
 
 Use as 
 ```julia
-model = set_model([model]) do
+build_sequence([model]) do model
     ...
 end
 ```
-Any sequences created within the code block will be assigned the same JuMP `Model`.
-If no model is provided a new one is created (using a Juniper optimizer based on the Ipopt non-linear optimizer).
+Within the code block you can create one or more sequences, e.g.
+```
+seq = Sequence(
+    SincPulse(flip_angle=90, phase=0, duration=2., bandwidth=:max)
+    nothing.,
+    InstantReadout
+)
+```
 
-The function will return the fully formed JuMP `Model`.
+You can also add any arbitrary constraints or objectives using the same syntax as for [`JuMP`](https://jump.dev/JuMP.jl):
+```
+@constraint model duration(seq) == 30.
+```
+
+As soon as the code block is the optimal sequence matching all your constraints and objectives will be returned.
 """
-function set_model(f::Function, model::Model)
+function build_sequence(f::Function, model::Model)
     prev_model = global_model[]
     global_model[] = model
     try
-        f()
+        sequence = f()
+        optimize!(model)
+        return sequence
     finally
         global_model[] = prev_model
     end
-    return model
 end
 
-function set_model(f::Function)
+function build_sequence(f::Function)
     ipopt_opt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
     juniper_opt = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt_opt)
     model = Model(juniper_opt)
-    set_model(f, model)
+    build_sequence(f, model)
 end
 
 
