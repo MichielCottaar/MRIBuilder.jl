@@ -17,7 +17,7 @@ end
 
 @global_model_constructor Sequence
 
-Sequence(model::Model, blocks::BuildingBlock...) = Sequence(model, to_block.(blocks))
+Sequence(model::Model, blocks...) = return Sequence(model, to_block.([blocks...]))
 
 Base.length(seq::Sequence) = length(seq)
 Base.getindex(seq::Sequence, index) = seq[index]
