@@ -1,6 +1,6 @@
 module FixedPulses
 
-import ...BuildingBlocks: PulseBlock, fixed
+import ...BuildingBlocks: RFPulseBlock, fixed
 import ...Variables: variables, duration
 
 
@@ -15,7 +15,7 @@ All arguments should be arrays of the same length N defining these control point
 - `amplitude`: amplitude of the RF pulse at every timepoint in kHz.
 - `phase`: phase of the RF pulse at every timpoint in degrees. If not set explicitly it will be determined by the provided starting `phase` (degrees) and the `frequency` (kHz).
 """
-struct FixedPulse <: PulseBlock
+struct FixedPulse <: RFPulseBlock
     time :: Vector{Float64}
     amplitude :: Vector{Float64}
     phase :: Vector{Float64}
@@ -42,7 +42,7 @@ Base.show(io::IO, fp::FixedPulse) = print(io, "FixedPulse for $(duration(fp)) ms
 
 Fixed version of `InstantRFPulseBlock`, where both `flip_angle` and `phase` are actual numbers.
 """
-struct FixedInstantPulse <: PulseBlock
+struct FixedInstantPulse <: RFPulseBlock
     flip_angle :: Number
     phase :: Number
 end
