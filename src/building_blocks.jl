@@ -202,8 +202,16 @@ function owner_model(bb::BuildingBlock)
             end
         end
     end
-    error("Cannot find owner model of $bb")
+    error("Cannot find owner model")
 end
-has_values(bb::BuildingBlock) = has_values(owner_model(bb))
+
+function has_values(bb::BuildingBlock) 
+    try 
+        return has_values(owner_model(bb))
+    catch
+        # return true for building blocks without a model
+        return true
+    end
+end
 
 end
