@@ -32,8 +32,8 @@ export ConcreteBlocks, AbstractConcreteBlock
 import .Wait: WaitBlock
 export WaitBlock
 
-import .Containers: Sequence
-export Sequence
+import .Containers: Sequence, FixedBlock
+export Sequence, FixedBlock
 
 import .Gradients: PulsedGradient, InstantGradientBlock, FixedGradient
 export PulsedGradient, InstantGradientBlock, FixedGradient
