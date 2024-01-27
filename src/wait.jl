@@ -20,19 +20,17 @@ Duration can be set to one of:
 struct WaitBlock <: BuildingBlock
     model :: Model
     duration :: VariableType
+    function WaitBlock(model::Model, duration=nothing)
+        res = new(
+            model, 
+            get_free_variable(model, duration),
+        )
+        @constraint model res.duration >= 0
+        return res
+    end
 end
 
 @global_model_constructor WaitBlock
-
-function WaitBlock(model::Model, duration=nothing)
-    res = WaitBlock(
-        model, 
-        get_free_variable(model, duration),
-        VariableType[]
-    )
-    @constraint model duration(res) >= 0
-    return res
-end
 
 """
     to_block(JuMP variable/:min or :max/nothing/number)
