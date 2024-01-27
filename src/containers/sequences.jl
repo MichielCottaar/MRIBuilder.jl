@@ -1,7 +1,7 @@
 module Sequences
 import JuMP: Model
 import ...BuildSequences: @global_model_constructor
-import ...Variables: variables, start_time, duration, VariableType
+import ...Variables: variables, start_time, duration, VariableType, get_free_variable
 import ...BuildingBlocks: BuildingBlock, to_block
 
 """
@@ -13,11 +13,19 @@ Represents a series of [`BuildingBlock`](@ref) objects run in turn.
 struct Sequence <: BuildingBlock
     model :: Model
     blocks :: Vector{<:BuildingBlock}
+    TR :: VariableType
+    function Sequence(model::Model, blocks::Vector; TR=nothing)
+        new(
+            model,
+            to_block.(blocks),
+            get_free_variable(model, TR),
+        )
+    end
 end
 
 @global_model_constructor Sequence
 
-Sequence(model::Model, blocks...) = return Sequence(model, to_block.([blocks...]))
+Sequence(model::Model, blocks...; TR=nothing) = Sequence(model, [blocks...]; TR=TR)
 
 Base.length(seq::Sequence) = length(seq)
 Base.getindex(seq::Sequence, index) = seq[index]
