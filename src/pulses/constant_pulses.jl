@@ -1,6 +1,6 @@
 module ConstantPulses
 import JuMP: VariableRef, @constraint, @variable, value, Model
-import ...BuildingBlocks: BuildingBlock, set_simple_constraints!
+import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, bandwidth, start_time, end_time, VariableType, duration
 import ...BuildSequences: @global_model_constructor
@@ -17,7 +17,7 @@ Represents an radio-frequency pulse with a constant amplitude and frequency (i.e
 - [`phase`](@ref): phase at the start of the RF pulse in degrees.
 - [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
 """
-struct ConstantPulse <: BuildingBlock
+struct ConstantPulse <: RFPulseBlock
     model :: Model
     amplitude :: VariableType
     duration :: VariableType

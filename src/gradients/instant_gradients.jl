@@ -1,7 +1,7 @@
 module InstantGradients
 import JuMP: @constraint, @variable, Model, owner_model
 import ...Variables: qval, bval, start_time, duration, variables, get_free_variable, VariableType
-import ...BuildingBlocks: BuildingBlock
+import ...BuildingBlocks: GradientBlock
 import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
 import ...BuildSequences: @global_model_constructor
 
@@ -16,7 +16,7 @@ Defines an instantaneous gradient.
 ## Variables
 - [`qval`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um.
 """
-struct InstantGradientBlock <: BuildingBlock
+struct InstantGradientBlock <: GradientBlock
     model::Model
     orientation :: Any
     qval :: VariableType

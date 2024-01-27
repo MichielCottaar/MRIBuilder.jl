@@ -3,7 +3,7 @@ module SincPulses
 import JuMP: VariableRef, @constraint, @variable, value, Model
 import QuadGK: quadgk
 import Polynomials: fit, Polynomial
-import ...BuildingBlocks: BuildingBlock, set_simple_constraints!
+import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...Variables: flip_angle, phase, amplitude, frequency, bandwidth, VariableType, variables, get_free_variable, duration
 import ...BuildSequences: @global_model_constructor
@@ -28,7 +28,7 @@ Represents an radio-frequency pulse with a constant amplitude and frequency.
 - [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
 - [`bandwidth`](@ref): width of the rectangular function in frequency space (in kHz). If the `duration` is short (compared with 1/`bandwidth`), this bandwidth will only be approximate.
 """
-struct SincPulse <: BuildingBlock
+struct SincPulse <: RFPulseBlock
     model :: Model
     symmetric :: Bool
     apodise :: Bool

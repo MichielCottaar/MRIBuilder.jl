@@ -14,6 +14,23 @@ Required methods:
 """
 abstract type BuildingBlock end
 
+"""
+Parent type for all RF pulses.
+
+RF pulses combined with gradients, should be childrent of [`ContainerBlock`](@ref) instead.
+"""
+abstract type RFPulseBlock <: BuildingBlock end
+
+"""
+Parent type for all gradient profiles.
+"""
+abstract type GradientBlock <: BuildingBlock end
+
+"""
+Parent type for all types combining one or more pulses/gradients.
+"""
+abstract type ContainerBlock <: BuildingBlock end
+
 
 """
     start_time(container, args...)

@@ -2,7 +2,7 @@ module Sequences
 import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR
-import ...BuildingBlocks: BuildingBlock, to_block
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, add_scanner_constraints!
 
 """
     Sequence(building_blocks...)
@@ -10,7 +10,7 @@ import ...BuildingBlocks: BuildingBlock, to_block
 
 Represents a series of [`BuildingBlock`](@ref) objects run in turn.
 """
-struct Sequence <: BuildingBlock
+struct Sequence <: ContainerBlock
     model :: Model
     blocks :: Vector{<:BuildingBlock}
     TR :: VariableType

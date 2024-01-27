@@ -1,11 +1,11 @@
 module InstantPulses
 import JuMP: @constraint, @variable, VariableRef, value, Model
-import ...BuildingBlocks: BuildingBlock
+import ...BuildingBlocks: RFPulseBlock
 import ...ConcreteBlocks: to_concrete_block, AbstractConcreteBlock
 import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType
 import ...BuildSequences: @global_model_constructor
 
-struct InstantRFPulseBlock <: BuildingBlock
+struct InstantRFPulseBlock <: RFPulseBlock
     model :: Model
     flip_angle :: VariableType
     phase :: VariableType

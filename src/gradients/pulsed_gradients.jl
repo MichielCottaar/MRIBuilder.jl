@@ -6,7 +6,7 @@ module PulsedGradients
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
 import ...Variables: qval, bval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
-import ...BuildingBlocks: BuildingBlock, duration, set_simple_constraints!
+import ...BuildingBlocks: GradientBlock, duration, set_simple_constraints!
 import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...BuildSequences: @global_model_constructor
 
@@ -15,7 +15,6 @@ import ...BuildSequences: @global_model_constructor
     PulsedGradient(; orientation=:bvec, variables...)
 
 Defines a trapezoidal pulsed gradient
-This is a [`BuildingBlock`](@ref) for a [`SequenceBuilder`](@ref).
 
 ## Parameters
 - `orientation` sets the gradient orienation. Can be set to a vector for a fixed orientation. Alternatively, can be set to :bvec (default) to rotate with the user-provided `bvecs` or to :neg_bvec to always be the reverse of the `bvecs`.
@@ -34,7 +33,7 @@ If not set, they will be determined during the sequence optimisation.
 
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
-mutable struct PulsedGradient <: BuildingBlock
+mutable struct PulsedGradient <: GradientBlock
     model :: Model
     orientation :: Any
     slew_rate :: VariableType
