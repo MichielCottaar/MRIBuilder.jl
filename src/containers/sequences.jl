@@ -1,7 +1,7 @@
 module Sequences
 import JuMP: Model
 import ...BuildSequences: @global_model_constructor
-import ...Variables: variables, start_time, duration, VariableType, get_free_variable
+import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR
 import ...BuildingBlocks: BuildingBlock, to_block
 
 """
@@ -53,6 +53,8 @@ end_time(seq::Sequence, index::Integer, args...) = start_time(seq, index) + end_
 
 duration(seq::Sequence) = end_time(seq, length(seq))
 
+TR(seq::Sequence) = seq.TR
+variables(::Type{<:Sequence}) = [TR]
 
 
 end

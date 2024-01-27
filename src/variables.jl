@@ -5,6 +5,7 @@ import ..Scanners: gradient_strength, slew_rate
 all_variables_symbols = [
     # general
     :duration => (:block, "duration of the building block in ms."),
+    :TR => (:sequence, "Time on which an MRI sequence repeats itself in ms."),
 
     # RF pulse
     :flip_angle => (:pulse, "The flip angle of the RF pulse in degrees"),
