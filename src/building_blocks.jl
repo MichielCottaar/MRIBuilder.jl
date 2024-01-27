@@ -51,8 +51,8 @@ function get_children_blocks end
 Returns the starting time of the specific [`BuildingBlock`](@ref) within the container.
 The [`BuildingBlock`](@ref) is defined by one or more indices as defined below.
 """
-start_time(bb) = 0.
-start_time(container, index1, index2, more_indices...) = start_time(container, index1) + start_time(container[index1], index2, more_indices)
+start_time(bb::BuildingBlock) = 0.
+start_time(container::ContainerBlock, index1, index2, more_indices...) = start_time(container, index1) + start_time(container[index1], index2, more_indices)
 
 """
     end_time(container, args...)
@@ -60,8 +60,9 @@ start_time(container, index1, index2, more_indices...) = start_time(container, i
 Returns the end time of the specific [`BuildingBlock`](@ref) within the container.
 The [`BuildingBlock`](@ref) is defined by one or more indices as defined below.
 """
-end_time(bb) = duration(bb)
-end_time(container, index1, index2, more_indices...) = start_time(container, index1) + end_time(container[index1], index2, more_indices)
+end_time(bb::BuildingBlock) = duration(bb::BuildingBlock)
+end_time(container::ContainerBlock, index1) = start_time(container, index1) + duration(container[index1])
+end_time(container::ContainerBlock, index1, index2, more_indices...) = start_time(container, index1) + end_time(container[index1], index2, more_indices)
 
 
 """
