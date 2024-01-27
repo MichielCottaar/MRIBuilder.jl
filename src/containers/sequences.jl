@@ -2,32 +2,40 @@ module Sequences
 import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_blocks
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_blocks, scanner_constraints!
 
 """
-    Sequence(building_blocks...)
-    Sequence([building_blocks])
+    Sequence(building_blocks...; TR=nothing, scanner=nothing)
+    Sequence([building_blocks]; TR=nothing, scanner=nothing)
 
 Represents a series of [`BuildingBlock`](@ref) objects run in turn.
+
+Providing a [`Scanner`](@ref) will lead to [`scanner_constraints!`](@ref) to be called on all building blocks.
+
+## Variables
+- [`TR`](@ref): repetition time of sequence in ms.
 """
 struct Sequence <: ContainerBlock
     model :: Model
     blocks :: Vector{<:BuildingBlock}
     TR :: VariableType
-    function Sequence(model::Model, blocks::AbstractVector; TR=nothing)
+    function Sequence(model::Model, blocks::AbstractVector; TR=nothing, scanner=nothing)
         seq = new(
             model,
             to_block.(blocks),
             get_free_variable(model, TR),
         )
         @constraint model seq.TR >= duration(seq)
+        if !isnothing(scanner)
+            scanner_constraints!(model, seq, scanner)
+        end
         return seq
     end
 end
 
 @global_model_constructor Sequence
 
-Sequence(model::Model, blocks...; TR=nothing) = Sequence(model, [blocks...]; TR=TR)
+Sequence(model::Model, blocks...; TR=nothing, scanner=nothing) = Sequence(model, [blocks...]; TR=TR, scanner=scanner)
 
 Base.length(seq::Sequence) = length(seq.blocks)
 Base.getindex(seq::Sequence, index) = seq.blocks[index]
