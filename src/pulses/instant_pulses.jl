@@ -20,7 +20,6 @@ function InstantRFPulseBlock(model::Model; flip_angle=nothing, phase=nothing)
         get_free_variable(model, phase)
     )
     @constraint model res.flip_angle >= 0
-    set_simple_constraints!(model, res, kwargs)
     return res
 end
 
