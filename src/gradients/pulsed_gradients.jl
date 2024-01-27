@@ -46,9 +46,8 @@ end
 @global_model_constructor PulsedGradient
 
 function PulsedGradient(model::Model; orientation=:bvec, slew_rate=nothing, rise_time=nothing, flat_time=nothing, kwargs...)
-    model = owner_model(builder)
     res = PulsedGradient(
-        builder,
+        model,
         orientation,
         [get_free_variable(model, value) for value in (slew_rate, rise_time, flat_time)]...
     )
