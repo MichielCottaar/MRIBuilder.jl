@@ -2,7 +2,7 @@ module Sequences
 import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, add_scanner_constraints!
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_blocks
 
 """
     Sequence(building_blocks...)
@@ -14,7 +14,7 @@ struct Sequence <: ContainerBlock
     model :: Model
     blocks :: Vector{<:BuildingBlock}
     TR :: VariableType
-    function Sequence(model::Model, blocks::Vector; TR=nothing)
+    function Sequence(model::Model, blocks::AbstractVector; TR=nothing)
         seq = new(
             model,
             to_block.(blocks),
@@ -31,6 +31,7 @@ Sequence(model::Model, blocks...; TR=nothing) = Sequence(model, [blocks...]; TR=
 
 Base.length(seq::Sequence) = length(seq.blocks)
 Base.getindex(seq::Sequence, index) = seq.blocks[index]
+get_children_blocks(seq::Sequence) = enumerate(seq.blocks)
 
 """
     start_time(sequence::Sequence, index::Integer, args...)

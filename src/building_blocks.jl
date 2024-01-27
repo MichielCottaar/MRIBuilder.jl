@@ -28,8 +28,19 @@ abstract type GradientBlock <: BuildingBlock end
 
 """
 Parent type for all types combining one or more pulses/gradients.
+
+Required methods:
+- [`get_children_blocks`](@ref): return all the [`BuildingBlock`](@ref) objects includes in this container with their indices.
 """
 abstract type ContainerBlock <: BuildingBlock end
+
+
+"""
+    get_children_blocks(container)
+
+Return all the [`BuildingBlock`](@ref) objects includes in this container with their indices.
+"""
+function get_children_blocks end
 
 
 """
@@ -70,6 +81,11 @@ function scanner_constraints!(model::Model, building_block::BuildingBlock, scann
     for func in [gradient_strength, slew_rate]
         if (func in variables(building_block)) && isfinite(func(scanner))
             @constraint model func(building_block) <= func(scanner)
+        end
+    end
+    if building_block isa ContainerBlock
+        for (_, child_block) in get_children_blocks(building_block)
+            scanner_constraints!(model, child_block, scanner)
         end
     end
 end
