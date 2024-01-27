@@ -1,3 +1,6 @@
+"""
+Define the [`Sequence`](@ref) building block.
+"""
 module Sequences
 import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
@@ -11,6 +14,9 @@ import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_
 Represents a series of [`BuildingBlock`](@ref) objects run in turn.
 
 Providing a [`Scanner`](@ref) will lead to [`scanner_constraints!`](@ref) to be called on all building blocks.
+
+This can be used as a top-level NMR/MRI sequence (in which case the [`TR`](@ref) variable is relevant)
+or be embedded as a [`BuildingBlock`](@ref) into higher-order `Sequence` or other [`ContainerBlock`](@ref) objects.
 
 ## Variables
 - [`TR`](@ref): repetition time of sequence in ms.
