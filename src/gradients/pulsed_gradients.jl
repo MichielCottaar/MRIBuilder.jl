@@ -7,7 +7,6 @@ import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
 import ...Variables: qval, bval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
 import ...BuildingBlocks: GradientBlock, duration, set_simple_constraints!, fixed
-import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...BuildSequences: @global_model_constructor
 import ..FixedGradients: FixedGradient
 

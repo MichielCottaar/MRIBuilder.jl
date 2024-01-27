@@ -7,7 +7,6 @@ include("build_sequences.jl")
 include("scanners.jl")
 include("variables.jl")
 include("building_blocks.jl")
-include("concrete_blocks.jl")
 include("wait.jl")
 include("containers/containers.jl")
 include("gradients/gradients.jl")
@@ -25,9 +24,6 @@ export variables, duration, start_time, end_time, flip_angle, amplitude, phase, 
 
 import .BuildingBlocks: BuildingBlock, fixed
 export BuildingBlocks, fixed
-
-import .ConcreteBlocks: ConcreteBlock, AbstractConcreteBlock
-export ConcreteBlocks, AbstractConcreteBlock
 
 import .Wait: WaitBlock
 export WaitBlock

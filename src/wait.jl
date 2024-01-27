@@ -2,7 +2,6 @@ module Wait
 import JuMP: Model, @constraint, @variable, VariableRef, owner_model, value
 import ..Variables: VariableType, variables, duration, get_free_variable
 import ..BuildingBlocks: BuildingBlock, to_block
-import ..ConcreteBlocks: to_concrete_block, ConcreteBlock
 import ..BuildSequences: @global_model_constructor
 import ...Scanners: Scanner
 
@@ -47,7 +46,5 @@ to_block(time::Union{VariableType, Symbol, Nothing, Val{:min}, Val{:max}}) = Wai
 variables(::Type{WaitBlock}) = [duration]
 
 duration(wb::WaitBlock) = wb.duration
-
-to_concrete_block(wb::WaitBlock) = ConcreteBlock(value(duration(wb)))
 
 end

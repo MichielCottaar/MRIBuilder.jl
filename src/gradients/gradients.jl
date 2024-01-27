@@ -4,8 +4,6 @@ Module defining sub-types of the [`GradientBlock`](@ref), i.e., any [`BuildingBl
 - [`PulsedGradient`](@ref)
 - [`InstantGradientBlock`](@ref)
 - [`FixedGradient`](@ref)
-
-Arbitrary gradient waveforms can be store din a [`ConcreteBlock`](@ref)
 """
 module Gradients
 include("integrate_gradients.jl")

@@ -4,7 +4,6 @@ import JuMP: VariableRef, @constraint, @variable, value, Model
 import QuadGK: quadgk
 import Polynomials: fit, Polynomial
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!, fixed
-import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...Variables: flip_angle, phase, amplitude, frequency, bandwidth, VariableType, variables, get_free_variable, duration
 import ...BuildSequences: @global_model_constructor
 import ..FixedPulses: FixedPulse

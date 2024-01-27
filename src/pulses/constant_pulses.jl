@@ -1,7 +1,6 @@
 module ConstantPulses
 import JuMP: VariableRef, @constraint, @variable, value, Model
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!, fixed
-import ...ConcreteBlocks: ConcreteBlock, to_concrete_block
 import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, bandwidth, start_time, end_time, VariableType, duration
 import ...BuildSequences: @global_model_constructor
 import ..FixedPulses: FixedPulse
