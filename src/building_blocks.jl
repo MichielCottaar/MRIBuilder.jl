@@ -1,5 +1,5 @@
 module BuildingBlocks
-import JuMP: has_values, GenericVariableRef, value, Model, @constraint, @objective, owner_model, objective_function
+import JuMP: has_values, GenericVariableRef, value, Model, @constraint, @objective, owner_model, objective_function, optimize!, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Scanners: Scanner
 import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate
@@ -136,6 +136,22 @@ end
 function match_blocks!(block1::BuildingBlock, block2::BuildingBlock)
     property_list = intersect(variables(block1), variables(block2))
     match_blocks!(block1, block2, property_list)
+end
+
+
+optimize!(bb::BuildingBlock) = optimize!(owner_model(bb))
+function owner_model(bb::BuildingBlock)
+    if hasproperty(bb, :model)
+        return bb.model
+    else
+        for name in propertynames(bb)
+            value = getproperty(bb, name)
+            if value isa AbstractJuMPScalar
+                return owner_model(value)
+            end
+        end
+    end
+    error("Cannot find owner model of $bb")
 end
 
 end
