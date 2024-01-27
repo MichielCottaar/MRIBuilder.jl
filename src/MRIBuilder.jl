@@ -23,8 +23,8 @@ export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 import .Variables: variables, duration, start_time, end_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, area_under_curve, δ, rise_time, flat_time, slew_rate, gradient_strength
 export variables, duration, start_time, end_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, area_under_curve, δ, rise_time, flat_time, slew_rate, gradient_strength
 
-import .BuildingBlocks: BuildingBlock
-export BuildingBlocks
+import .BuildingBlocks: BuildingBlock, fixed
+export BuildingBlocks, fixed
 
 import .ConcreteBlocks: ConcreteBlock, AbstractConcreteBlock
 export ConcreteBlocks, AbstractConcreteBlock
