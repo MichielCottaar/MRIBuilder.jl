@@ -1,6 +1,6 @@
 module InstantReadouts
 import ...BuildingBlocks: BuildingBlock, to_block, fixed
-import ...Variables: variables
+import ...Variables: variables, duration
 
 """
     InstantReadout()
@@ -14,5 +14,6 @@ end
 
 variables(::Type{<:InstantReadout}) = []
 to_block(::Type{<:InstantReadout}) = InstantReadout()
+duration(::InstantReadout) =0.
 fixed(i::InstantReadout) = i
 end
