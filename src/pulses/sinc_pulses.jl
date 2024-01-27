@@ -57,13 +57,13 @@ function SincPulse(model::Model;
         N_right_var = get_free_variable(model, N_right)
     end
     res = SincPulse(
-        builder,
+        model,
         symmetric,
         apodise,
         nlobe_integral_params(max_Nlobes, apodise),
         N_left_var,
         N_right_var,
-        [get_free_variable(model, value) for value in (amplitude, phase, frequeny, lobe_duration)]...
+        [get_free_variable(model, value) for value in (amplitude, phase, frequency, lobe_duration)]...
     )
     @constraint model res.amplitude >= 0
     @constraint model res.N_left >= 1
