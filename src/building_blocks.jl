@@ -2,7 +2,7 @@ module BuildingBlocks
 import JuMP: has_values, value, Model, @constraint, @objective, owner_model, objective_function, optimize!, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Scanners: Scanner
-import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate
+import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time
 
 """
 Parent type for all individual components out of which a sequence can be built.
@@ -18,6 +18,9 @@ abstract type BuildingBlock end
 Parent type for all RF pulses.
 
 RF pulses combined with gradients, should be childrent of [`ContainerBlock`](@ref) instead.
+
+Required methods:
+- [`effective_time`](@ref)(pulse): Best approximation of time the RF pulse is applied. This is defined relative to the start of the pulse.
 """
 abstract type RFPulseBlock <: BuildingBlock end
 
@@ -55,14 +58,28 @@ start_time(bb::BuildingBlock) = 0.
 start_time(container::ContainerBlock, index1, index2, more_indices...) = start_time(container, index1) + start_time(container[index1], index2, more_indices)
 
 """
+    effective_time(pulse)
+    effective_time(readout)
+    effective_time(container, indices...)
+
+Returns the effective time of a pulse or readout.
+
+For a pulse, this means the timepoint at which one would place an [`InstantRFPulseBlock`](@ref) if one would want to have a similar effect.
+
+For a reaodut, this is the time the readout passes through the zero-point in k-space (or the minimum in k-space if it does not go through zero).
+
+The time is given with respect to the start of the pulse or readout, or to the start of a container if the pulse/readout is identified using indices.
+"""
+effective_time(bb::ContainerBlock, index, indices...) = start_time(bb, index) + effective_time(bb[index], indices...)
+
+"""
     end_time(container, args...)
 
 Returns the end time of the specific [`BuildingBlock`](@ref) within the container.
 The [`BuildingBlock`](@ref) is defined by one or more indices as defined below.
 """
 end_time(bb::BuildingBlock) = duration(bb::BuildingBlock)
-end_time(container::ContainerBlock, index1) = start_time(container, index1) + duration(container[index1])
-end_time(container::ContainerBlock, index1, index2, more_indices...) = start_time(container, index1) + end_time(container[index1], index2, more_indices)
+end_time(container::ContainerBlock, index1, indices...) = start_time(container, index1) + end_time(container[index1], indices...)
 
 
 """

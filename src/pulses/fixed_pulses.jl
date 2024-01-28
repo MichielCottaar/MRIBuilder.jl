@@ -1,7 +1,7 @@
 module FixedPulses
 
-import ...BuildingBlocks: RFPulseBlock, fixed
-import ...Variables: variables, duration
+import ...BuildingBlocks: RFPulseBlock, fixed, BuildingBlockPrinter
+import ...Variables: variables, duration, amplitude, effective_time
 
 
 """
@@ -33,8 +33,11 @@ end
 variables(::Type{<:FixedPulse}) = []
 
 duration(fp::FixedPulse) = maximum(fp.time)
+amplitude(fp::FixedPulse) = maximum(abs.(fp.amplitude))
+effective_time(pulse::FixedPulse) = pulse.time[argmax(abs(pulse.amplitude))]
 
-Base.show(io::IO, fp::FixedPulse) = print(io, "FixedPulse for $(duration(fp)) ms")
+Base.show(io::IO, fp::FixedPulse) = print(io, "FixedPulse for $(duration(fp)) ms (peak at $(effective_time(fp)) ms)")
+
 
 
 """

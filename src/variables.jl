@@ -54,8 +54,10 @@ variables() = [values(symbol_to_func)...]
 area_under_curve(bb) = qval(bb)
 
 
+# These functions are more fully defined in building_blocks.jl
 function start_time end
 function end_time end
+function effective_time end
 
 
 const VariableType = Union{Number, AbstractJuMPScalar}

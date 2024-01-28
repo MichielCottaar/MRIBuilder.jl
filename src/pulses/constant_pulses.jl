@@ -1,7 +1,7 @@
 module ConstantPulses
 import JuMP: VariableRef, @constraint, @variable, value, Model
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!, fixed
-import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, bandwidth, start_time, end_time, VariableType, duration
+import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, bandwidth, start_time, end_time, VariableType, duration, effective_time
 import ...BuildSequences: @global_model_constructor
 import ..FixedPulses: FixedPulse
 
@@ -43,6 +43,7 @@ phase(pulse::ConstantPulse) = pulse.phase
 frequency(pulse::ConstantPulse) = pulse.frequency
 flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
 bandwidth(pulse::ConstantPulse) = 3.79098854 / duration(pulse)
+effective_time(pulse::ConstantPulse) = duration(pulse) / 2
 
 variables(::Type{<:ConstantPulse}) = [amplitude, duration, phase, frequency, flip_angle, bandwidth]
 

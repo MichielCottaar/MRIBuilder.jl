@@ -1,7 +1,7 @@
 module InstantPulses
 import JuMP: @constraint, @variable, VariableRef, value, Model
 import ...BuildingBlocks: RFPulseBlock, fixed
-import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType
+import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType, effective_time
 import ...BuildSequences: @global_model_constructor
 import ..FixedPulses: FixedInstantPulse
 
@@ -25,8 +25,9 @@ end
 
 flip_angle(instant::InstantRFPulseBlock) = instant.flip_angle
 phase(instant::InstantRFPulseBlock) = instant.phase
-duration(instant::InstantRFPulseBlock) = 0.
+duration(::InstantRFPulseBlock) = 0.
 variables(::Type{<:InstantRFPulseBlock}) = [flip_angle, phase]
+effective_time(::InstantRFPulseBlock) = 0.
 
 
 function fixed(block::InstantRFPulseBlock)
