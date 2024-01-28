@@ -4,7 +4,7 @@ import StaticArrays: SVector, SMatrix
 import ..Variables: qval, bval
 
 """
-    PathWay(sequence::Sequence, pulse_effects::Vector{:Symbol/Number}, readout_index=1)
+    Pathway(sequence::Sequence, pulse_effects::Vector{:Symbol/Number}, readout_index=1)
 
 Describes how a specific spin/isochromat might experience the sequence.
 
@@ -37,10 +37,10 @@ Over the pathway the following values are computed. Each can be accessed by call
 ### Effect of gradients
 - [`qvec`](@ref): Net displacement vector in k-space/q-space.
 - [`qval`](@ref)/[`area_under_curve`](@ref): size of the displacement in k-space/q-space. For a spoiled pathway, this should be large compared with 1/voxel size; for unspoiled pathways it should be (close to) zero.
-- [`bmat`](@ref): Net diffusion weighting due to gradients along the [`PathWay`](@ref) in matrix form.
-- [`bval`](@ref): Net diffusion weighting due to gradients along the [`PathWay`](@ref) as a single number.
+- [`bmat`](@ref): Net diffusion weighting due to gradients along the [`Pathway`](@ref) in matrix form.
+- [`bval`](@ref): Net diffusion weighting due to gradients along the [`Pathway`](@ref) as a single number.
 """
-struct PathWay
+struct Pathway
     # user provided
     sequence :: Sequence
     pulse_effects :: Vector{Union{:Symbol, :Number}}
@@ -53,9 +53,9 @@ struct PathWay
 end
 
 """
-    duration_state(pathway::PathWay, transverse::Bool, positive::Bool)
+    duration_state(pathway::Pathway, transverse::Bool, positive::Bool)
 
-Returns how long the [`PathWay`](@ref) spent in a specific state.
+Returns how long the [`Pathway`](@ref) spent in a specific state.
 
 The requested state can be set using `transverse` and `positive` as follows:
 - `transverse=false`, `positive=true`: +longitudinal
@@ -63,7 +63,7 @@ The requested state can be set using `transverse` and `positive` as follows:
 - `transverse=false`, `positive=false`: -longitudinal
 - `transverse=true`, `positive=false`: -transverse
 """
-function duration_state(pathway::PathWay, transverse, positive)
+function duration_state(pathway::Pathway, transverse, positive)
     index = Dict([
         (false, true) => 1,
         (true, true) => 2,
@@ -74,9 +74,9 @@ function duration_state(pathway::PathWay, transverse, positive)
 end
 
 """
-    duration_transverse(pathway::PathWay)
+    duration_transverse(pathway::Pathway)
 
-Returns the total amount of time that spins following the given [`PathWay`](@ref) spent in the transverse plane.
+Returns the total amount of time that spins following the given [`Pathway`](@ref) spent in the transverse plane.
 This determines the amount of T2-weighting as ``e^{t/T_2}``, where ``t`` is the `duration_transverse`.
 
 Also see [`duration_dephase`](@ref) for T2'-weighting.
@@ -86,9 +86,9 @@ function duration_transverse(pathway::Pathway)
 end
 
 """
-    duration_dephase(pathway::PathWay)
+    duration_dephase(pathway::Pathway)
 
-Returns the net time that spins following the given [`PathWay`](@ref) spent in the +transverse versus the -transverse state.
+Returns the net time that spins following the given [`Pathway`](@ref) spent in the +transverse versus the -transverse state.
 This determines the amount of T2'-weighting as ``e^{t/T_2'}``, where ``t`` is the `duration_dephase`.
 
 Also see [`duration_transverse`](@ref) for T2-weighting.
@@ -99,39 +99,39 @@ end
 
 
 """
-    qvec(pathway::PathWay)
+    qvec(pathway::Pathway)
 
-Return net displacement vector in k-space/q-space experienced by the spins following a specific [`PathWay`](@ref).
-
-Only gradients active while the spins are in the transverse plane are considered.
-"""
-qvec(pathway::PathWay) = pathway.qvec
-
-"""
-    qval(pathway::PathWay)
-
-Return net displacement in k-space/q-space experienced by the spins following a specific [`PathWay`](@ref).
+Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
 """
-qval(pathway::PathWay) = norm(qvec(pathway))
+qvec(pathway::Pathway) = pathway.qvec
 
 """
-    bmat(pathway::PathWay)
+    qval(pathway::Pathway)
 
-Return 3x3 diffusion-weighted matrix experienced by the spins following a specific [`PathWay`](@ref).
+Return net displacement in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
 """
-bmat(pathway::PathWay) = pathway.bmat
+qval(pathway::Pathway) = norm(qvec(pathway))
 
 """
-    bval(pathway::PathWay)
+    bmat(pathway::Pathway)
 
-Return size of diffusion-weighting experienced by the spins following a specific [`PathWay`](@ref).
+Return 3x3 diffusion-weighted matrix experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
 """
-bval(pathway::PathWay) = norm(bmat(pathway))
+bmat(pathway::Pathway) = pathway.bmat
+
+"""
+    bval(pathway::Pathway)
+
+Return size of diffusion-weighting experienced by the spins following a specific [`Pathway`](@ref).
+
+Only gradients active while the spins are in the transverse plane are considered.
+"""
+bval(pathway::Pathway) = norm(bmat(pathway))
 
 end
