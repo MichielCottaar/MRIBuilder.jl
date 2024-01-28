@@ -177,6 +177,6 @@ Only gradients active while the spins are in the transverse plane are considered
 By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-bval(pathway::Pathway; scale=nothing, rotate=nothing) = norm(bmat(pathway; scale, rotate))
+bval(pathway::Pathway; scale=nothing, rotate=nothing) = tr(bmat(pathway; scale, rotate))
 
 end
