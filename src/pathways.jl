@@ -1,7 +1,9 @@
 module Pathways
 import LinearAlgebra: norm
 import StaticArrays: SVector, SMatrix
+import ..Containers: Sequence
 import ..Variables: qval, bval
+import ..PathwayWalkers: PathwayWalker
 
 """
     Pathway(sequence::Sequence, pulse_effects::Vector{:Symbol/Number}, readout_index=1)
@@ -35,6 +37,9 @@ Over the pathway the following values are computed. Each can be accessed by call
 - [`duration_dephase`](@ref): The total amount of time the spins spent in the +transverse relative to -transverse state in ms. The absolute value of this can be used to quantify the expected effect of T2'-decay.
 
 ### Effect of gradients
+Some gradients will be scaled/rotated with user-provided values (e.g., bvals/bvecs).
+The area under curve, q-values, and b-values are computed separately for such gradients.
+You can select which gradients to consider when accessing these values.
 - [`qvec`](@ref): Net displacement vector in k-space/q-space.
 - [`qval`](@ref)/[`area_under_curve`](@ref): size of the displacement in k-space/q-space. For a spoiled pathway, this should be large compared with 1/voxel size; for unspoiled pathways it should be (close to) zero.
 - [`bmat`](@ref): Net diffusion weighting due to gradients along the [`Pathway`](@ref) in matrix form.
@@ -47,10 +52,25 @@ struct Pathway
     readout_index :: Integer
 
     # computed
-    duration_states :: SVector{4, Float64}
-    qvec :: SVector{3, Float64}
-    bmat :: SMatrix{3, 3, Float64, 9}
+    duration_states :: Dict{Any, SVector{4, Float64}}
+    qvec :: Dict{Any, SVector{3, Float64}}
+    bmat :: Dict{Any, SMatrix{3, 3, Float64, 9}}
 end
+
+function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_index::Integer)
+    walker = PathwayWalker(pulse_effects, readout_index)
+    walk_pathway!(walker, sequence)
+    return Pathway(
+        sequence,
+        pulse_effects,
+        readout_index,
+
+        Dict(k => SVector{4, Float64}(v) for (k, v) in pairs(walker.duration_states)),
+        Dict(k => SVector{3, Float64}(v) for (k, v) in pairs(walker.qvec)),
+        Dict(k => SMatrix{3, 3, Float64, 9}(v) for (k, v) in pairs(walker.bmat)),
+    )
+end
+
 
 """
     duration_state(pathway::Pathway, transverse::Bool, positive::Bool)
@@ -99,39 +119,51 @@ end
 
 
 """
-    qvec(pathway::Pathway)
+    qvec(pathway::Pathway, scale=nothing, rotate=nothing)
 
 Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
+
+By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
+You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-qvec(pathway::Pathway) = pathway.qvec
+qvec(pathway::Pathway, scale=nothing, rotate=nothing) = pathway.qvec
 
 """
-    qval(pathway::Pathway)
+    qval(pathway::Pathway, scale=nothing, rotate=nothing)
 
 Return net displacement in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
+
+By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
+You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-qval(pathway::Pathway) = norm(qvec(pathway))
+qval(pathway::Pathway, scale=nothing, rotate=nothing) = norm(qvec(pathway)[(scale, rotate)])
 
 """
-    bmat(pathway::Pathway)
+    bmat(pathway::Pathway, scale=nothing, rotate=nothing)
 
 Return 3x3 diffusion-weighted matrix experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
+
+By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
+You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-bmat(pathway::Pathway) = pathway.bmat
+bmat(pathway::Pathway, scale=nothing, rotate=nothing) = pathway.bmat[(scale, rotate)]
 
 """
-    bval(pathway::Pathway)
+    bval(pathway::Pathway, scale=nothing, rotate=nothing)
 
 Return size of diffusion-weighting experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
+
+By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
+You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-bval(pathway::Pathway) = norm(bmat(pathway))
+bval(pathway::Pathway, scale=nothing, rotate=nothing) = norm(bmat(pathway, scale, rotate))
 
 end
