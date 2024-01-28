@@ -52,22 +52,22 @@ struct Pathway
     readout_index :: Integer
 
     # computed
-    duration_states :: Dict{Any, SVector{4, Float64}}
-    qvec :: Dict{Any, SVector{3, Float64}}
-    bmat :: Dict{Any, SMatrix{3, 3, Float64, 9}}
+    duration_states :: Dict{Any, SVector{4, VariableType}}
+    qvec :: Dict{Any, SVector{3, VariableType}}
+    bmat :: Dict{Any, SMatrix{3, 3, VariableType, 9}}
 end
 
 function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_index::Integer)
-    walker = PathwayWalker(pulse_effects, readout_index)
-    walk_pathway!(walker, sequence)
+    walker = PathwayWalker()
+    walk_pathway!(sequence, copy(pulse_effects), walker, Ref(readout_index))
     return Pathway(
         sequence,
         pulse_effects,
         readout_index,
 
-        Dict(k => SVector{4, Float64}(v) for (k, v) in pairs(walker.duration_states)),
-        Dict(k => SVector{3, Float64}(v) for (k, v) in pairs(walker.qvec)),
-        Dict(k => SMatrix{3, 3, Float64, 9}(v) for (k, v) in pairs(walker.bmat)),
+        Dict(k => SVector{4, VariableType}(v) for (k, v) in pairs(walker.duration_states)),
+        Dict(k => SVector{3, VariableType}(v) for (k, v) in pairs(walker.qvec)),
+        Dict(k => SMatrix{3, 3, VariableType, 9}(v) for (k, v) in pairs(walker.bmat)),
     )
 end
 
