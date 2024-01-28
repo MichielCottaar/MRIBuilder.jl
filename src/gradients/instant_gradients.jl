@@ -75,7 +75,7 @@ duration(instant::InstantGradientBlock) = 0.
 variables(::Type{<:InstantGradientBlock}) = [qvec, qval]
 
 function fixed(block::InstantGradientBlock)
-    return FixedInstantGradient(block.orientation, value(qval(block)))
+    return FixedInstantGradient(qvec(block), block.rotate, block.scale)
 end
 
 
