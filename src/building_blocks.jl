@@ -133,14 +133,13 @@ variables(bb::BuildingBlock) = variables(typeof(bb))
 
 struct BuildingBlockPrinter{T<:BuildingBlock}
     bb::T
-    index::Any
     start_time::Union{Nothing, Number}
     spaces::Int
 end
 
 
 
-Base.show(io::IO, block::BuildingBlock) = print(io, BuildingBlockPrinter(block, nothing, nothing, 0))
+Base.show(io::IO, block::BuildingBlock) = print(io, BuildingBlockPrinter(block, nothing, 0))
 
 function _robust_value(possible_number)
     try
@@ -152,9 +151,6 @@ end
 
 function Base.show(io::IO, printer::BuildingBlockPrinter)
     block = printer.bb
-    if !isnothing(printer.index)
-        print(io, printer.index, ": ")
-    end
     print(io, string(typeof(block)), "(")
     variable_names = nameof.(variables(block))
     printed_duration = false
@@ -193,6 +189,7 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         use_start_time = isnothing(printer.start_time) ? 0. : printer.start_time
         print(io, ":")
         for (child_index, child_block) in get_children_blocks(block)
+            print(io, child_index, ": ")
             child_printer = BuildingBlockPrinter(
                 child_block, child_index,
                 _robust_value(start_time(block, child_index) + use_start_time),
