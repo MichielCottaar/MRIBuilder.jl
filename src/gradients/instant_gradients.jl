@@ -1,6 +1,6 @@
 module InstantGradients
 import JuMP: @constraint, @variable, Model, owner_model, AbstractJuMPScalar
-import ...Variables: qvec, bmat, duration, variables, get_free_variable, VariableType
+import ...Variables: qvec, bmat_gradient, duration, variables, get_free_variable, VariableType
 import ...BuildingBlocks: GradientBlock, fixed
 import ...BuildSequences: @global_model_constructor
 import ..FixedGradients: FixedInstantGradient
@@ -70,9 +70,9 @@ end
 
 
 qvec(instant::InstantGradientBlock) = instant.qvec
-bmat(instant::InstantGradientBlock, qstart=nothing) = zeros(3, 3)
+bmat_gradient(instant::InstantGradientBlock, qstart=nothing) = zeros(3, 3)
 duration(instant::InstantGradientBlock) = 0.
-variables(::Type{<:InstantGradientBlock}) = [qval]
+variables(::Type{<:InstantGradientBlock}) = [qvec, qval]
 
 function fixed(block::InstantGradientBlock)
     return FixedInstantGradient(block.orientation, value(qval(block)))

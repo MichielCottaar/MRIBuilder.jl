@@ -19,8 +19,9 @@ all_variables_symbols = [
     :slice_thickness => (:pulse, "Slice thickness of an RF pulse that is active during a gradient.")
 
     # gradients
+    :qvec => (:gradient, "The spatial range and orientation on which the displacements can be detected due to this gradient in 1/um (equivalent to [`area_under_curve_vec`](@ref))"),
     :qval => (:gradient, "The spatial range on which the displacements can be detected due to this gradient in 1/um (equivalent to [`area_under_curve`](@ref))"),
-    :area_under_curve => (:gradient, "Area under the curve of the gradient in 1/um (equivalent to [`qval`](@ref))."),
+    :qval_sqr => (:gradient, "Square of qval in 1/um^2. This can be more efficient to calculate and hence to contrain than `qval` (as it avoids computing a square root)."),
     :δ => (:gradient, "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms."),
     :rise_time => (:gradient, "Time for gradient pulse to reach its maximum value in ms."),
     :flat_time => (:gradient, "Time of gradient pulse at maximum value in ms."),
@@ -53,7 +54,11 @@ variables() = [values(symbol_to_func)...]
 
 
 # Some universal truths
-area_under_curve(bb) = qval(bb)
+qval(bb) = sqrt(qval_sqr(bb))
+function qval_sqr(bb)
+    vec = qvec(bb)
+    return vec[1] * vec[1] + vec[2] * vec[2] + vec[3] * vec[3]
+end
 
 
 # These functions are more fully defined in building_blocks.jl
@@ -93,6 +98,14 @@ function get_free_variable(model::Model, ::Val{:max})
     return var
 end
 
-function bval end
+"""
+    bmat_gradient(gradient::GradientBlock, qstart=(0, 0, 0))
+
+Computes the diffusion-weighting matrix due to a single gradient block.
+
+This should be defined for every `GradientBlock`, but not be called directly.
+Instead, the `bmat` and `bval` should be constrained for specific `Pathways`
+"""
+function bmat_gradient end
 
 end

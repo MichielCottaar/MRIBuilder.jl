@@ -3,7 +3,7 @@ import StaticArrays: SVector
 import ...Variables: VariableType, variables
 import ...BuildingBlocks: GradientBlock
 import JuMP: @constraint, @variable, Model, owner_model
-import ...Variables: qvec, bmat, gradient_strength, slew_rate, duration, variables, VariableType
+import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
 import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
 
 struct AbstractChangingGradientBlock{T<:VariableType} <: GradientBlock
@@ -37,7 +37,7 @@ duration(cgb::AbstractChangingGradientBlock) = cgb.duration
 slew_rate(cgb::AbstractChangingGradientBlock) = (cgb.gradient_strength_end .- cgb.gradient_strength_start) ./ duration(cgb)
 qvec(cgb::AbstractChangingGradientBlock) = (cgb.gradient_strength_start .+ cgb.gradient_strength_end) .* (duration(cgb)/2)
 
-function bmat(cgb::AbstractChangingGradientBlock, qstart)
+function bmat_gradient(cgb::AbstractChangingGradientBlock, qstart)
     # grad = (g1 * (duration - t) + g2 * t) / duration
     #      = g1 + (g2 - g1) * t / duration
     # q = qstart + g1 * t + (g2 - g1) * t^2 / (2 * duration)
@@ -53,11 +53,11 @@ function bmat(cgb::AbstractChangingGradientBlock, qstart)
         duration(cgb)^2 .* qstart .* (
             2 .* cgb.gradient_strength_start' .+
             cgb.gradient_strength_end') ./ 3 .+
-        bmat(cgb)
+        bmat_gradient(cgb)
     )
 end
 
-function bmat(cgb::AbstractChangingGradientBlock)
+function bmat_gradient(cgb::AbstractChangingGradientBlock)
     diff = cgb.gradient_strength_end .- cgb.gradient_strength_start
     return (
         cgb.gradient_strength_start .* cgb.gradient_strength_start' ./ 3 .+
@@ -67,6 +67,6 @@ function bmat(cgb::AbstractChangingGradientBlock)
 end
 
 
-variables(::Type{<:AbstractChangingGradientBlock}) = [duration, qvec, bmat, slew_rate]
+variables(::Type{<:AbstractChangingGradientBlock}) = [duration, slew_rate]
 
 end

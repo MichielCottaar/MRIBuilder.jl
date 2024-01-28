@@ -3,7 +3,7 @@ import StaticArrays: SVector
 import ...Variables: VariableType, variables
 import ...BuildingBlocks: GradientBlock
 import JuMP: @constraint, @variable, Model, owner_model
-import ...Variables: qvec, bmat, gradient_strength, slew_rate, duration, variables, VariableType
+import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
 import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
 
 struct AbstractConstantGradientBlock{T<:VariableType} <: GradientBlock
@@ -37,11 +37,11 @@ gradient_strength(cgb::AbstractConstantGradientBlock) = cgb.gradient_strength
 slew_rate(::AbstractConstantGradientBlock) = zero(SVector{3, Float64})
 qvec(cgb::AbstractConstantGradientBlock) = duration(cgb) .* gradient_strength(cgb)
 
-function bmat(cgb::AbstractConstantGradientBlock)
+function bmat_gradient(cgb::AbstractConstantGradientBlock)
     return (grad .* grad') .* duration(cgb)^3 ./3
 end
 
-function bmat(cgb::AbstractConstantGradientBlock, qstart)
+function bmat_gradient(cgb::AbstractConstantGradientBlock, qstart)
     # \int dt (qstart + t * grad)^2 = 
     #   qstart^2 * duration +
     #   qstart * grad * duration^2 +
@@ -49,10 +49,10 @@ function bmat(cgb::AbstractConstantGradientBlock, qstart)
     return (
         qstart .* qstart' .* duration(cgb) .+
         qstart .* grad' .* duration(cgb)^2 .+
-        bmat(cgb)
+        bmat_gradient(cgb)
     )
 end
 
-variables(::Type{<:AbstractConstantGradientBlock}) = [duration, gradient_strength, qvec, bmat]
+variables(::Type{<:AbstractConstantGradientBlock}) = [duration, gradient_strength]
 
 end
