@@ -67,6 +67,13 @@ variables(::Type{<:Sequence}) = [TR]
 # print timings when printing sequences
 Base.show(io::IO, seq::AbstractSequence) = print(io, BuildingBlockPrinter(seq, nothing, 0., 0))
 
+"""
+Represents a series of [`BuildingBlock`](@ref) run in sequence.
+
+Each [`BuildingBlock`](@ref) is fixed, i.e, it does not contain any free parameters.
+
+A fixed version of any [`Sequence`](@ref) can be created by calling [`fixed`](@ref) on that sequence.
+"""
 struct FixedSequence <: AbstractSequence
     _blocks :: Vector{<:BuildingBlock}
     TR :: Number
