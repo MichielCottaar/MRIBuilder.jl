@@ -2,7 +2,7 @@ module Pathways
 import LinearAlgebra: norm
 import StaticArrays: SVector, SMatrix
 import ..Containers: Sequence
-import ..Variables: qval, bval
+import ..Variables: qval, bval, area_under_curve
 import ..PathwayWalkers: PathwayWalker
 
 """
@@ -119,7 +119,7 @@ end
 
 
 """
-    qvec(pathway::Pathway, scale=nothing, rotate=nothing)
+    qvec(pathway::Pathway; scale=nothing, rotate=nothing)
 
 Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
 
@@ -128,10 +128,10 @@ Only gradients active while the spins are in the transverse plane are considered
 By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-qvec(pathway::Pathway, scale=nothing, rotate=nothing) = pathway.qvec
+qvec(pathway::Pathway; scale=nothing, rotate=nothing) = get(pathway.qvec, (scale, rotate), zero(SVector{3, Float64}))
 
 """
-    qval(pathway::Pathway, scale=nothing, rotate=nothing)
+    qval(pathway::Pathway; scale=nothing, rotate=nothing)
 
 Return net displacement in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
 
@@ -140,10 +140,23 @@ Only gradients active while the spins are in the transverse plane are considered
 By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-qval(pathway::Pathway, scale=nothing, rotate=nothing) = norm(qvec(pathway)[(scale, rotate)])
+qval(pathway::Pathway; scale=nothing, rotate=nothing) = norm(qvec(pathway; scale, rotate))
 
 """
-    bmat(pathway::Pathway, scale=nothing, rotate=nothing)
+    area_under_curve(pathway::Pathway; scale=nothing, rotate=nothing)
+
+Return net displacement in k-space (i.e., spoiling) experienced by the spins following a specific [`Pathway`](@ref).
+
+Only gradients active while the spins are in the transverse plane are considered.
+
+By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
+You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
+"""
+area_under_curve(pathway::Pathway; scale=nothing, rotate=nothing) = qval(pathway; scale, rotate)
+
+
+"""
+    bmat(pathway::Pathway; scale=nothing, rotate=nothing)
 
 Return 3x3 diffusion-weighted matrix experienced by the spins following a specific [`Pathway`](@ref).
 
@@ -152,10 +165,10 @@ Only gradients active while the spins are in the transverse plane are considered
 By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-bmat(pathway::Pathway, scale=nothing, rotate=nothing) = pathway.bmat[(scale, rotate)]
+bmat(pathway::Pathway; scale=nothing, rotate=nothing)  = get(pathway.qvec, (scale, rotate), zero(SMatrix{3, 3, Float64, 9}))
 
 """
-    bval(pathway::Pathway, scale=nothing, rotate=nothing)
+    bval(pathway::Pathway; scale=nothing, rotate=nothing)
 
 Return size of diffusion-weighting experienced by the spins following a specific [`Pathway`](@ref).
 
@@ -164,6 +177,6 @@ Only gradients active while the spins are in the transverse plane are considered
 By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-bval(pathway::Pathway, scale=nothing, rotate=nothing) = norm(bmat(pathway, scale, rotate))
+bval(pathway::Pathway; scale=nothing, rotate=nothing) = norm(bmat(pathway; scale, rotate))
 
 end
