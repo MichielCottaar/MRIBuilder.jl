@@ -1,7 +1,9 @@
 module FixedGradients
 
-import ...BuildingBlocks: GradientBlock, fixed, BuildingBlock
-import ...Variables: variables, duration, qval
+import Printf: @sprintf
+import LinearAlgebra: norm
+import ...BuildingBlocks: GradientBlock, fixed, BuildingBlock, BuildingBlockPrinter
+import ...Variables: variables, duration, qval, gradient_strength, slew_rate
 
 
 """
@@ -49,7 +51,36 @@ variables(::Type{<:FixedGradient}) = []
 
 duration(fg::FixedGradient) = maximum(fg.time)
 
-Base.show(io::IO, fb::FixedGradient) = print(io, "FixedGradient for $(duration(fb)) ms")
+gradient_strength(fg::FixedGradient) = max(maximum(abs.(fg.Gx)), maximum(abs.(fg.Gy)), maximum(abs.(fg.Gz)))
+
+slew_rate(fg::FixedGradient) = maximum(map((fg.Gx, fg.Gy, fg.Gz)) do gradient
+    return maximum(abs.(gradient[2:end] - gradient[1:end-1]) ./ (fg.time[2:end] - fg.time[1:end-1]))
+end)
+
+qvec(fg::FixedGradient) = map((fg.Gx, fg.Gy, fg.Gz)) do gradient
+    weights_double = fg.time[2:end] - fg.time[1:end-1]
+    weights = [weights_double[1] / 2, ((weights_double[1:end-1] + weights_double[2:end]) / 2)..., weights_double[end]/2]
+    return sum(weights .* gradient)
+end
+
+qval(fg::FixedGradient) = norm(qvec(fg))
+
+
+function Base.show(io::IO, printer::BuildingBlockPrinter{<:FixedGradient})
+    fp = printer.bb
+    pp(value::Number) = @sprintf("%.3g", value)
+
+    print(io, "FixedGradient(")
+    if isnothing(printer.start_time)
+        print(io, "duration=", pp(duration(fp)))
+    else
+        print(io, "t=", pp(printer.start_time), "-", pp(printer.start_time + duration(fp)))
+    end
+    for fn in (qval, gradient_strength, slew_rate)
+        print(io, ", $(nameof(fn))=", pp(fn(fp)))
+    end
+    print(io, ")")
+end
 
 """
     FixedInstantGradient(orientation, qval)

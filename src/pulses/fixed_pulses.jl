@@ -1,7 +1,8 @@
 module FixedPulses
 
+import Printf: @sprintf
 import ...BuildingBlocks: RFPulseBlock, fixed, BuildingBlockPrinter
-import ...Variables: variables, duration, amplitude, effective_time
+import ...Variables: variables, duration, amplitude, effective_time, flip_angle
 
 
 """
@@ -22,6 +23,7 @@ struct FixedPulse <: RFPulseBlock
     function FixedPulse(time::AbstractVector{<:Number}, amplitude::AbstractVector{<:Number}, phase::AbstractVector{<:Number})
         @assert length(time) == length(amplitude)
         @assert length(time) == length(phase)
+        @assert all(time .>= 0)
         new(Float64.(time), Float64.(amplitude), Float64.(phase))
     end
 end
@@ -30,14 +32,29 @@ function FixedPulse(time::AbstractVector{<:Number}, amplitude::AbstractVector{<:
     return FixedPulse(time, amplitude, (time .- time[1]) .* (frequency * 360) .+ phase)
 end
 
-variables(::Type{<:FixedPulse}) = []
+variables(::Type{<:FixedPulse}) = [duration, flip_angle, effective_time]
 
 duration(fp::FixedPulse) = maximum(fp.time)
 amplitude(fp::FixedPulse) = maximum(abs.(fp.amplitude))
-effective_time(pulse::FixedPulse) = pulse.time[argmax(abs(pulse.amplitude))]
+effective_time(pulse::FixedPulse) = pulse.time[argmax(abs.(pulse.amplitude))]
+function flip_angle(pulse::FixedPulse)
+    weights_double = pulse.time[2:end] - pulse.time[1:end-1]
+    weights = [weights_double[1] / 2, ((weights_double[1:end-1] + weights_double[2:end]) / 2)..., weights_double[end]/2]
+    return sum(weights .* pulse.amplitude) * 360
+end
 
-Base.show(io::IO, fp::FixedPulse) = print(io, "FixedPulse for $(duration(fp)) ms (peak at $(effective_time(fp)) ms)")
+function Base.show(io::IO, printer::BuildingBlockPrinter{<:FixedPulse})
+    fp = printer.bb
+    pp(value::Number) = @sprintf("%.3g", value)
 
+    print(io, "FixedPulse(")
+    if isnothing(printer.start_time)
+        print(io, "duration=", pp(duration(fp)))
+    else
+        print(io, "t=", pp(printer.start_time), "-", pp(printer.start_time + duration(fp)))
+    end
+    print(io, ", flip_angle=", pp(flip_angle(fp)), ", effective_time=", pp(effective_time(fp)), ")")
+end
 
 
 """
