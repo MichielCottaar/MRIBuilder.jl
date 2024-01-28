@@ -14,7 +14,7 @@ struct AbstractConstantGradientBlock{T<:VariableType} <: GradientBlock
 end
 
 """
-    ConstantGradientBlock(duration, gradient_strength, rotate, scale)
+    ConstantGradientBlock(gradient_strength, duration, rotate, scale)
 
 Underlying type for any flat part in a gradient waveform.
 It can overlap with an [`RFPulseBlock`], in which case it will be a `SliceSelectPulse`
