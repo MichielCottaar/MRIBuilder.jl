@@ -6,7 +6,7 @@ module PulsedGradients
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
 import ...Variables: qval, bval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
-import ...BuildingBlocks: ContainerBlock, duration, set_simple_constraints!, fixed, start_time, get_children_blocks
+import ...BuildingBlocks: ContainerBlock, duration, set_simple_constraints!, fixed, start_time, get_children_indices
 import ...BuildSequences: @global_model_constructor
 import ..FixedGradients: FixedGradient
 import ..ChangingGradientBlocks: ChangingGradientBlock

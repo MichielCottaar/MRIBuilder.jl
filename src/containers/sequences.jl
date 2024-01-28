@@ -5,7 +5,7 @@ module Sequences
 import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR, end_time
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_blocks, scanner_constraints!, fixed, BuildingBlockPrinter
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_indices, scanner_constraints!, fixed, BuildingBlockPrinter
 import ..FixedBlocks: FixedBlock
 
 abstract type AbstractSequence <: ContainerBlock end
@@ -48,7 +48,7 @@ Sequence(model::Model, blocks...; TR=nothing, scanner=nothing) = Sequence(model,
 
 Base.length(seq::AbstractSequence) = length(seq._blocks)
 Base.getindex(seq::AbstractSequence, index) = seq._blocks[index]
-get_children_blocks(seq::AbstractSequence) = enumerate(seq._blocks)
+get_children_indices(seq::AbstractSequence) = eachindex(seq._blocks)
 
 """
     start_time(sequence::Sequence, index::Integer, args...)

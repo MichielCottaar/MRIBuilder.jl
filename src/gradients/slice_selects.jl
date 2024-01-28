@@ -1,6 +1,6 @@
 module SliceSelects
 import JuMP: Model
-import ...BuildingBlocks: RFPulseBlock, ContainerBlock, get_children_blocks
+import ...BuildingBlocks: RFPulseBlock, ContainerBlock, get_children_indices
 import ...Variables: VariableType, slice_thickness, get_free_variable, effective_time, start_time, qvec, bmat, qval, bval
 import ...Variables: flip_angle, amplitude, phase, frequency, bandwidth, inverse_bandwidth, N_left, N_right
 import ..ConstantGradientBlocks: ConstantGradientBlock
@@ -47,7 +47,7 @@ function AbstractSliceSelect{VariableType}(model::Model, gradient_strength::SVec
 end
 
 
-get_children_blocks(select::SliceSelect) = [(symb, getproperty(select, symb)) for symb in (:flat_before, :pulse, :flat_after)]
+get_children_indices(::SliceSelect) = (:flat_before, :pulse, :flat_after)
 Base.get_index(select::SliceSelect, index::Symbol) = getproperty(select, index)
 
 start_time(select::SliceSelect, symbol::Symbol) = start_time(select, Val(symbol))

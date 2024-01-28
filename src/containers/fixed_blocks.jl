@@ -1,7 +1,7 @@
 
 module FixedBlocks
 
-import ...BuildingBlocks: BuildingBlock, ContainerBlock
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, get_children_indices
 import ...Gradients: FixedGradient
 import ...Pulses: FixedPulse
 import ...Variables: duration, variables
@@ -58,13 +58,13 @@ start_time(fb::FixedBlock, index::Symbol) = start_time(fb, Val(index))
 start_time(fb::FixedBlock, ::Val{:pulse}) = fb.pulse_delay
 start_time(fb::FixedBlock, ::Val{:gradient}) = fb.gradient_delay
 
-function get_children_blocks(fb::FixedBlock)
-    res = Tuple{Symbol, BuildingBlock}[]
+function get_children_indices(fb::FixedBlock)
+    res = Symbol[]
     if !isnothing(fb.pulse)
-        push!((:pulse, fb.pulse))
+        push!(:pulse)
     end
     if !isnothing(fb. gradient)
-        push!((:gradient, fb.gradient))
+        push!(:gradient)
     end
     return res
 end
