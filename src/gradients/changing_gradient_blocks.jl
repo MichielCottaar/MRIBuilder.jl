@@ -15,7 +15,7 @@ struct AbstractChangingGradientBlock{T<:VariableType} <: GradientBlock
 end
 
 """
-    ChangingGradientBlock(duration, gradient_strength, rotate, scale)
+    ChangingGradientBlock(grad1, grad2, duration, rotate, scale)
 
 Underlying type for any linearly changing part in a gradient waveform.
 
@@ -26,7 +26,7 @@ Do not create this directly, it will be created by the gradient waveforms.
 const ChangingGradientBlock = AbstractChangingGradientBlock{VariableType}
 
 """
-    FixedChangingGradientBlock(duration, gradient_strength, rotate, scale)
+    FixedChangingGradientBlock(grad1, grad2, duration, rotate, scale)
 
 Fixed equivalent of [`ChangingGradientBlock`](@ref).
 """

@@ -26,7 +26,7 @@ Do not create this directly, it will be created by the gradient waveforms.
 const ConstantGradientBlock = AbstractConstantGradientBlock{VariableType}
 
 """
-    FixedConstantGradientBlock(duration, gradient_strength, rotate, scale)
+    FixedConstantGradientBlock(gradient_strength, duration, rotate, scale)
 
 Fixed equivalent of [`ConstantGradientBlock`](@ref).
 """
