@@ -12,9 +12,11 @@ all_variables_symbols = [
     :amplitude => (:pulse, "The maximum amplitude of an RF pulse in kHz"),
     :phase => (:pulse, "The angle of the phase of an RF pulse in KHz"),
     :frequency => (:pulse, "The off-resonance frequency of an RF pulse (relative to the Larmor frequency of water) in KHz"),
-    :bandwidth => (:pulse, "Bandwidth of the RF pulse in kHz"),
+    :bandwidth => (:pulse, "Bandwidth of the RF pulse in kHz. If you are going to divide by the bandwidth, it can be more efficient to use the [`inverse_bandwidth`](@ref)."),
+    :inverse_bandwidth => (:pulse, "Inverse of the [`bandwidth`](@ref) of the RF pulse in ms"),
     :N_left => (:pulse, "The number of zero crossings of the RF pulse before the main peak"),
     :N_right => (:pulse, "The number of zero crossings of the RF pulse after the main peak"),
+    :slice_thickness => (:pulse, "Slice thickness of an RF pulse that is active during a gradient.")
 
     # gradients
     :qval => (:gradient, "The spatial range on which the displacements can be detected due to this gradient in 1/um (equivalent to [`area_under_curve`](@ref))"),
