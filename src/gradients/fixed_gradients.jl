@@ -2,8 +2,10 @@ module FixedGradients
 
 import Printf: @sprintf
 import LinearAlgebra: norm
-import ...BuildingBlocks: GradientBlock, fixed, BuildingBlock, BuildingBlockPrinter
-import ...Variables: variables, duration, qval, gradient_strength, slew_rate
+import StaticArrays: SVector
+import ...BuildingBlocks: ContainerBlock, fixed, BuildingBlock, BuildingBlockPrinter, get_children_blocks
+import ...Variables: variables, duration, qvec, gradient_strength, slew_rate, start_time
+import ..ChangingGradientBlocks: FixedChangingGradientBlock
 
 
 """
@@ -22,17 +24,27 @@ All arguments should be arrays of the same length N defining these control point
 """
 struct FixedGradient <: GradientBlock
     time :: Vector{Float64}
-    Gx :: Vector{Float64}
-    Gy :: Vector{Float64}
-    Gz :: Vector{Float64}
-    rotate :: Bool
-    function FixedGradient(time::AbstractVector{<:Number}, Gx::AbstractVector{<:Number}, Gy::AbstractVector{<:Number}, Gz::AbstractVector{<:Number}; rotate=false)
+    gradient_strength :: Vector{SVector{3, Float64}}
+    rotate :: Union{Symbol, Nothing}
+    scale :: Union{Symbol, Nothing}
+    function FixedGradient(time::AbstractVector{<:Number}, Gx::AbstractVector{<:Number}, Gy::AbstractVector{<:Number}, Gz::AbstractVector{<:Number}; rotate=nothing, scale=nothing)
         @assert length(time) == length(Gx)
         @assert length(time) == length(Gy)
         @assert length(time) == length(Gz)
-        new(Float64.(time), Float64.(Gx), Float64.(Gy), Float64.(Gz), rotate)
+        grad = [SVector{3, Float64}(Gx[i], Gy[i], Gz[i]) for i in eachindex(Gx)]
+        new(Float64.(time), grad, rotate, scale)
     end
 end
+
+get_children_indices(fg::FixedGradient) = 1:(length(fg.time)-1)
+Base.get_index(fg::FixedGradient, index::Int) = FixedChangingGradientBlock(
+    fg.gradient_strength[index],
+    fg.gradient_strength[index + 1],
+    fg.times[index + 1] - fg.times[index],
+    rotate,
+    scale,
+)
+start_time(fg::FixedGradient, index::Int) = fg.times[index]
 
 function FixedGradient(time::AbstractVector{<:Number}, arr::AbstractVector{<:AbstractVector{<:Number}}; kwargs...) 
     @assert all(length.(arr) .== 3)
@@ -51,19 +63,22 @@ variables(::Type{<:FixedGradient}) = []
 
 duration(fg::FixedGradient) = maximum(fg.time)
 
-gradient_strength(fg::FixedGradient) = max(maximum(abs.(fg.Gx)), maximum(abs.(fg.Gy)), maximum(abs.(fg.Gz)))
-
-slew_rate(fg::FixedGradient) = maximum(map((fg.Gx, fg.Gy, fg.Gz)) do gradient
-    return maximum(abs.(gradient[2:end] - gradient[1:end-1]) ./ (fg.time[2:end] - fg.time[1:end-1]))
-end)
-
-qvec(fg::FixedGradient) = map((fg.Gx, fg.Gy, fg.Gz)) do gradient
-    weights_double = fg.time[2:end] - fg.time[1:end-1]
-    weights = [weights_double[1] / 2, ((weights_double[1:end-1] + weights_double[2:end]) / 2)..., weights_double[end]/2]
-    return sum(weights .* gradient)
+function gradient_strength(fg::FixedGradient)
+    if isnothing(fg.rotate)
+        return maximum(map(g -> max(abs.(g)...), fg.gradient_strength))
+    else
+        return maximum(map(norm, fg.gradient_strength))
+    end
 end
 
-qval(fg::FixedGradient) = norm(qvec(fg))
+function slew_rate(fg::FixedGradient)
+    diff = (fg.gradient_strength[2:end] .- fg.gradient_strength[1:end-1]) ./ (fg.time[2:end] - fg.time[1:end-1])
+    if isnothing(fg.rotate)
+        return maximum(map(d -> max(abs.(d)...), diff))
+    else
+        return maximum(map(norm, diff))
+    end
+end
 
 
 function Base.show(io::IO, printer::BuildingBlockPrinter{<:FixedGradient})
@@ -88,12 +103,13 @@ end
 Instantaneous MR gradient with no free variables.
 """
 struct FixedInstantGradient <: GradientBlock
-    orientation :: Any
-    qval :: Number
+    qvec :: SVector{3, Number}
+    rotate :: Union{Nothing, Symbol}
+    scale :: Union{Nothing, Symbol}
 end
 
 duraction(instant::FixedInstantGradient) = 0.
-qval(instant::FixedInstantGradient) = instant.qval
+qvec(instant::FixedInstantGradient) = instant.qvec
 
 fixed(f::Union{FixedGradient, FixedInstantGradient}) = f
 
