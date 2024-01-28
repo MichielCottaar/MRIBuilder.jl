@@ -11,7 +11,7 @@ import ..FixedGradients: FixedInstantGradient
 Defines an instantaneous gradient.
 
 ## Parameters
-- `orientation` sets the gradient orienation (ignored if `qvec` is set). Can be set to a vector for a fixed orientation. Otherwise the orientation will be aligned with the `rotate` (if set) or fully free (if `rotate` is nothing).
+- `orientation` sets the gradient orienation (ignored if `qvec` is set). Can be set to a vector for a fixed orientation. Otherwise the orientation will be aligned with the `rotate` (if set) or fully free (if `rotate` is nothing). Set to :flip to point in the inverse of the user-provided `rotate`.
 - `rotate`: with which user-set parameter will this gradient be rotated (e.g., :bvec). Default is no rotation.
 - `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling.
 
@@ -28,31 +28,40 @@ end
 
 @global_model_constructor InstantGradientBlock
 
-function InstantGradientBlock(model::Model; orientation=nothing, qval=nothing, qvec=nothing, rotate=nothing, scale=nothing)
-    used_qval = false
-    if isnothing(qvec)
-        if isnothing(orientation)
-            if isnothing(rotate)
-                qvec = SVector{3}(
-                    get_free_variable(nothing),
-                    get_free_variable(nothing),
-                    get_free_variable(nothing),
-                )
-            else
-                qvec = SVector{3}(
-                    get_free_variable(qval),
-                    0.,
-                    0.,
-                )
-                used_qval = true
-            end
-        else
-            qval = get_free_variable(qval)
-            qvec = (orientation ./ norm(orientation)) * qval
-            used_qval = true
-        end
+function interpret_orientation(orientation, qval, qvec, will_rotate)
+    if !isnothing(qvec)
+        return (false, qvec)
     end
+    if orientation == :flip
+        @assert will_rotate "setting `orientation=:flip` only makes sense if the `rotate` is set as well."
+        return (true, SVector{3}(
+            -get_free_variable(qval),
+            0.,
+            0.,
+        ))
+    end
+    if isnothing(orientation)
+        if !will_rotate
+            return (false, SVector{3}(
+                get_free_variable(nothing),
+                get_free_variable(nothing),
+                get_free_variable(nothing),
+            ))
+        else
+            return (true, SVector{3}(
+                get_free_variable(qval),
+                0.,
+                0.,
+            ))
+        end
+    else
+        qval = get_free_variable(qval)
+        return (true, (orientation ./ norm(orientation)) * qval)
+    end
+end
 
+function InstantGradientBlock(model::Model; orientation=nothing, qval=nothing, qvec=nothing, rotate=nothing, scale=nothing)
+    (used_qval, qvec) = interpret_orientation(orientation, qval, qvec, !isnothing(rotate))
     res = InstantGradientBlock(
         model,
         qvec,
