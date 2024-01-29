@@ -65,7 +65,7 @@ TR(seq::AbstractSequence) = seq.TR
 variables(::Type{<:Sequence}) = [TR]
 
 # print timings when printing sequences
-Base.show(io::IO, seq::AbstractSequence) = print(io, BuildingBlockPrinter(seq, nothing, 0., 0))
+Base.show(io::IO, seq::AbstractSequence) = print(io, BuildingBlockPrinter(seq, 0., 0))
 
 """
 Represents a series of [`BuildingBlock`](@ref) run in sequence.
