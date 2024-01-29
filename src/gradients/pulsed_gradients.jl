@@ -98,9 +98,9 @@ end
 
 rise_time(pg::PulsedGradient) = duration(pg.rise)
 flat_time(pg::PulsedGradient) = duration(pg.flat)
-gradient_strength_vec(g::PulsedGradient) = rise_time(g) * slew_rate(g)
+gradient_strength_vec(g::PulsedGradient) = rise_time(g) * slew_rate_vec(g)
 gradient_strength(g::PulsedGradient) = isnothing(g.scaling) ? maximum(gradient_strength_vec(g)) : (res.scaling * rise_time(g))
-slew_rate_vec(g::PulsedGradient) = g.slew_rate_vec
+slew_rate_vec(g::PulsedGradient) = abs.(g.slew_rate_vec)
 slew_rate(g::PulsedGradient) = isnothing(g.scaling) ? maximum(slew_rate_vec(g)) : res.scaling
 δ(g::PulsedGradient) = rise_time(g) + flat_time(g)
 duration(g::PulsedGradient) = 2 * rise_time(g) + flat_time(g)
@@ -112,6 +112,11 @@ Base.getindex(pg::PulsedGradient, symbol::Symbol) = pg[Val(symbol)]
 Base.getindex(pg::PulsedGradient, ::Val{:rise}) = pg.rise
 Base.getindex(pg::PulsedGradient, ::Val{:flat}) = pg.flat
 Base.getindex(pg::PulsedGradient, ::Val{:fall}) = pg.fall
+
+start_time(pg::PulsedGradient, symbol::Symbol) = pg[Val(symbol)]
+start_time(pg::PulsedGradient, ::Val{:rise}) = 0.
+start_time(pg::PulsedGradient, ::Val{:flat}) = rise_time(pg)
+start_time(pg::PulsedGradient, ::Val{:fall}) = δ(pg)
 
 
 variables(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength_vec, duration, rise_time, flat_time]
