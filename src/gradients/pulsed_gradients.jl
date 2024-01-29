@@ -91,8 +91,8 @@ function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, fl
     )
 
     set_simple_constraints!(model, res, kwargs)
-    @constraint model res.flat_time >= 0
-    @constraint model res.rise_time >= 0
+    @constraint model flat_time >= 0
+    @constraint model rise_time >= 0
     return res
 end
 
