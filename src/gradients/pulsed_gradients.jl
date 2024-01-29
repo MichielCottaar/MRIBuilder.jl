@@ -5,7 +5,7 @@ module PulsedGradients
 
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
-import ...Variables: qval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
+import ...Variables: qval, qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
 import ...BuildingBlocks: ContainerBlock, duration, set_simple_constraints!, fixed, start_time, get_children_indices
 import ...BuildSequences: @global_model_constructor
 import ..FixedGradients: FixedGradient
@@ -33,7 +33,7 @@ If not set, they will be determined during the sequence optimisation.
 - [`duration`](@ref): total pulse duration (2 * `rise_time` + `flat_time`) in ms.
 ### Gradient variables
 - [`gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
-- [`qval`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
+- [`qval`](@ref)/[`qvec`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
 
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
@@ -78,6 +78,7 @@ function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, fl
         end
     end
     rise_time = get_free_variable(model, rise_time)
+    flat_time = get_free_variable(model, flat_time)
     grad_vec = slew_rate .* rise_time
 
     res = PulsedGradient(
@@ -95,14 +96,16 @@ function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, fl
     return res
 end
 
-rise_time(pg::PulsedGradient) = pg.rise_time
-flat_time(pg::PulsedGradient) = pg.flat_time
+rise_time(pg::PulsedGradient) = duration(pg.rise)
+flat_time(pg::PulsedGradient) = duration(pg.flat)
 gradient_strength_vec(g::PulsedGradient) = rise_time(g) * slew_rate(g)
 gradient_strength(g::PulsedGradient) = isnothing(g.scaling) ? maximum(gradient_strength_vec(g)) : (res.scaling * rise_time(g))
 slew_rate_vec(g::PulsedGradient) = g.slew_rate_vec
 slew_rate(g::PulsedGradient) = isnothing(g.scaling) ? maximum(slew_rate_vec(g)) : res.scaling
 δ(g::PulsedGradient) = rise_time(g) + flat_time(g)
 duration(g::PulsedGradient) = 2 * rise_time(g) + flat_time(g)
+qvec(g::PulsedGradient) = δ(g) .* gradient_strength_vec(g)
+qval(g::PulsedGradient) = δ(g) .* gradient_strength(g)
 
 get_children_indices(::PulsedGradient) = (:rise, :flat, :fall)
 Base.getindex(pg::PulsedGradient, symbol::Symbol) = pg[Val(symbol)]
