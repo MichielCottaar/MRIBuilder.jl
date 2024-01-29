@@ -37,7 +37,7 @@ struct FixedGradient <: GradientBlock
 end
 
 get_children_indices(fg::FixedGradient) = 1:(length(fg.time)-1)
-Base.get_index(fg::FixedGradient, index::Int) = FixedChangingGradientBlock(
+Base.getindex(fg::FixedGradient, index::Int) = FixedChangingGradientBlock(
     fg.gradient_strength[index],
     fg.gradient_strength[index + 1],
     fg.times[index + 1] - fg.times[index],

@@ -16,7 +16,7 @@ all_variables_symbols = [
     :inverse_bandwidth => (:pulse, "Inverse of the [`bandwidth`](@ref) of the RF pulse in ms"),
     :N_left => (:pulse, "The number of zero crossings of the RF pulse before the main peak"),
     :N_right => (:pulse, "The number of zero crossings of the RF pulse after the main peak"),
-    :slice_thickness => (:pulse, "Slice thickness of an RF pulse that is active during a gradient.")
+    :slice_thickness => (:pulse, "Slice thickness of an RF pulse that is active during a gradient."),
 
     # gradients
     :qvec => (:gradient, "The spatial range and orientation on which the displacements can be detected due to this gradient in 1/um (equivalent to [`area_under_curve_vec`](@ref))"),
