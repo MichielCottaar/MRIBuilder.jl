@@ -1,4 +1,5 @@
 module InstantGradients
+import StaticArrays: SVector
 import JuMP: @constraint, @variable, Model, owner_model, AbstractJuMPScalar
 import ...Variables: qvec, bmat_gradient, duration, variables, get_free_variable, VariableType
 import ...BuildingBlocks: GradientBlock, fixed
