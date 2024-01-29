@@ -82,9 +82,9 @@ function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, fl
 
     res = PulsedGradient(
         model,
-        ChangingGradientBlock(zeros(3), grad_vec, rise_time, rotate, scale)
-        ConstantGradientBlock(grad_vec, flat_time, rotate, scale)
-        ChangingGradientBlock(grad_vec, zeros(3), rise_time, rotate, scale)
+        ChangingGradientBlock(zeros(3), grad_vec, rise_time, rotate, scale),
+        ConstantGradientBlock(grad_vec, flat_time, rotate, scale),
+        ChangingGradientBlock(grad_vec, zeros(3), rise_time, rotate, scale),
         slew_rate,
         rate_1d,
     )
