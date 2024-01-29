@@ -2,7 +2,7 @@ module SliceSelects
 import JuMP: Model
 import StaticArrays: SVector
 import ...BuildingBlocks: RFPulseBlock, ContainerBlock, get_children_indices
-import ...Variables: VariableType, slice_thickness, get_free_variable, effective_time, start_time, qvec, bmat, qval, bval
+import ...Variables: VariableType, slice_thickness, get_free_variable, effective_time, start_time, qvec, bmat_gradient, qval
 import ...Variables: flip_angle, amplitude, phase, frequency, bandwidth, inverse_bandwidth, N_left, N_right
 import ..ConstantGradientBlocks: ConstantGradientBlock
 
@@ -58,15 +58,15 @@ start_time(select::SliceSelect, ::Val{:flat_after}) = duration(select.flat_befor
 start_time(select::SliceSelect, ::Val{:flat_total}) = 0.
 
 qvec(select::SliceSelect) = qvec(select.flat_total)
-bmat(select::SliceSelect) = bmat(select.flat_total)
+bmat_gradient(select::SliceSelect) = bmat_gradient(select.flat_total)
 duration(select::SliceSelect) = duration(select.flat_total)
 gradient_strength(select::SliceSelect) = gradient_strength(select.flat_total)
 slice_thickness(select::SliceSelect) = bandwidth(select) ./ gradient_strength(select)
 
-for fn in (flip_angle, amplitude, phase, frequency, bandwidth, inverse_bandwidth, N_left, N_right)
-    @eval $fn(select::SliceSelect) = $fn(select.pulse)
+for fn in (:flip_angle, :amplitude, :phase, :frequency, :bandwidth, :inverse_bandwidth, :N_left, :N_right)
+    @eval $(fn)(select::SliceSelect) = $(fn)(select.pulse)
 end
 
-variables(::Type{<:SliceSelect}) = (duration, gradient_strength, slice_thickness, qvec, bmat, qval, bval, flip_angle, amplitude, phase, frequency, bandwidth, inverse_bandwidth, N_left, N_right)
+variables(::Type{<:SliceSelect}) = (duration, gradient_strength, slice_thickness, qvec, qval, flip_angle, amplitude, phase, frequency, bandwidth, inverse_bandwidth, N_left, N_right)
 
 end
