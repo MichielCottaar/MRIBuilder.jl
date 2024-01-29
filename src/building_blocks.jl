@@ -178,17 +178,16 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         print(io, ", ")
     end
     for name in propertynames(block)
-        value = getproperty(block, name)
+        ft = fieldtype(typeof(block), name)
         if (
-            name in variable_names || 
-            value isa AbstractJuMPScalar ||
-            (value isa AbstractVector && eltype(value) isa AbstractJuMPScalar) ||
-            value isa Model || 
-            value isa BuildingBlock || 
-            string(name)[1] == '_'
+            ft in (VariableType, Model) ||
+            ft <: BuildingBlock ||
+            (ft <: AbstractVector && eltype(ft) == VariableType) ||
+            string(name)[1] == "_"
         )
             continue
         end
+
         print(io, name, "=", repr(value), ", ")
     end
 
