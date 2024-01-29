@@ -2,7 +2,7 @@ module BuildingBlocks
 import JuMP: has_values, value, Model, @constraint, @objective, owner_model, objective_function, optimize!, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Scanners: Scanner
-import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time
+import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType
 
 """
 Parent type for all individual components out of which a sequence can be built.
@@ -151,13 +151,15 @@ end
 
 Base.show(io::IO, block::BuildingBlock) = print(io, BuildingBlockPrinter(block, nothing, 0))
 
-function _robust_value(possible_number)
+function _robust_value(possible_number::VariableType)
     try
         return value(possible_number)
     catch
         return nothing
     end
 end
+
+_robust_value(possible_vector::AbstractVector) = _robust_value.(possible_vector)
 
 function Base.show(io::IO, printer::BuildingBlockPrinter)
     block = printer.bb
@@ -168,6 +170,7 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         print(io, "t=", @sprintf("%.3g", printer.start_time))
 
         dur = _robust_value(duration(block))
+        @assert !(dur isa AbstractVector)
         if !isnothing(dur) && !iszero(dur)
             print(io, "-", @sprintf("%.3g", printer.start_time + dur))
             printed_duration = true
@@ -176,7 +179,14 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
     end
     for name in propertynames(block)
         value = getproperty(block, name)
-        if name in variable_names || value isa Model || value isa BuildingBlock || string(name)[1] == '_'
+        if (
+            name in variable_names || 
+            value isa AbstractJuMPScalar ||
+            (value isa AbstractVector && eltype(value) isa AbstractJuMPScalar) ||
+            value isa Model || 
+            value isa BuildingBlock || 
+            string(name)[1] == '_'
+        )
             continue
         end
         print(io, name, "=", repr(value), ", ")
@@ -190,7 +200,11 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         if isnothing(numeric_value)
             continue
         end
-        printed_value = @sprintf("%.3g", numeric_value)
+        if numeric_value isa AbstractVector
+            printed_value = "[" * join(map(v -> @sprintf("%.3g", v), numeric_value), ", ") * "]"
+        else
+            printed_value = @sprintf("%.3g", numeric_value)
+        end
         print(io, "$(nameof(fn))=$(printed_value), ")
     end
     print(io, ")")
@@ -199,13 +213,12 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         use_start_time = isnothing(printer.start_time) ? 0. : printer.start_time
         print(io, ":")
         for (child_index, child_block) in get_children_blocks(block)
-            print(io, child_index, ": ")
             child_printer = BuildingBlockPrinter(
-                child_block, child_index,
+                child_block,
                 _robust_value(start_time(block, child_index) + use_start_time),
                 printer.spaces + 2
             )
-            print(io, "\n", repeat(' ', printer.spaces), child_printer)
+            print(io, "\n", repeat(' ', printer.spaces + 2), "- ", child_index, ": ", child_printer)
         end
     end
 end
