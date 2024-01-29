@@ -43,7 +43,7 @@ mutable struct PulsedGradient <: ContainerBlock
     flat :: ConstantGradientBlock
     fall :: ChangingGradientBlock
     slew_rate_vec :: SVector{3, VariableType}
-    scaling :: Union{Nothing, VariableType}
+    _scaling :: Union{Nothing, VariableType}
 end
 
 @global_model_constructor PulsedGradient
@@ -99,9 +99,9 @@ end
 rise_time(pg::PulsedGradient) = duration(pg.rise)
 flat_time(pg::PulsedGradient) = duration(pg.flat)
 gradient_strength_vec(g::PulsedGradient) = rise_time(g) * slew_rate_vec(g)
-gradient_strength(g::PulsedGradient) = isnothing(g.scaling) ? maximum(gradient_strength_vec(g)) : (res.scaling * rise_time(g))
+gradient_strength(g::PulsedGradient) = isnothing(g._scaling) ? maximum(gradient_strength_vec(g)) : (res._scaling * rise_time(g))
 slew_rate_vec(g::PulsedGradient) = g.slew_rate_vec
-slew_rate(g::PulsedGradient) = isnothing(g.scaling) ? maximum(abs.(slew_rate_vec(g))) : res.scaling
+slew_rate(g::PulsedGradient) = isnothing(g._scaling) ? maximum(abs.(slew_rate_vec(g))) : res._scaling
 δ(g::PulsedGradient) = rise_time(g) + flat_time(g)
 duration(g::PulsedGradient) = 2 * rise_time(g) + flat_time(g)
 qvec(g::PulsedGradient) = δ(g) .* gradient_strength_vec(g)
