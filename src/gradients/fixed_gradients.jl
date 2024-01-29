@@ -3,7 +3,7 @@ module FixedGradients
 import Printf: @sprintf
 import LinearAlgebra: norm
 import StaticArrays: SVector
-import ...BuildingBlocks: ContainerBlock, fixed, BuildingBlock, BuildingBlockPrinter, get_children_blocks
+import ...BuildingBlocks: ContainerBlock, fixed, BuildingBlock, BuildingBlockPrinter, get_children_blocks, GradientBlock
 import ...Variables: variables, duration, qvec, gradient_strength, slew_rate, start_time
 import ..ChangingGradientBlocks: FixedChangingGradientBlock
 
@@ -22,7 +22,7 @@ All arguments should be arrays of the same length N defining these control point
 - `Gz`: gradient in the z-direction at every timepoint (assumed zero if not provided).
 - `gradients`: length-3 array at every timepoint defining the x-, y-, and z- direction of the gradient.
 """
-struct FixedGradient <: GradientBlock
+struct FixedGradient <: ContainerBlock
     time :: Vector{Float64}
     gradient_strength :: Vector{SVector{3, Float64}}
     rotate :: Union{Symbol, Nothing}
