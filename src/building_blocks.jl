@@ -183,7 +183,7 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
             ft in (VariableType, Model) ||
             ft <: BuildingBlock ||
             (ft <: AbstractVector && eltype(ft) == VariableType) ||
-            string(name)[1] == "_"
+            string(name)[1] == '_'
         )
             continue
         end
