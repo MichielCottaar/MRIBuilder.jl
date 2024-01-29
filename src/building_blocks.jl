@@ -45,7 +45,7 @@ abstract type ContainerBlock <: BuildingBlock end
 
 Return all the [`BuildingBlock`](@ref) objects includes in this container with their indices.
 """
-get_children_blocks(bb::BuildingBlock) = [(i, bb[i]) for i in get_children_indices]
+get_children_blocks(bb::BuildingBlock) = [(i, bb[i]) for i in get_children_indices(bb)]
 
 """
     get_children_indices(container)
