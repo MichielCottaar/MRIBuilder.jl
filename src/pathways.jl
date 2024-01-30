@@ -315,9 +315,8 @@ If that gradient tracker does not exist, it will be created.
 
 This function is used to get the `walker` up to date till the start of a gradient, pulse, or final readout.
 """
-function update_walker_till_time!(walker::PathwayWalker, new_time::Float64, gradient_key=nothing)
+function update_walker_till_time!(walker::PathwayWalker, new_time::VariableType, gradient_key=nothing)
     # update duration state and pulse time
-    @assert new_time >= walker.last_pulse_time
     index = duration_state_index(walker.is_transverse, walker.is_positive)
     walker.duration_states[index] = walker.duration_states[index] + (new_time - walker.last_pulse_time)
     walker.last_pulse_time = new_time
@@ -341,15 +340,14 @@ The `bmat` is updated with the outer produce of `qvec` with itself multiplied by
 
 When called with the first signature the tracker will be created from scratch if a tracker with that `key` does not exist.
 """
-function update_gradient_tracker_till_time!(walker::PathwayWalker, key::Tuple, new_time::Float64)
+function update_gradient_tracker_till_time!(walker::PathwayWalker, key::Tuple, new_time::VariableType)
     if key in keys(walker.gradient_trackers)
         walker.gradient_trackers[key] = GradientTracker()
     end
     update_gradient_tracker_till_time!(walker.gradient_trackers[key], new_time)
 end
 
-function update_gradient_tracker_till_time!(gradient_tracker::GradientTracker, new_time::Float64)
-    @assert new_time >= gradient_tracker.last_gradient_time
+function update_gradient_tracker_till_time!(gradient_tracker::GradientTracker, new_time::VariableType)
     gradient_tracker.bmat += (
         (gradient_tracker.qvec .* gradient_tracker.qvec') .* 
         (pulse_time - gradient_tracker.last_gradient_time)
@@ -383,6 +381,7 @@ function update_walker_pulse!(walker::PathwayWalker, pulse_effects::AbstractVect
 
     update_walker_till_time!(walker, pulse_time)
 
+    prev_sign = walker.is_positive
     # -transverse, +longitudinal, +transverse, -longitudinal, -transverse, +longitudinal
     ordering = [(true, false), (false, true), (true, true), (false, false), (true, false)]
 
