@@ -51,13 +51,13 @@ You can select which gradients to consider when accessing these values.
 struct Pathway
     # user provided
     sequence :: Sequence
-    pulse_effects :: Vector{Union{Symbol, Number}}
+    pulse_effects :: Vector{<:Union{Symbol, Number}}
     readout_index :: Integer
 
     # computed
-    duration_states :: Dict{Any, SVector{4, VariableType}}
-    qvec :: Dict{Any, SVector{3, VariableType}}
-    bmat :: Dict{Any, SMatrix{3, 3, VariableType, 9}}
+    duration_states :: Dict{Any, SVector{4, <:VariableType}}
+    qvec :: Dict{Any, SVector{3, <:VariableType}}
+    bmat :: Dict{Any, SMatrix{3, 3, <:VariableType, 9}}
 end
 
 function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_index::Integer=1)
@@ -67,9 +67,9 @@ function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_inde
         sequence,
         pulse_effects,
         readout_index,
-        Dict(k => SVector{4, VariableType}(v) for (k, v) in pairs(walker.duration_states)),
-        Dict(k => SVector{3, VariableType}(v) for (k, v) in pairs(walker.qvec)),
-        Dict(k => SMatrix{3, 3, VariableType, 9}(v) for (k, v) in pairs(walker.bmat)),
+        Dict(k => SVector{4}(v) for (k, v) in pairs(walker.duration_states)),
+        Dict(k => SVector{3}(v) for (k, v) in pairs(walker.qvec)),
+        Dict(k => SMatrix{3, 3}(v) for (k, v) in pairs(walker.bmat)),
     )
 end
 
