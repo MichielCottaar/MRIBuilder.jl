@@ -348,8 +348,9 @@ function update_gradient_tracker_till_time!(walker::PathwayWalker, key::Tuple, n
 end
 
 function update_gradient_tracker_till_time!(gradient_tracker::GradientTracker, new_time::VariableType)
+    @show gradient_tracker.qvec
     gradient_tracker.bmat += (
-        (gradient_tracker.qvec .* gradient_tracker.qvec') .* 
+        (gradient_tracker.qvec .* permutedims(gradient_tracker.qvec)) .* 
         (new_time - gradient_tracker.last_gradient_time)
     )
     gradient_tracker.last_gradient_time = new_time
