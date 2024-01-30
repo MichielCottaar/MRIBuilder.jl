@@ -4,6 +4,8 @@ import StaticArrays: SVector, SMatrix
 import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_blocks
 import ..Containers: Sequence
 import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time
+import ..Wait: WaitBlock
+import ..Readouts: InstantReadout
 
 
 """
@@ -285,6 +287,21 @@ function walk_pathway!(container::ContainerBlock, walker::PathwayWalker, pulse_e
     return false
 end
 
+walk_pathway!(wait::WaitBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) = false
+
+function walk_pathway!(::InstantReadout, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
+    if length(pulse_effects) > 0
+        return false
+    end
+    nreadout[] -= 1
+    if iszero(nreadout[])
+        return true
+    elseif nreadout[] < 0
+        error("Pathway walker continued past the point where it should have ended. Did you start with a negative `nreadout`?")
+    end
+    return false
+end
+
 
 """
     update_walker_pulse!(walker::PathwayWalker, pulse_effects::Vector, pulse_time)
@@ -292,7 +309,7 @@ end
 Apply the first element of `pulse_effects` to the `walker` at the given `pulse_time`.
 
 The following steps will be taken if the first `pulse_effect` is not `:ignore`
-- if `walker.transverse` is true before the pulse, increase the `walker.bmat` by the outer product of `walker.qvec` with itself multiplied by the time since the last gradient
+- if `walker.is_transverse` is true before the pulse, increase the `walker.bmat` by the outer product of `walker.qvec` with itself multiplied by the time since the last gradient
 - update `walker.duration_states` with time since last pulse.
 - update `walker.last_pulse_time`
 - update `walker.is_transverse`, and `walker.is_positive` based on the first value in `pulse_effects`. 
@@ -334,10 +351,10 @@ function update_walker_pulse!(walker::PathwayWalker, pulse_effects::AbstractVect
     if instruction == :refocus
         walker.is_positive = !walker.is_positive
     elseif instruction == :excite
-        index = findfirst(isequal(walker.is_transverse, walker.is_positive), ordering)
+        index = findfirst(isequal((walker.is_transverse, walker.is_positive)), ordering)
         (walker.is_transverse, walker.is_positive) = ordering[index + 1]
     elseif instruction == :neg_excite
-        index = findlast(isequal(walker.is_transverse, walker.is_positive), ordering)
+        index = findlast(isequal((walker.is_transverse, walker.is_positive)), ordering)
         (walker.is_transverse, walker.is_positive) = ordering[index - 1]
     else
         error("Invalid pulse instruction ($instruction); This error should have been caught earlier.")
@@ -357,7 +374,7 @@ end
 Update the walker's `qvec` and `bmat` based on the given `gradient_block`.
 
 The following steps will be taken:
-- Do nothing if `walker.transverse` is false
+- Do nothing if `walker.is_transverse` is false
 - increase the appropriate `walker.bmat` by the outer product of `walker.qvec` with itself multiplied by the time since the last gradient
 - update the appropriate `walker.qvec` and `walker.bmat` based on the gradient waveform. This will require appropriate `qvec`/`bmat` functions to be defined for the gradient building block.
 - update `walker.last_gradient_time` to the time at the end of the gradient.
@@ -365,7 +382,7 @@ The following steps will be taken:
 This requires [`bmat`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientBlock`](@ref).
 """
 function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType)
-    if walker.transverse
+    if walker.is_transverse
         return
     end
 
