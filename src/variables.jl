@@ -53,8 +53,8 @@ variables() = [values(symbol_to_func)...]
 
 
 # Some universal truths
-function qval(bb)
-    vec = qvec(bb)
+function qval(bb; kwargs...)
+    vec = qvec(bb; kwargs...)
     return sqrt(vec[1]^2 + vec[2]^2 + vec[3]^2)
 end
 

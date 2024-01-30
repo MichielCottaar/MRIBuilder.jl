@@ -126,17 +126,6 @@ You can set `scale` and/or `rotate` to specific symbols to only consider gradien
 """
 qvec(pathway::Pathway; scale=nothing, rotate=nothing) = get(pathway.qvec, (scale, rotate), zero(SVector{3, Float64}))
 
-"""
-    qval(pathway::Pathway; scale=nothing, rotate=nothing)
-
-Return net displacement in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
-
-Only gradients active while the spins are in the transverse plane are considered.
-
-By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
-You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
-"""
-qval(pathway::Pathway; scale=nothing, rotate=nothing) = norm(qvec(pathway; scale, rotate))
 
 """
     area_under_curve(pathway::Pathway; scale=nothing, rotate=nothing)
