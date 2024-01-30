@@ -38,7 +38,7 @@ grad_start(cgb::AbstractChangingGradientBlock) = cgb.gradient_strength_start
 slew_rate(cgb::AbstractChangingGradientBlock) = cgb.slew_rate
 grad_end(cgb::AbstractChangingGradientBlock) = gradient_strength(cgb) .+ slew_rate(cgb) .* duration(cgb)
 gradient_strength(cgb::AbstractChangingGradientBlock) = max.(cgb.gradient_strength_start, cgb.gradient_strength_start)
-qvec(cgb::AbstractChangingGradientBlock) = (cgb.gradient_strength_start .+ cgb.gradient_strength_end) .* (duration(cgb)/2)
+qvec(cgb::AbstractChangingGradientBlock) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cgb)/2)
 
 function bmat_gradient(cgb::AbstractChangingGradientBlock, qstart)
     # grad = (g1 * (duration - t) + g2 * t) / duration
@@ -54,17 +54,17 @@ function bmat_gradient(cgb::AbstractChangingGradientBlock, qstart)
     return (
         qstart .* permutedims(qstart) .* duration(cgb) .+
         duration(cgb)^2 .* qstart .* permutedims(
-            2 .* cgb.gradient_strength_start .+
-            cgb.gradient_strength_end) ./ 3 .+
+            2 .* grad_start(cgb) .+
+            grad_end(cgb)) ./ 3 .+
         bmat_gradient(cgb)
     )
 end
 
 function bmat_gradient(cgb::AbstractChangingGradientBlock)
-    diff = cgb.gradient_strength_end .- cgb.gradient_strength_start
+    diff = slew_rate(cgb) .* duration(cgb)
     return (
-        cgb.gradient_strength_start .* permutedims(cgb.gradient_strength_start) ./ 3 .+
-        cgb.gradient_strength_start .* permutedims(diff) ./ 4 .+
+        grad_start(cgb) .* permutedims(grad_start(cgb)) ./ 3 .+
+        grad_start(cgb) .* permutedims(diff) ./ 4 .+
         diff .* permutedims(diff) ./ 10
     ) .* duration(cgb)^3
 end
