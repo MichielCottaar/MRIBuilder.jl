@@ -180,7 +180,12 @@ function _robust_value(possible_number::VariableType)
     end
 end
 
-_robust_value(possible_vector::AbstractVector) = _robust_value.(possible_vector)
+function _robust_value(possible_vector::AbstractVector) 
+    result = _robust_value.(possible_vector)
+    if any(isnothing.(result))
+        return nothing
+    end
+end
 
 function Base.show(io::IO, printer::BuildingBlockPrinter)
     block = printer.bb
