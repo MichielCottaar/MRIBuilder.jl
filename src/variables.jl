@@ -85,7 +85,7 @@ function get_free_variable(model::Model, value::VariableType; integer=false)
     end
     return value
 end
-get_free_variable(model::Model, ::Nothing; integer=false) = @variable(model, integer=integer)
+get_free_variable(model::Model, ::Nothing; integer=false) = @variable(model, start=0.01, integer=integer)
 get_free_variable(model::Model, value::Symbol; integer=false) = integer ? error("Cannot maximise or minimise an integer variable") : get_free_variable(model, Val(value))
 function get_free_variable(model::Model, ::Val{:min})
     var = get_free_variable(model, nothing)
