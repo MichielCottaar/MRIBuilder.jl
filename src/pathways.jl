@@ -272,7 +272,7 @@ function walk_pathway!(grad::GradientBlock, walker::PathwayWalker, pulse_effects
 end
 
 function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
-    update_walker_pulse(walker, pulse_effects, nreadout, block_start_time + effective_time(pulse))
+    update_walker_pulse!(walker, pulse_effects, block_start_time + effective_time(pulse))
     return iszero(length(pulse_effects)) && iszero(nreadout[])
 end
 
