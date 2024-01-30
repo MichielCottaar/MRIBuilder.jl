@@ -214,7 +214,7 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
             continue
         end
 
-        print(io, name, "=", repr(value), ", ")
+        print(io, name, "=", repr(getproperty(block, name)), ", ")
     end
 
     for fn in variables(block)
