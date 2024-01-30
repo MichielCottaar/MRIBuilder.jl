@@ -3,7 +3,7 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_blocks
 import ..Containers: Sequence
-import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time
+import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration
 import ..Wait: WaitBlock
 import ..Readouts: InstantReadout
 
@@ -429,7 +429,7 @@ function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker,
 
     # update qvec/bmat during gradient
     tracker = walker.gradient_trackers[key]
-    tracker.bmat = tracker.bmat .+ bmat(gradient, tracker.qvec)
+    tracker.bmat = tracker.bmat .+ bmat_gradient(gradient, tracker.qvec)
     tracker.qvec = tracker.qvec .+ qvec(gradient)
     tracker.last_gradient_time = gradient_start_time + duration(gradient)
 end
