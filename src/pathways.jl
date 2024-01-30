@@ -1,5 +1,5 @@
 module Pathways
-import LinearAlgebra: norm
+import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_blocks
 import ..Containers: Sequence
@@ -68,8 +68,8 @@ function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_inde
         pulse_effects,
         readout_index,
         SVector{4}(walker.duration_states),
-        Dict(k => SVector{3}(v) for (k, v) in pairs(walker.qvec)),
-        Dict(k => SMatrix{3, 3}(v) for (k, v) in pairs(walker.bmat)),
+        Dict(k => SVector{3}(v.qvec) for (k, v) in pairs(walker.gradient_trackers)),
+        Dict(k => MMatrix{3, 3}(v.bmat) for (k, v) in pairs(walker.gradient_trackers)),
     )
 end
 
