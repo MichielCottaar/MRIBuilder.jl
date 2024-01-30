@@ -42,7 +42,7 @@ import .Containers: Sequence, FixedBlock, FixedSequence
 export Sequence, FixedBlock, FixedSequence
 
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
-export duration_transverse, duration_dephase, bval, bmat
+export Pathway, duration_transverse, duration_dephase, bval, bmat
 
 import JuMP: @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
 export @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
