@@ -1,5 +1,6 @@
 module Variables
 import JuMP: @variable, Model, @objective, objective_function, owner_model, has_values, value, AbstractJuMPScalar
+import LinearAlgebra: norm
 import ..Scanners: gradient_strength, slew_rate
 
 all_variables_symbols = [
