@@ -150,7 +150,7 @@ Only gradients active while the spins are in the transverse plane are considered
 By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
-bmat(pathway::Pathway; scale=nothing, rotate=nothing)  = get(pathway.qvec, (scale, rotate), zero(SMatrix{3, 3, Float64, 9}))
+bmat(pathway::Pathway; scale=nothing, rotate=nothing)  = get(pathway.bmat, (scale, rotate), zero(SMatrix{3, 3, Float64, 9}))
 
 """
     bval(pathway::Pathway; scale=nothing, rotate=nothing)
