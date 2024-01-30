@@ -38,7 +38,8 @@ slew_rate(::AbstractConstantGradientBlock) = zero(SVector{3, Float64})
 qvec(cgb::AbstractConstantGradientBlock) = duration(cgb) .* gradient_strength(cgb)
 
 function bmat_gradient(cgb::AbstractConstantGradientBlock)
-    return (grad .* grad') .* duration(cgb)^3 ./3
+    grad = gradient_strength(cgb)
+    return (grad .* permutedims(grad)) .* duration(cgb)^3 ./3
 end
 
 function bmat_gradient(cgb::AbstractConstantGradientBlock, qstart)
@@ -46,9 +47,10 @@ function bmat_gradient(cgb::AbstractConstantGradientBlock, qstart)
     #   qstart^2 * duration +
     #   qstart * grad * duration^2 +
     #   grad * grad * duration^3 / 3 +
+    grad = gradient_strength(cgb)
     return (
-        qstart .* qstart' .* duration(cgb) .+
-        qstart .* grad' .* duration(cgb)^2 .+
+        qstart .* permutedims(qstart) .* duration(cgb) .+
+        qstart .* permutedims(grad) .* duration(cgb)^2 .+
         bmat_gradient(cgb)
     )
 end
