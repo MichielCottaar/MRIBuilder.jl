@@ -364,29 +364,25 @@ The following steps will be taken:
 
 This requires [`bmat`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientBlock`](@ref).
 """
-function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType, internal_start_time, internal_end_time)
+function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType)
     if walker.transverse
         return
     end
 
-    if iszero(internal_start_time) || isnothing(internal_start_time)
-        # only worry about this for the first call
-
-        # make sure the appropriate gradient tracker exists
-        key = (gradient.scale, gradient.rotate)
-        if !(key in keys(walker.gradient_trackers))
-            walker.gradient_trackers[key] = GradientTracker()
-        end
-        tracker = walker.gradient_trackers[key]
-
-        # update bmat till start of gradient
-        tracker.bmat = tracker.bmat .+ (
-            (tracker.qvec .* tracker.qvec') .* 
-            (gradient_start_time - tracker.last_gradient_time)
-        )
-        tracker.last_gradient_time = gradient_start_time
+    # make sure the appropriate gradient tracker exists
+    key = (gradient.scale, gradient.rotate)
+    if !(key in keys(walker.gradient_trackers))
+        walker.gradient_trackers[key] = GradientTracker()
     end
+    tracker = walker.gradient_trackers[key]
 
+    # update bmat till start of gradient
+    tracker.bmat = tracker.bmat .+ (
+        (tracker.qvec .* tracker.qvec') .* 
+        (gradient_start_time - tracker.last_gradient_time)
+    )
+
+    tracker.last_gradient_time = gradient_start_time
     tracker.bmat = tracker.bmat .+ bmat(gradient, tracker.qvec, internal_start_time, internal_end_time)
     tracker.qvec = tracker.qvec .+ qvec(gradient, internal_start_time, internal_end_time)
 end
