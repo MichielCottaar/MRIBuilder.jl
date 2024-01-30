@@ -57,7 +57,7 @@ function qval_square(bb; kwargs...)
     vec = qvec(bb; kwargs...)
     return vec[1]^2 + vec[2]^2 + vec[3]^2
 end
-qval(bb; kwargs...) = sqrt(qval_square(qvec))
+qval(bb; kwargs...) = sqrt(qval_square(bb))
 
 
 
