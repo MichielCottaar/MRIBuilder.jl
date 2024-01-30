@@ -1,6 +1,5 @@
 module Variables
 import JuMP: @variable, Model, @objective, objective_function, owner_model, has_values, value, AbstractJuMPScalar
-import LinearAlgebra: norm
 import ..Scanners: gradient_strength, slew_rate
 
 all_variables_symbols = [
@@ -54,7 +53,10 @@ variables() = [values(symbol_to_func)...]
 
 
 # Some universal truths
-qval(bb) = norm(qvec(bb))
+function qval(bb)
+    vec = qvec(bb)
+    return sqrt(vec[1]^2 + vec[2]^2 + vec[3]^2)
+end
 
 
 
