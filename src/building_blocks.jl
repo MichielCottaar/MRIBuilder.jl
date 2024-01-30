@@ -122,11 +122,32 @@ end
 
 function scanner_constraints!(model::Model, building_block::BuildingBlock, scanner::Scanner)
     for func in [gradient_strength, slew_rate]
-        if (func in variables(building_block)) && isfinite(func(scanner))
-            @constraint model func(building_block) <= func(scanner)
+        if isfinite(func(scanner))
+            scanner_constraints!(model, building_block, scanner, func)
         end
     end
-    if building_block isa ContainerBlock
+end
+
+function scanner_constraints!(model::Model, building_block::BuildingBlock, scanner::Scanner, func::Function)
+    if func in variables(building_block)
+        # apply constraint at this level
+        res_bb = func(building_block)
+        if res_bb isa AbstractVector
+            if isnothing(getproperty(building_block, :rotate, true))
+                # no rotation; apply constraint to each dimension independently
+                for expr in res_bb
+                    @constraint model expr <= func(scanner)
+                end
+            else
+                # with rotation: apply constraint to total squared
+                total_squared = sum(map(n->n^2, res_bb))
+                @constraint model total_squared <= func(scanner)^2
+            end
+        else
+            @constraint model res_bb <= func(scanner)
+        end
+    elseif building_block isa ContainerBlock
+        # apply constraints at lower level
         for (_, child_block) in get_children_blocks(building_block)
             scanner_constraints!(model, child_block, scanner)
         end

@@ -19,14 +19,13 @@ all_variables_symbols = [
     :slice_thickness => (:pulse, "Slice thickness of an RF pulse that is active during a gradient."),
 
     # gradients
-    :qvec => (:gradient, "The spatial range and orientation on which the displacements can be detected due to this gradient in 1/um (equivalent to [`area_under_curve_vec`](@ref))"),
-    :qval => (:gradient, "The spatial range on which the displacements can be detected due to this gradient in 1/um (equivalent to [`area_under_curve`](@ref))"),
-    :qval_sqr => (:gradient, "Square of qval in 1/um^2. This can be more efficient to calculate and hence to contrain than `qval` (as it avoids computing a square root)."),
+    :qvec => (:gradient, "The spatial range and orientation on which the displacements can be detected due to this gradient in 1/um."),
+    :qval => (:gradient, "The spatial range on which the displacements can be detected due to this gradient in 1/um."),
     :δ => (:gradient, "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms."),
     :rise_time => (:gradient, "Time for gradient pulse to reach its maximum value in ms."),
     :flat_time => (:gradient, "Time of gradient pulse at maximum value in ms."),
-    :slew_rate => (:gradient, "maximum increase of a gradient (kHz/um/ms)"),
-    :gradient_strength => (:gradient, "maximum strength of a gradient (kHz/um)"),
+    :gradient_strength => (:gradient, "vector with maximum strength of a gradient along each dimension (kHz/um)"),
+    :slew_rate => (:gradient, "vector with maximum slew rate of a gradient along each dimension (kHz/um)"),
 ]
 
 symbol_to_func = Dict{Symbol, Function}()
@@ -54,11 +53,8 @@ variables() = [values(symbol_to_func)...]
 
 
 # Some universal truths
-qval(bb) = sqrt(qval_sqr(bb))
-function qval_sqr(bb)
-    vec = qvec(bb)
-    return vec[1] * vec[1] + vec[2] * vec[2] + vec[3] * vec[3]
-end
+qval(bb) = norm(qvec(bb))
+
 
 
 # These functions are more fully defined in building_blocks.jl

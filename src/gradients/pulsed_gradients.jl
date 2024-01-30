@@ -37,13 +37,15 @@ If not set, they will be determined during the sequence optimisation.
 
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
-mutable struct PulsedGradient <: ContainerBlock
+struct PulsedGradient <: ContainerBlock
     model :: Model
     rise :: ChangingGradientBlock
     flat :: ConstantGradientBlock
     fall :: ChangingGradientBlock
-    slew_rate_vec :: SVector{3, VariableType}
+    slew_rate :: SVector{3, VariableType}
     _scaling :: Union{Nothing, VariableType}
+    rotate :: Union{Nothing, Symbol}
+    scale :: Union{Nothing, Symbol}
 end
 
 @global_model_constructor PulsedGradient
@@ -79,15 +81,17 @@ function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, fl
     end
     rise_time = get_free_variable(model, rise_time)
     flat_time = get_free_variable(model, flat_time)
-    grad_vec = slew_rate .* rise_time
+    grad = slew_rate .* rise_time
 
     res = PulsedGradient(
         model,
-        ChangingGradientBlock(zeros(3), grad_vec, rise_time, rotate, scale),
-        ConstantGradientBlock(grad_vec, flat_time, rotate, scale),
-        ChangingGradientBlock(grad_vec, zeros(3), rise_time, rotate, scale),
+        ChangingGradientBlock(zeros(3), grad, rise_time, rotate, scale),
+        ConstantGradientBlock(grad, flat_time, rotate, scale),
+        ChangingGradientBlock(grad, zeros(3), rise_time, rotate, scale),
         slew_rate,
         rate_1d,
+        rotate,
+        scale
     )
 
     set_simple_constraints!(model, res, kwargs)
@@ -98,14 +102,11 @@ end
 
 rise_time(pg::PulsedGradient) = duration(pg.rise)
 flat_time(pg::PulsedGradient) = duration(pg.flat)
-gradient_strength_vec(g::PulsedGradient) = rise_time(g) * slew_rate_vec(g)
-gradient_strength(g::PulsedGradient) = isnothing(g._scaling) ? maximum(gradient_strength_vec(g)) : (res._scaling * rise_time(g))
-slew_rate_vec(g::PulsedGradient) = g.slew_rate_vec
-slew_rate(g::PulsedGradient) = isnothing(g._scaling) ? maximum(abs.(slew_rate_vec(g))) : res._scaling
+gradient_strength(g::PulsedGradient) = gradient_strength(g.flat)
+slew_rate(g::PulsedGradient) = g.slew_rate
 δ(g::PulsedGradient) = rise_time(g) + flat_time(g)
 duration(g::PulsedGradient) = 2 * rise_time(g) + flat_time(g)
-qvec(g::PulsedGradient) = δ(g) .* gradient_strength_vec(g)
-qval(g::PulsedGradient) = δ(g) * gradient_strength(g)
+qvec(g::PulsedGradient) = δ(g) .* gradient_strength(g)
 
 get_children_indices(::PulsedGradient) = (:rise, :flat, :fall)
 Base.getindex(pg::PulsedGradient, symbol::Symbol) = pg[Val(symbol)]
@@ -119,16 +120,16 @@ start_time(pg::PulsedGradient, ::Val{:flat}) = rise_time(pg)
 start_time(pg::PulsedGradient, ::Val{:fall}) = δ(pg)
 
 
-variables(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength_vec, duration, rise_time, flat_time]
+variables(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time]
 
 
 function fixed(block::PulsedGradient)
-    grad_vec = value.(gradient_strength_vec(block))
+    grad = value.(gradient_strength(block))
     t_rise = value(rise_time(block))
     t_d = value(δ(block))
     return FixedGradient(
         [0., t_rise, t_d, td + t_rise],
-        [zeros(3), grad_vec, grad_vec, zeros(3)]; 
+        [zeros(3), grad, grad, zeros(3)]; 
         rotate=rotate
     )
 end

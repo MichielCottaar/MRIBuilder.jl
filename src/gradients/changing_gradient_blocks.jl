@@ -35,6 +35,7 @@ const FixedChangingGradientBlock = AbstractChangingGradientBlock{Float64}
 duration(cgb::AbstractChangingGradientBlock) = cgb.duration
 
 slew_rate(cgb::AbstractChangingGradientBlock) = (cgb.gradient_strength_end .- cgb.gradient_strength_start) ./ duration(cgb)
+gradient_strength(cgb::AbstractChangingGradientBlock) = max.(cgb.gradient_strength_start, cgb.gradient_strength_start)
 qvec(cgb::AbstractChangingGradientBlock) = (cgb.gradient_strength_start .+ cgb.gradient_strength_end) .* (duration(cgb)/2)
 
 function bmat_gradient(cgb::AbstractChangingGradientBlock, qstart)
