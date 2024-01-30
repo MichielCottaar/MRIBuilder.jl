@@ -69,7 +69,7 @@ function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_inde
         readout_index,
         SVector{4}(walker.duration_states),
         Dict(k => SVector{3}(v.qvec) for (k, v) in pairs(walker.gradient_trackers)),
-        Dict(k => MMatrix{3, 3}(v.bmat) for (k, v) in pairs(walker.gradient_trackers)),
+        Dict(k => SMatrix{3, 3}(v.bmat) for (k, v) in pairs(walker.gradient_trackers)),
     )
 end
 
