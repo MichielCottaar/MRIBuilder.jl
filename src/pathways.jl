@@ -1,9 +1,10 @@
 module Pathways
 import LinearAlgebra: norm
-import StaticArrays: SVector, SMatrix
+import StaticArrays: SVector, SMatrix, MVector, MMatrix
+import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock
 import ..Containers: Sequence
-import ..Variables: qval, bval, area_under_curve
-import ..PathwayWalkers: PathwayWalker
+import ..Variables: qvec, qval, bmat_gradient, VariableType
+
 
 """
     Pathway(sequence::Sequence, pulse_effects::Vector{:Symbol/Number}, readout_index=1)
@@ -48,7 +49,7 @@ You can select which gradients to consider when accessing these values.
 struct Pathway
     # user provided
     sequence :: Sequence
-    pulse_effects :: Vector{Union{:Symbol, :Number}}
+    pulse_effects :: Vector{Union{Symbol, Number}}
     readout_index :: Integer
 
     # computed
@@ -59,12 +60,11 @@ end
 
 function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_index::Integer)
     walker = PathwayWalker()
-    walk_pathway!(sequence, copy(pulse_effects), walker, Ref(readout_index))
+    walk_pathway!(sequence, interpret_pulse_effects.(pulse_effects), walker, Ref(readout_index))
     return Pathway(
         sequence,
         pulse_effects,
         readout_index,
-
         Dict(k => SVector{4, VariableType}(v) for (k, v) in pairs(walker.duration_states)),
         Dict(k => SVector{3, VariableType}(v) for (k, v) in pairs(walker.qvec)),
         Dict(k => SMatrix{3, 3, VariableType, 9}(v) for (k, v) in pairs(walker.bmat)),
@@ -84,13 +84,7 @@ The requested state can be set using `transverse` and `positive` as follows:
 - `transverse=true`, `positive=false`: -transverse
 """
 function duration_state(pathway::Pathway, transverse, positive)
-    index = Dict([
-        (false, true) => 1,
-        (true, true) => 2,
-        (false, false) => 3,
-        (true, false) => 4,
-    ])[(Bool(transverse), Bool(positive))]
-    return pathway.duration_states[index]
+    return pathway.duration_states[duration_state_index(transverse, positive)]
 end
 
 """
@@ -178,5 +172,234 @@ By default gradients that are affected by user-provided `scale` or `rotate` para
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
 bval(pathway::Pathway; scale=nothing, rotate=nothing) = tr(bmat(pathway; scale, rotate))
+
+
+"""
+    interpret_pulse_effects(number_or_symbol)
+
+Interpret the various numbers and symbols that can be passed on to a `Pathway`.
+
+The result will be one of:
+- :ignore (if input is 0, :ignore, or :skip).
+- :excite (if input is 90 or :excite).
+- :refocus (if input is 180, :refocus, or :excite).
+- :neg_excite (if input is -90, 270, or :negexcite).
+"""
+function interpret_pulse_effects(number::Number)
+    normed = Int(number % 360)
+    if normed == 0
+        return :ignore
+    elseif normed == 90
+        return :excite
+    elseif normed == 180
+        return :refocus
+    elseif normed == 270
+        return :neg_excite
+    else
+        error("The pulse effect along a pathway should be divisible by 90, not $number.")
+    end
+end
+
+function interpret_pulse_effects(sym::Symbol)
+    mapping = Dict{Symbol, Symbol}(
+        :ignore => :ignore,
+        :skip => :ignore,
+        :excite => :excite,
+        :net_excite => :net_excite,
+        :refocus => :refocus,
+        :invert => :refocus,
+    )
+    if sym in keys(mapping)
+        return mapping[sym]
+    else
+        all_symbols = join(keys(mapping), ", ")
+        error("The pulse effect along a pathway should be one of ($all_symbols), not $sym.")
+    end
+end
+
+
+"""
+Helper structure for [`PathwayWalker`](@ref), which is itself a helper for `Pathway`.  You are deep down the rabit hole now...
+    
+For documentation, see that structure and [`walk_pathway`](@ref) and [`update_walker_gradient!`](@ref).
+"""
+mutable struct GradientTracker
+    last_gradient_time :: VariableType
+    qvec :: MVector{3, VariableType}
+    bmat :: MMatrix{3, 3, VariableType, 9}
+end
+
+GradientTracker() = GradientTracker(0., zeros(3), zeros(3, 3))
+
+
+"""
+Helper structure for `Pathway`.
+    
+For documentation, see that structure and [`walk_pathway`](@ref).
+"""
+mutable struct PathwayWalker
+    last_pulse_time :: VariableType
+    is_transverse :: Bool
+    is_positive :: Bool
+    duration_states :: MVector{4, VariableType}
+    gradient_trackers :: Dict{Any, GradientTracker}
+end
+
+PathwayWalker() = PathwayWalker(
+    0., false, true,
+    zeros(4),
+    Dict{Any, GradientTracker}()
+)
+
+"""
+    walk_pathway!(bb::BuildingBlock, walker::PathwayWalker, pulse_effects::Vector, nreadout::Ref{Int}, start_time)
+
+Computes the effect of a specific [`BuildingBlock`](@ref) (starting at `start_time`) on the [`PathwayWalker`](@ref).
+
+This needs to be defined for any [`ContainerBlock`](@ref) that the walker may encounter.
+
+This might be as simpla as calling [`walk_pathway!`] on all the children (i.e., for a `Sequence`).
+
+For individual pulses and gradients, the following behaviour is implemented:
+- If a pulse is encountered, call [`update_walker_pulse!`](@ref)`(walker, pulse_effects, pulse_effective_time)`
+- If a gradient is encountered, call [`update_walker_gradient!`](@ref)(gradient, walker, gradient_start_time)
+
+For overlapping gradients/pulses, one should first encounter the part of the gradient before the [`effective_time`](@ref) of the pulse,
+then apply the pulse, and then the rest of the gradient.
+This effective time can be passed on to [`update_walker_gradient!`](@ref) to allow part of the gradient waveform to be applied.
+
+The function should return `true` if the `Pathway` has reached its end (i.e., the final readout) and `false` otherwise.
+"""
+function walk_pathway!(grad::GradientBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, start_time=0.::VariableType) 
+    update_walker_gradient!(grad, walker, start_time)
+    return false
+end
+
+function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, start_time=0.::VariableType) 
+    update_walker_pulse(walker, pulse_effects, nreadout, start_time + effective_time(pulse))
+    return iszero(length(pulse_effects)) && iszero(nreadout[])
+end
+
+
+"""
+    update_walker_pulse!(walker::PathwayWalker, pulse_effects::Vector, pulse_time)
+
+Apply the first element of `pulse_effects` to the `walker` at the given `pulse_time`.
+
+The following steps will be taken if the first `pulse_effect` is not `:ignore`
+- if `walker.transverse` is true before the pulse, increase the `walker.bmat` by the outer product of `walker.qvec` with itself multiplied by the time since the last gradient
+- update `walker.duration_states` with time since last pulse.
+- update `walker.last_pulse_time`
+- update `walker.is_transverse`, and `walker.is_positive` based on the first value in `pulse_effects`. 
+- if `walker.is_positive` changed in the previous step than the `walker.qvec` needs to be flipped.
+- remove the first element from `pulse_effects`.
+
+If the first element is `:ignore` the only effect is that the first element is removed from `pulse_effects`.
+"""
+function update_walker_pulse!(walker::PathwayWalker, pulse_effects::AbstractVector{Symbol}, pulse_time::VariableType)
+    if length(pulse_effects) == 0
+        error("Pathway definition is invalid! Another RF pulse was encountered before the number of readouts expected from `nreadout` where detected.")
+    end
+    instruction = popfirst!(pulse_effects)
+    if instruction == :ignore
+        return
+    end
+
+    # update qvec/bmat
+    if walker.is_transverse
+        for gradient_tracker in values(walker.gradient_trackers)
+            gradient_tracker.bmat += (
+                (gradient_tracker.qvec .* gradient_tracker.qvec') .* 
+                (pulse_time - gradient_tracker.last_gradient_time)
+            )
+            gradient_tracker.last_gradient_time = pulse_time
+        end
+    end
+    prev_sign = walker.is_positive
+    
+    # update durations
+    index = duration_state_index(walker.is_transverse, walker.is_positive)
+    walker.duration_states[index] = walk.duration_state[index] + (pulse_time - walker.last_pulse_time)
+
+    walker.last_pulse_time = pulse_time
+
+    # -transverse, +longitudinal, +transverse, -longitudinal, -transverse, +longitudinal
+    ordering = [(true, false), (false, true), (true, true), (false, false), (true, false)]
+
+    if instruction == :refocus
+        walker.is_positive = !walker.is_positive
+    elseif instruction == :excite
+        index = findfirst(isequal(walker.is_transverse, walker.is_positive), ordering)
+        (walker.is_transverse, walker.is_positive) = ordering[index + 1]
+    elseif instruction == :neg_excite
+        index = findlast(isequal(walker.is_transverse, walker.is_positive), ordering)
+        (walker.is_transverse, walker.is_positive) = ordering[index - 1]
+    else
+        error("Invalid pulse instruction ($instruction); This error should have been caught earlier.")
+    end
+
+    # flip qvec if needed
+    if prev_sign != walker.is_positive
+        for gradient_tracker in values(walker.gradient_trackers)
+            gradient_tracker.qvec = -gradient_tracker.qvec
+        end
+    end
+end
+
+"""
+    update_walker_gradient!(gradient_block::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType; overlapping_pulses=[], overlapping_readouts=[])
+
+Update the walker's `qvec` and `bmat` based on the given `gradient_block`.
+
+The following steps will be taken:
+- Do nothing if `walker.transverse` is false
+- increase the appropriate `walker.bmat` by the outer product of `walker.qvec` with itself multiplied by the time since the last gradient
+- update the appropriate `walker.qvec` and `walker.bmat` based on the gradient waveform. This will require appropriate `qvec`/`bmat` functions to be defined for the gradient building block.
+- update `walker.last_gradient_time` to the time at the end of the gradient.
+
+This requires [`bmat`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientBlock`](@ref).
+"""
+function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType, internal_start_time, internal_end_time)
+    if walker.transverse
+        return
+    end
+
+    if iszero(internal_start_time) || isnothing(internal_start_time)
+        # only worry about this for the first call
+
+        # make sure the appropriate gradient tracker exists
+        key = (gradient.scale, gradient.rotate)
+        if !(key in keys(walker.gradient_trackers))
+            walker.gradient_trackers[key] = GradientTracker()
+        end
+        tracker = walker.gradient_trackers[key]
+
+        # update bmat till start of gradient
+        tracker.bmat = tracker.bmat .+ (
+            (tracker.qvec .* tracker.qvec') .* 
+            (gradient_start_time - tracker.last_gradient_time)
+        )
+        tracker.last_gradient_time = gradient_start_time
+    end
+
+    tracker.bmat = tracker.bmat .+ bmat(gradient, tracker.qvec, internal_start_time, internal_end_time)
+    tracker.qvec = tracker.qvec .+ qvec(gradient, internal_start_time, internal_end_time)
+end
+
+"""
+    duration_state_index(transverse, positive)
+
+Returns the index of a specific state in the `Pathway.duration_state` vector.
+
+This function is used internally to access that vector.
+"""
+function duration_state_index(transverse, positive)
+    return Dict([
+        (false, true) => 1,
+        (true, true) => 2,
+        (false, false) => 3,
+        (true, false) => 4,
+    ])[(Bool(transverse), Bool(positive))]
+end
 
 end
