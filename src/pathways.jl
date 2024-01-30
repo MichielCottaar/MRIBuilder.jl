@@ -1,6 +1,6 @@
 module Pathways
 import LinearAlgebra: norm
-import StaticArrays: SVector, SMatrix, MVector, MMatrix
+import StaticArrays: SVector, SMatrix
 import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_blocks
 import ..Containers: Sequence
 import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time
@@ -225,8 +225,8 @@ For documentation, see that structure and [`walk_pathway`](@ref) and [`update_wa
 """
 mutable struct GradientTracker
     last_gradient_time :: VariableType
-    qvec :: MVector{3, VariableType}
-    bmat :: MMatrix{3, 3, VariableType, 9}
+    qvec :: Vector{<:VariableType}
+    bmat :: Matrix{<:VariableType}
 end
 
 GradientTracker() = GradientTracker(0., zeros(3), zeros(3, 3))
@@ -241,7 +241,7 @@ mutable struct PathwayWalker
     last_pulse_time :: VariableType
     is_transverse :: Bool
     is_positive :: Bool
-    duration_states :: MVector{4, VariableType}
+    duration_states :: Vector{<:VariableType}
     gradient_trackers :: Dict{Any, GradientTracker}
 end
 
@@ -324,7 +324,7 @@ function update_walker_pulse!(walker::PathwayWalker, pulse_effects::AbstractVect
     
     # update durations
     index = duration_state_index(walker.is_transverse, walker.is_positive)
-    walker.duration_states[index] = walk.duration_state[index] + (pulse_time - walker.last_pulse_time)
+    walker.duration_states[index] = walker.duration_states[index] + (pulse_time - walker.last_pulse_time)
 
     walker.last_pulse_time = pulse_time
 
