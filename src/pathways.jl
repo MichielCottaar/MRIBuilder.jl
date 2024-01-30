@@ -341,7 +341,7 @@ The `bmat` is updated with the outer produce of `qvec` with itself multiplied by
 When called with the first signature the tracker will be created from scratch if a tracker with that `key` does not exist.
 """
 function update_gradient_tracker_till_time!(walker::PathwayWalker, key::Tuple, new_time::VariableType)
-    if key in keys(walker.gradient_trackers)
+    if !(key in keys(walker.gradient_trackers))
         walker.gradient_trackers[key] = GradientTracker()
     end
     update_gradient_tracker_till_time!(walker.gradient_trackers[key], new_time)
@@ -425,7 +425,7 @@ function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker,
 
     # update gradient tracker till start of gradient
     key = (gradient.scale, gradient.rotate)
-    update_gradient_tracker_till_time!(gradient, key, gradient_start_time)
+    update_gradient_tracker_till_time!(walker, key, gradient_start_time)
 
     # update qvec/bmat during gradient
     tracker = walker.gradient_trackers[key]
