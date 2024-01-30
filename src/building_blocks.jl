@@ -133,7 +133,7 @@ function scanner_constraints!(model::Model, building_block::BuildingBlock, scann
         # apply constraint at this level
         res_bb = func(building_block)
         if res_bb isa AbstractVector
-            if isnothing(getproperty(building_block, :rotate, true))
+            if isnothing(building_block.rotate)
                 # no rotation; apply constraint to each dimension independently
                 for expr in res_bb
                     @constraint model expr <= func(scanner)
