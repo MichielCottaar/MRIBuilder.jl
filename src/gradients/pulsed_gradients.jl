@@ -79,6 +79,7 @@ function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, fl
             slew_rate = rate_1d .* (orientation ./ norm(orientation))
         end
     end
+    slew_rate = SVector{3}(slew_rate)
     rise_time = get_free_variable(model, rise_time)
     flat_time = get_free_variable(model, flat_time)
     grad = slew_rate .* rise_time
