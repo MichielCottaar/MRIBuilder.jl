@@ -149,7 +149,7 @@ function scanner_constraints!(model::Model, building_block::BuildingBlock, scann
     elseif building_block isa ContainerBlock
         # apply constraints at lower level
         for (_, child_block) in get_children_blocks(building_block)
-            scanner_constraints!(model, child_block, scanner)
+            scanner_constraints!(model, child_block, scanner, func)
         end
     end
 end
