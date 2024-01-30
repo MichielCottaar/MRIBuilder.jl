@@ -1,9 +1,9 @@
 module Pathways
 import LinearAlgebra: norm
 import StaticArrays: SVector, SMatrix, MVector, MMatrix
-import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock
+import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_blocks
 import ..Containers: Sequence
-import ..Variables: qvec, qval, bmat_gradient, VariableType
+import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time
 
 
 """
@@ -58,9 +58,9 @@ struct Pathway
     bmat :: Dict{Any, SMatrix{3, 3, VariableType, 9}}
 end
 
-function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_index::Integer)
+function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_index::Integer=1)
     walker = PathwayWalker()
-    walk_pathway!(sequence, interpret_pulse_effects.(pulse_effects), walker, Ref(readout_index))
+    walk_pathway!(sequence, walker, interpret_pulse_effects.(pulse_effects), Ref(readout_index))
     return Pathway(
         sequence,
         pulse_effects,
@@ -256,10 +256,6 @@ PathwayWalker() = PathwayWalker(
 
 Computes the effect of a specific [`BuildingBlock`](@ref) (starting at `start_time`) on the [`PathwayWalker`](@ref).
 
-This needs to be defined for any [`ContainerBlock`](@ref) that the walker may encounter.
-
-This might be as simpla as calling [`walk_pathway!`] on all the children (i.e., for a `Sequence`).
-
 For individual pulses and gradients, the following behaviour is implemented:
 - If a pulse is encountered, call [`update_walker_pulse!`](@ref)`(walker, pulse_effects, pulse_effective_time)`
 - If a gradient is encountered, call [`update_walker_gradient!`](@ref)(gradient, walker, gradient_start_time)
@@ -270,14 +266,23 @@ This effective time can be passed on to [`update_walker_gradient!`](@ref) to all
 
 The function should return `true` if the `Pathway` has reached its end (i.e., the final readout) and `false` otherwise.
 """
-function walk_pathway!(grad::GradientBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, start_time=0.::VariableType) 
-    update_walker_gradient!(grad, walker, start_time)
+function walk_pathway!(grad::GradientBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
+    update_walker_gradient!(grad, walker, block_start_time)
     return false
 end
 
-function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, start_time=0.::VariableType) 
-    update_walker_pulse(walker, pulse_effects, nreadout, start_time + effective_time(pulse))
+function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
+    update_walker_pulse(walker, pulse_effects, nreadout, block_start_time + effective_time(pulse))
     return iszero(length(pulse_effects)) && iszero(nreadout[])
+end
+
+function walk_pathway!(container::ContainerBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
+    for (index, child) in get_children_blocks(container)
+        if walk_pathway!(child, walker, pulse_effects, nreadout, block_start_time + start_time(container, index))
+            return true
+        end
+    end
+    return false
 end
 
 
