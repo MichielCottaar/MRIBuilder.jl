@@ -419,7 +419,7 @@ The following steps will be taken:
 This requires [`bmat`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientBlock`](@ref).
 """
 function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType)
-    if walker.is_transverse
+    if !walker.is_transverse
         return
     end
 
