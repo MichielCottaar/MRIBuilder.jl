@@ -50,10 +50,10 @@ function bmat_gradient(cgb::AbstractChangingGradientBlock, qstart)
     #   g1 * (g2 - g1) * duration^3 / 4 +
     #   (g2 - g1)^2 * duration^3 / 10
     return (
-        qstart .* qstart' .* duration(cgb) .+
-        duration(cgb)^2 .* qstart .* (
-            2 .* cgb.gradient_strength_start' .+
-            cgb.gradient_strength_end') ./ 3 .+
+        qstart .* permutedims(qstart) .* duration(cgb) .+
+        duration(cgb)^2 .* qstart .* permutedims(
+            2 .* cgb.gradient_strength_start .+
+            cgb.gradient_strength_end) ./ 3 .+
         bmat_gradient(cgb)
     )
 end
@@ -61,9 +61,9 @@ end
 function bmat_gradient(cgb::AbstractChangingGradientBlock)
     diff = cgb.gradient_strength_end .- cgb.gradient_strength_start
     return (
-        cgb.gradient_strength_start .* cgb.gradient_strength_start' ./ 3 .+
-        cgb.gradient_strength_start .* diff' ./ 4 .+
-        diff .* diff' ./ 10
+        cgb.gradient_strength_start .* permutedims(cgb.gradient_strength_start) ./ 3 .+
+        cgb.gradient_strength_start .* permutedims(diff) ./ 4 .+
+        diff .* permutedims(diff) ./ 10
     ) .* duration(cgb)^3
 end
 
