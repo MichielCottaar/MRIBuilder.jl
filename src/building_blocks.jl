@@ -2,7 +2,7 @@ module BuildingBlocks
 import JuMP: has_values, value, Model, @constraint, @objective, owner_model, objective_function, optimize!, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Scanners: Scanner
-import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType
+import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, qval_square
 
 """
 Parent type for all individual components out of which a sequence can be built.
@@ -261,7 +261,11 @@ If set to `:min` or `:max`, minimising or maximising this function will be added
 function set_simple_constraints!(model::Model, block::BuildingBlock, kwargs)
     to_funcs = Dict(nameof(fn) => fn for fn in variables(block))
     for (key, value) in kwargs
-        apply_simple_constraint!(model, to_funcs[key](block), value)
+        if key == :qval
+            apply_simple_constraint!(model, qval_square(block), value isa VariableType ? value^2 : value)
+        else
+            apply_simple_constraint!(model, to_funcs[key](block), value)
+        end
     end
     nothing
 end
@@ -276,7 +280,7 @@ apply_simple_constraint!(model::Model, variable, ::Nothing) = nothing
 apply_simple_constraint!(model::Model, variable, value::Symbol) = apply_simple_constraint!(model, variable, Val(value))
 apply_simple_constraint!(model::Model, variable, ::Val{:min}) = @objective model Min objective_function(model) + variable
 apply_simple_constraint!(model::Model, variable, ::Val{:max}) = @objective model Min objective_function(model) - variable
-apply_simple_constraint!(model::Model, variable, value::Number) = @constraint model variable == value
+apply_simple_constraint!(model::Model, variable, value::VariableType) = @constraint model variable == value
 
 
 """
