@@ -36,8 +36,8 @@ duration(cgb::AbstractChangingGradientBlock) = cgb.duration
 
 grad_start(cgb::AbstractChangingGradientBlock) = cgb.gradient_strength_start
 slew_rate(cgb::AbstractChangingGradientBlock) = cgb.slew_rate
-grad_end(cgb::AbstractChangingGradientBlock) = gradient_strength(cgb) .+ slew_rate(cgb) .* duration(cgb)
-gradient_strength(cgb::AbstractChangingGradientBlock) = max.(cgb.gradient_strength_start, cgb.gradient_strength_start)
+grad_end(cgb::AbstractChangingGradientBlock) = grad_start(cgb) .+ slew_rate(cgb) .* duration(cgb)
+gradient_strength(cgb::AbstractChangingGradientBlock) = max.(grad_start(cgb), grad_end(cgb))
 qvec(cgb::AbstractChangingGradientBlock) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cgb)/2)
 
 function bmat_gradient(cgb::AbstractChangingGradientBlock, qstart)
