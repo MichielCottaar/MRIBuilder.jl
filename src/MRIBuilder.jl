@@ -20,8 +20,8 @@ export build_sequence
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 
-import .Variables: variables, duration, start_time, end_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec
-export variables, duration, start_time, end_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec
+import .Variables: variables, duration, start_time, end_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square
+export variables, duration, start_time, end_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square
 
 import .BuildingBlocks: BuildingBlock, fixed
 export BuildingBlocks, fixed
