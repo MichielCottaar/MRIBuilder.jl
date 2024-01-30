@@ -225,8 +225,8 @@ For documentation, see that structure and [`walk_pathway`](@ref) and [`update_wa
 """
 mutable struct GradientTracker
     last_gradient_time :: VariableType
-    qvec :: Vector{<:VariableType}
-    bmat :: Matrix{<:VariableType}
+    qvec :: Vector{VariableType}
+    bmat :: Matrix{VariableType}
 end
 
 GradientTracker() = GradientTracker(0., zeros(3), zeros(3, 3))
@@ -241,7 +241,7 @@ mutable struct PathwayWalker
     last_pulse_time :: VariableType
     is_transverse :: Bool
     is_positive :: Bool
-    duration_states :: Vector{<:VariableType}
+    duration_states :: Vector{VariableType}
     gradient_trackers :: Dict{Any, GradientTracker}
 end
 
