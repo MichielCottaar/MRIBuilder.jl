@@ -137,6 +137,7 @@ function scanner_constraints!(model::Model, building_block::BuildingBlock, scann
                 # no rotation; apply constraint to each dimension independently
                 for expr in res_bb
                     @constraint model expr <= func(scanner)
+                    @constraint model expr >= -func(scanner)
                 end
             else
                 # with rotation: apply constraint to total squared
@@ -145,6 +146,7 @@ function scanner_constraints!(model::Model, building_block::BuildingBlock, scann
             end
         else
             @constraint model res_bb <= func(scanner)
+            @constraint model res_bb >= -func(scanner)
         end
     elseif building_block isa ContainerBlock
         # apply constraints at lower level
