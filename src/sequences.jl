@@ -2,10 +2,11 @@
 Define the [`Sequence`](@ref) building block.
 """
 module Sequences
+import Printf: @sprintf
 import JuMP: Model, @constraint
 import ...BuildSequences: @global_model_constructor
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR, end_time
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_indices, scanner_constraints!, fixed, BuildingBlockPrinter
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_indices, scanner_constraints!, fixed, BuildingBlockPrinter, _robust_value, get_children_blocks
 
 """
     Sequence(building_blocks...; TR=nothing, scanner=nothing)
@@ -64,9 +65,34 @@ variables(::Type{<:Sequence}) = [TR]
 # print timings when printing sequences
 Base.show(io::IO, seq::Sequence) = print(io, BuildingBlockPrinter(seq, 0., 0))
 
+function Base.show(io::IO, printer::BuildingBlockPrinter{<:Sequence})
+    seq = printer.bb
+    print(io, "Sequence(")
+    d = _robust_value(duration(seq))
+    if !isnothing(d)
+        if !isnothing(printer.start_time)
+            print(io, "t=", @sprintf("%.3g", printer.start_time), "-", @sprintf("%.3g", printer.start_time + d), ", ")
+        else
+            print(io, "duration=", @sprintf("%.3g", d), ",")
+        end
+    end
+    TR = _robust_value(seq.TR)
+    if !isnothing(TR)
+        print(io, "TR=", Int(round(TR)))
+    end
+    print(io, "):")
+
+    for (child_index, child_block) in get_children_blocks(seq)
+        child_printer = BuildingBlockPrinter(
+            child_block,
+            isnothing(printer.start_time) ? nothing : _robust_value(start_time(seq, child_index) + printer.start_time),
+            printer.spaces + 2
+        )
+        print(io, "\n", repeat(' ', printer.spaces + 2), "- ", child_index, ": ", child_printer)
+    end
 
 end
 
-
+end
 
 

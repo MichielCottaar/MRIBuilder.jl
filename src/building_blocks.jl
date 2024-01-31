@@ -209,7 +209,6 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         ft = fieldtype(typeof(block), name)
         if (
             ft in (VariableType, Model) ||
-            ft <: BuildingBlock ||
             (ft <: AbstractVector && eltype(ft) == VariableType) ||
             string(name)[1] == '_'
         )
@@ -235,19 +234,6 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         print(io, "$(nameof(fn))=$(printed_value), ")
     end
     print(io, ")")
-
-    if block isa ContainerBlock
-        use_start_time = isnothing(printer.start_time) ? 0. : printer.start_time
-        print(io, ":")
-        for (child_index, child_block) in get_children_blocks(block)
-            child_printer = BuildingBlockPrinter(
-                child_block,
-                _robust_value(start_time(block, child_index) + use_start_time),
-                printer.spaces + 2
-            )
-            print(io, "\n", repeat(' ', printer.spaces + 2), "- ", child_index, ": ", child_printer)
-        end
-    end
 end
 
 
