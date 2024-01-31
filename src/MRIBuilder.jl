@@ -32,8 +32,8 @@ export WaitBlock
 import .Pulses: InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
 export InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
 
-import .Gradients: PulsedGradient, InstantGradientBlock, FixedGradient
-export PulsedGradient, InstantGradientBlock, FixedGradient
+import .Gradients: PulsedGradient, InstantGradientBlock
+export PulsedGradient, InstantGradientBlock
 
 import .Readouts: InstantReadout
 export InstantReadout

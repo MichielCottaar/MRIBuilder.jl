@@ -10,22 +10,16 @@ All other gradient profiles are made up of [`ChangingGradientBlock`](@ref) and [
 They are still included here for clarity:
 - [`PulsedGradient`](@ref)
 - [`GradientWaveform`](@ref)
-- [`FixedGradient`](@ref)
 """
 module Gradients
 
 include("changing_gradient_blocks.jl")
 include("constant_gradient_blocks.jl")
-include("slice_selects.jl")
-
-#include("integrate_gradients.jl")
-include("fixed_gradients.jl")
-include("pulsed_gradients.jl")
 include("instant_gradients.jl")
 
-import ..BuildingBlocks: GradientBlock
 
-import .PulsedGradients: PulsedGradient
+import ..BuildingBlocks: GradientBlock
+import .ChangingGradientBlocks: ChangingGradientBlock
+import .ConstantGradientBlocks: ConstantGradientBlock
 import .InstantGradients: InstantGradientBlock
-import .FixedGradients: FixedGradient
 end

@@ -4,7 +4,6 @@ import JuMP: @constraint, @variable, Model, owner_model, AbstractJuMPScalar
 import ...Variables: qvec, bmat_gradient, duration, variables, get_free_variable, VariableType
 import ...BuildingBlocks: GradientBlock, fixed
 import ...BuildSequences: @global_model_constructor
-import ..FixedGradients: FixedInstantGradient
 
 """
     InstantGradientBlock(; orientation=nothing, qval=nothing, qvec=nothing, rotate=nothing, scale=nothing)

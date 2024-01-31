@@ -12,7 +12,7 @@ all_variables_symbols = [
 
     :pulse => [
         :flip_angle => "The flip angle of the RF pulse in degrees",
-        :amplitude => "The maximum amplitude of an RF pulse in kHz"
+        :amplitude => "The maximum amplitude of an RF pulse in kHz",
         :phase => "The angle of the phase of an RF pulse in KHz",
         :frequency => "The off-resonance frequency of an RF pulse (relative to the Larmor frequency of water) in KHz",
         :bandwidth => "Bandwidth of the RF pulse in kHz. If you are going to divide by the bandwidth, it can be more efficient to use the [`inverse_bandwidth`](@ref).",

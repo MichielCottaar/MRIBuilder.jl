@@ -9,7 +9,6 @@ import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, v
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed
 import ...BuildSequences: @global_model_constructor
 import ..Generic: GenericWaveform
-import ..FixedGradients: FixedGradient
 import ..ChangingGradientBlocks: ChangingGradientBlock
 import ..ConstantGradientBlocks: ConstantGradientBlock
 
@@ -138,18 +137,6 @@ start_time(pg::TrapezoidGradient, ::Val{:fall}) = δ(pg)
 
 
 variables(::Type{<:TrapezoidGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time]
-
-
-function fixed(block::TrapezoidGradient)
-    grad = value.(gradient_strength(block))
-    t_rise = value(rise_time(block))
-    t_d = value(δ(block))
-    return FixedGradient(
-        [0., t_rise, t_d, td + t_rise],
-        [zeros(3), grad, grad, zeros(3)]; 
-        rotate=rotate
-    )
-end
 
 
 end
