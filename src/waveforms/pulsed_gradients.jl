@@ -1,20 +1,21 @@
 """
 Defines a set of different options for MRI gradients.
 """
-module PulsedGradients
+module TrapezoidGradients
 
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
-import ...Variables: qval, qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
-import ...BuildingBlocks: ContainerBlock, duration, set_simple_constraints!, fixed, start_time, get_children_indices
+import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
+import ...BuildingBlocks: duration, set_simple_constraints!, fixed
 import ...BuildSequences: @global_model_constructor
+import ..Generic: GenericWaveform
 import ..FixedGradients: FixedGradient
 import ..ChangingGradientBlocks: ChangingGradientBlock
 import ..ConstantGradientBlocks: ConstantGradientBlock
 
 
 """
-    PulsedGradient(; orientation=:bvec, variables...)
+    TrapezoidGradient(; orientation=:bvec, rotate=nothing, scale=nothing, pulse=nothing, variables...)
 
 Defines a trapezoidal pulsed gradient
 
@@ -22,6 +23,7 @@ Defines a trapezoidal pulsed gradient
 - `orientation` sets the gradient orienation (ignored if `qvec` is set). Can be set to a vector for a fixed orientation. Otherwise the orientation will be aligned with the `rotate` (if set) or fully free (if `rotate` is nothing). Set to :flip to point in the inverse of the user-provided `rotate`.
 - `rotate`: with which user-set parameter will this gradient be rotated (e.g., :bvec). Default is no rotation.
 - `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling.
+- `pulse`: RF pulse that will play during the flat part of the trapezoidal gradient. If you want to add dead time around the pulse, you can set it to a tuple (e.g., `pulse=(2, pulse, :min)`).
 
 ## Variables
 Variables can be set during construction or afterwards as an attribute.
@@ -34,23 +36,27 @@ If not set, they will be determined during the sequence optimisation.
 ### Gradient variables
 - [`gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
 - [`qval`](@ref)/[`qvec`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
+### Pulse variables
+Any variables defined for the specific pulse added. Also:
+- [`slice_thickness`](@ref): vector with the slice thickness
 
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
-struct PulsedGradient <: ContainerBlock
+struct TrapezoidGradient <: ContainerBlock
     model :: Model
-    rise :: ChangingGradientBlock
-    flat :: ConstantGradientBlock
-    fall :: ChangingGradientBlock
+    rise_time :: VariableType
+    flat_time :: VariableType
     slew_rate :: SVector{3, VariableType}
-    _scaling :: Union{Nothing, VariableType}
     rotate :: Union{Nothing, Symbol}
     scale :: Union{Nothing, Symbol}
+    time_before_pulse :: VariableType
+    pulse :: Union{Nothing, RFPulseBlock}
+    time_after_pulse :: VariableType
 end
 
-@global_model_constructor PulsedGradient
+@global_model_constructor TrapezoidGradient
 
-function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, kwargs...)
+function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, kwargs...)
     if isnothing(orientation) && isnothing(rotate)
         rate_1d = nothing
         slew_rate = (
@@ -82,13 +88,11 @@ function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, fl
     slew_rate = SVector{3}(slew_rate)
     rise_time = get_free_variable(model, rise_time)
     flat_time = get_free_variable(model, flat_time)
-    grad = slew_rate .* rise_time
 
-    res = PulsedGradient(
+    res = TrapezoidGradient(
         model,
-        ChangingGradientBlock(zeros(3), slew_rate, rise_time, rotate, scale),
-        ConstantGradientBlock(grad, flat_time, rotate, scale),
-        ChangingGradientBlock(grad, -slew_rate, rise_time, rotate, scale),
+        rise_time,
+        flat_time,
         slew_rate,
         rate_1d,
         rotate,
@@ -101,30 +105,42 @@ function PulsedGradient(model::Model; orientation=nothing, rise_time=nothing, fl
     return res
 end
 
-rise_time(pg::PulsedGradient) = duration(pg.rise)
-flat_time(pg::PulsedGradient) = duration(pg.flat)
-gradient_strength(g::PulsedGradient) = gradient_strength(g.flat)
-slew_rate(g::PulsedGradient) = g.slew_rate
-δ(g::PulsedGradient) = rise_time(g) + flat_time(g)
-duration(g::PulsedGradient) = 2 * rise_time(g) + flat_time(g)
-qvec(g::PulsedGradient) = δ(g) .* gradient_strength(g) .* 2π
+function GenericWaveform(pg::PulsedGradient)
+    GenericWaveform(
+        duration(pg),
+        [
+            ChangingGradientBlock(zeros(3), slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
+            ConstantGradientBlock(gradient_strength(pg), flat_time(pg), pg.rotate, pg.scale),
+            ChangingGradientBlock(gradient_strength(pg), -slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
+        ],
+        []
+    )
+end
 
-get_children_indices(::PulsedGradient) = (:rise, :flat, :fall)
-Base.getindex(pg::PulsedGradient, symbol::Symbol) = pg[Val(symbol)]
-Base.getindex(pg::PulsedGradient, ::Val{:rise}) = pg.rise
-Base.getindex(pg::PulsedGradient, ::Val{:flat}) = pg.flat
-Base.getindex(pg::PulsedGradient, ::Val{:fall}) = pg.fall
+rise_time(pg::TrapezoidGradient) = pg.rise_time
+flat_time(pg::TrapezoidGradient) = pg.flat_time
+gradient_strength(g::TrapezoidGradient) = slew_rate(g) .* rise_time(g)
+slew_rate(g::TrapezoidGradient) = g.slew_rate
+δ(g::TrapezoidGradient) = rise_time(g) + flat_time(g)
+duration(g::TrapezoidGradient) = 2 * rise_time(g) + flat_time(g)
+qvec(g::TrapezoidGradient) = δ(g) .* gradient_strength(g) .* 2π
 
-start_time(pg::PulsedGradient, symbol::Symbol) = start_time(pg, Val(symbol))
-start_time(pg::PulsedGradient, ::Val{:rise}) = 0.
-start_time(pg::PulsedGradient, ::Val{:flat}) = rise_time(pg)
-start_time(pg::PulsedGradient, ::Val{:fall}) = δ(pg)
+get_children_indices(::TrapezoidGradient) = (:rise, :flat, :fall)
+Base.getindex(pg::TrapezoidGradient, symbol::Symbol) = pg[Val(symbol)]
+Base.getindex(pg::TrapezoidGradient, ::Val{:rise}) = pg.rise
+Base.getindex(pg::TrapezoidGradient, ::Val{:flat}) = pg.flat
+Base.getindex(pg::TrapezoidGradient, ::Val{:fall}) = pg.fall
+
+start_time(pg::TrapezoidGradient, symbol::Symbol) = start_time(pg, Val(symbol))
+start_time(pg::TrapezoidGradient, ::Val{:rise}) = 0.
+start_time(pg::TrapezoidGradient, ::Val{:flat}) = rise_time(pg)
+start_time(pg::TrapezoidGradient, ::Val{:fall}) = δ(pg)
 
 
-variables(::Type{<:PulsedGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time]
+variables(::Type{<:TrapezoidGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time]
 
 
-function fixed(block::PulsedGradient)
+function fixed(block::TrapezoidGradient)
     grad = value.(gradient_strength(block))
     t_rise = value(rise_time(block))
     t_d = value(δ(block))
