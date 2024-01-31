@@ -38,8 +38,8 @@ export PulsedGradient, InstantGradientBlock, FixedGradient
 import .Readouts: InstantReadout
 export InstantReadout
 
-import .Containers: Sequence, FixedBlock, FixedSequence
-export Sequence, FixedBlock, FixedSequence
+import .Sequences: Sequence
+export Sequence
 
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
 export Pathway, duration_transverse, duration_dephase, bval, bmat
