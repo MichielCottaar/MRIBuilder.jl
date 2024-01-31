@@ -27,8 +27,8 @@ struct SliceSelect
 end
 
 function SliceSelect(model::Model, gradient_strength::SVector{3, VariableType}, time_before_pulse, pulse::RFPulseBlock, time_after_pulse, rotate::Symbol, scale::Symbol)
-    time_before_pulse = get_free_variable(model, time_before_pulse),
-    time_after_pulse = get_free_variable(model, time_after_pulse),
+    time_before_pulse = get_free_variable(model, time_before_pulse)
+    time_after_pulse = get_free_variable(model, time_after_pulse)
     return SliceSelect(
         model,
         time_before_pulse,
