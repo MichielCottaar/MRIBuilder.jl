@@ -5,7 +5,7 @@ module TrapezoidGradients
 
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
-import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
+import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, slice_thickness
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed
 import ...BuildSequences: @global_model_constructor
 import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
@@ -47,11 +47,14 @@ struct TrapezoidGradient <: AbstractOverlapping
     slew_rate :: SVector{3, VariableType}
     rotate :: Union{Nothing, Symbol}
     scale :: Union{Nothing, Symbol}
+    time_before_pulse :: VariableType
+    pulse :: Union{Nothing, Symbol}
+    time_after_pulse :: VariableType
 end
 
 @global_model_constructor TrapezoidGradient
 
-function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, kwargs...)
+function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, pulse=nothing,kwargs...)
     if isnothing(orientation) && isnothing(rotate)
         rate_1d = nothing
         slew_rate = (
@@ -82,7 +85,15 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
     end
     slew_rate = SVector{3}(slew_rate)
     rise_time = get_free_variable(model, rise_time)
-    flat_time = get_free_variable(model, flat_time)
+    if isnothing(pulse)
+        flat_time = get_free_variable(model, flat_time)
+    elseif pulse isa RFPulseBlock
+        flat_time = duration(pulse)
+        time_before_pulse = time_after_pulse = 0.
+    else pulse isa Tuple
+        time_before_pulse, pulse, time_after_pulse = pulse
+        flat_time = time_before_pulse + duration(pulse) + time_after_pulse
+    end
 
     res = TrapezoidGradient(
         model,
@@ -91,7 +102,11 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
         slew_rate,
         rate_1d,
         rotate,
-        scale
+        scale,
+        time_before_pulse,
+        pulse,
+        time_after_pulse
+        
     )
 
     set_simple_constraints!(model, res, kwargs)
@@ -106,7 +121,7 @@ waveform(pg::TrapezoidGradient) = [
     ChangingGradientBlock(gradient_strength(pg), -slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
 ]
 
-interruptions(pg::TrapezoidGradient) = []
+interruptions(pg::TrapezoidGradient) = isnothing(pg.pulse) ? [] : [(index=2, time=pg.time_before_pulse + effective_time(pulse), object=pg.pulse)]
 
 rise_time(pg::TrapezoidGradient) = pg.rise_time
 flat_time(pg::TrapezoidGradient) = pg.flat_time
@@ -115,6 +130,7 @@ slew_rate(g::TrapezoidGradient) = g.slew_rate
 δ(g::TrapezoidGradient) = rise_time(g) + flat_time(g)
 duration(g::TrapezoidGradient) = 2 * rise_time(g) + flat_time(g)
 qvec(g::TrapezoidGradient, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
+inverse_slice_thickness(g::TrapezoidGradient) = isnothing(g.pulse) ? nothing : inverse_bandwidth(g) .* gradient_strength(g)
 
 variables(::Type{<:TrapezoidGradient}) = [qvec, δ, gradient_strength, duration, rise_time, flat_time]
 
