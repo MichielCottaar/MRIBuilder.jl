@@ -107,7 +107,7 @@ gradient_strength(g::PulsedGradient) = gradient_strength(g.flat)
 slew_rate(g::PulsedGradient) = g.slew_rate
 δ(g::PulsedGradient) = rise_time(g) + flat_time(g)
 duration(g::PulsedGradient) = 2 * rise_time(g) + flat_time(g)
-qvec(g::PulsedGradient) = δ(g) .* gradient_strength(g)
+qvec(g::PulsedGradient) = δ(g) .* gradient_strength(g) .* 2π
 
 get_children_indices(::PulsedGradient) = (:rise, :flat, :fall)
 Base.getindex(pg::PulsedGradient, symbol::Symbol) = pg[Val(symbol)]

@@ -143,7 +143,7 @@ area_under_curve(pathway::Pathway; scale=nothing, rotate=nothing) = qval(pathway
 """
     bmat(pathway::Pathway; scale=nothing, rotate=nothing)
 
-Return 3x3 diffusion-weighted matrix experienced by the spins following a specific [`Pathway`](@ref).
+Return 3x3 diffusion-weighted matrix experienced by the spins following a specific [`Pathway`](@ref) in rad^2 ms/um^2.
 
 Only gradients active while the spins are in the transverse plane are considered.
 
@@ -155,12 +155,12 @@ bmat(pathway::Pathway; scale=nothing, rotate=nothing)  = get(pathway.bmat, (scal
 """
     bval(pathway::Pathway; scale=nothing, rotate=nothing)
 
-Return size of diffusion-weighting experienced by the spins following a specific [`Pathway`](@ref).
+Return size of diffusion-weighting experienced by the spins following a specific [`Pathway`](@ref) in rad^2 ms/um^2.
 
-Only gradients active while the spins are in the transverse plane are considered.
+Only gradients active while the spins are in the transverse plane will contribute to the diffusion weighting.
 
 By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
-You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
+You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by specific `scale`/`rotate` parameters
 """
 bval(pathway::Pathway; scale=nothing, rotate=nothing) = tr(bmat(pathway; scale, rotate))
 

@@ -19,8 +19,8 @@ all_variables_symbols = [
     :slice_thickness => (:pulse, "Slice thickness of an RF pulse that is active during a gradient."),
 
     # gradients
-    :qvec => (:gradient, "The spatial range and orientation on which the displacements can be detected due to this gradient in 1/um."),
-    :qval => (:gradient, "The spatial range on which the displacements can be detected due to this gradient in 1/um."),
+    :qvec => (:gradient, "The spatial range and orientation on which the displacements can be detected due to this gradient in rad/um."),
+    :qval => (:gradient, "The spatial range on which the displacements can be detected due to this gradient in rad/um (i.e., norm of [`qvec`](@ref))."),
     :δ => (:gradient, "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms."),
     :rise_time => (:gradient, "Time for gradient pulse to reach its maximum value in ms."),
     :flat_time => (:gradient, "Time of gradient pulse at maximum value in ms."),
@@ -101,7 +101,7 @@ end
 """
     bmat_gradient(gradient::GradientBlock, qstart=(0, 0, 0))
 
-Computes the diffusion-weighting matrix due to a single gradient block.
+Computes the diffusion-weighting matrix due to a single gradient block in rad^2 ms/um^2.
 
 This should be defined for every `GradientBlock`, but not be called directly.
 Instead, the `bmat` and `bval` should be constrained for specific `Pathways`

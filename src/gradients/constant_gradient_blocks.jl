@@ -35,10 +35,10 @@ const FixedConstantGradientBlock = AbstractConstantGradientBlock{Float64}
 duration(cgb::AbstractConstantGradientBlock) = cgb.duration
 gradient_strength(cgb::AbstractConstantGradientBlock) = cgb.gradient_strength
 slew_rate(::AbstractConstantGradientBlock) = zero(SVector{3, Float64})
-qvec(cgb::AbstractConstantGradientBlock) = duration(cgb) .* gradient_strength(cgb)
+qvec(cgb::AbstractConstantGradientBlock) = duration(cgb) .* gradient_strength(cgb) .* 2π
 
 function bmat_gradient(cgb::AbstractConstantGradientBlock)
-    grad = gradient_strength(cgb)
+    grad = 2π .* gradient_strength(cgb)
     return (grad .* permutedims(grad)) .* duration(cgb)^3 ./3
 end
 
@@ -47,7 +47,7 @@ function bmat_gradient(cgb::AbstractConstantGradientBlock, qstart)
     #   qstart^2 * duration +
     #   qstart * grad * duration^2 +
     #   grad * grad * duration^3 / 3 +
-    grad = gradient_strength(cgb)
+    grad = 2π .* gradient_strength(cgb)
     return (
         qstart .* permutedims(qstart) .* duration(cgb) .+
         qstart .* permutedims(grad) .* duration(cgb)^2 .+
