@@ -6,43 +6,45 @@ import JuMP: @constraint, @variable, Model, owner_model
 import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
 import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
 
-struct AbstractConstantGradientBlock{T<:VariableType} <: GradientBlock
-    gradient_strength :: SVector{3, T}
-    duration :: T
-    rotate :: Union{Nothing, Symbol}
-    scale :: Union{Nothing, Symbol}
-end
-
 """
     ConstantGradientBlock(gradient_strength, duration, rotate, scale)
 
 Underlying type for any flat part in a gradient waveform.
 It can overlap with an [`RFPulseBlock`], in which case it will be a `SliceSelectPulse`
 
-The corresponding type in a fixed gradient is [`FixedConstantGradientBlock`](@ref)
+Usually, you do not want to create this object directly, use a gradient waveform instead.
 
-Do not create this directly, it will be created by the gradient waveforms.
+## Parameters
+- `rotate`: with which user-set parameter will this gradient be rotated (e.g., :bvec). Default is no rotation.
+- `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling.
 """
-const ConstantGradientBlock = AbstractConstantGradientBlock{VariableType}
+struct ConstantGradientBlock{T<:VariableType} <: GradientBlock
+    gradient_strength :: SVector{3, T}
+    duration :: T
+    rotate :: Union{Nothing, Symbol}
+    scale :: Union{Nothing, Symbol}
+end
+
+const ConstantGradientBlock = ConstantGradientBlock{VariableType}
 
 """
     FixedConstantGradientBlock(gradient_strength, duration, rotate, scale)
 
 Fixed equivalent of [`ConstantGradientBlock`](@ref).
 """
-const FixedConstantGradientBlock = AbstractConstantGradientBlock{Float64}
+const FixedConstantGradientBlock = ConstantGradientBlock{Float64}
 
-duration(cgb::AbstractConstantGradientBlock) = cgb.duration
-gradient_strength(cgb::AbstractConstantGradientBlock) = cgb.gradient_strength
-slew_rate(::AbstractConstantGradientBlock) = zero(SVector{3, Float64})
-qvec(cgb::AbstractConstantGradientBlock) = duration(cgb) .* gradient_strength(cgb) .* 2π
+duration(cgb::ConstantGradientBlock) = cgb.duration
+gradient_strength(cgb::ConstantGradientBlock) = cgb.gradient_strength
+slew_rate(::ConstantGradientBlock) = zero(SVector{3, Float64})
+qvec(cgb::ConstantGradientBlock) = duration(cgb) .* gradient_strength(cgb) .* 2π
 
-function bmat_gradient(cgb::AbstractConstantGradientBlock)
+function bmat_gradient(cgb::ConstantGradientBlock)
     grad = 2π .* gradient_strength(cgb)
     return (grad .* permutedims(grad)) .* duration(cgb)^3 ./3
 end
 
-function bmat_gradient(cgb::AbstractConstantGradientBlock, qstart)
+function bmat_gradient(cgb::ConstantGradientBlock, qstart)
     # \int dt (qstart + t * grad)^2 = 
     #   qstart^2 * duration +
     #   qstart * grad * duration^2 +
@@ -55,6 +57,6 @@ function bmat_gradient(cgb::AbstractConstantGradientBlock, qstart)
     )
 end
 
-variables(::Type{<:AbstractConstantGradientBlock}) = [duration, gradient_strength]
+variables(::Type{<:ConstantGradientBlock}) = [duration, gradient_strength, qvec]
 
 end

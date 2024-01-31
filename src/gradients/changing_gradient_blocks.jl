@@ -6,41 +6,35 @@ import JuMP: @constraint, @variable, Model, owner_model
 import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
 import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
 
-struct AbstractChangingGradientBlock{T<:VariableType} <: GradientBlock
-    gradient_strength_start :: SVector{3, T}
-    slew_rate :: SVector{3, T}
-    duration :: T
+"""
+    ChangingGradientBlock(grad1, slew_rate, duration, rotate, scale)
+
+Underlying type for any linearly changing part in a gradient waveform.
+
+Usually, you do not want to create this object directly, use a gradient waveform instead.
+
+## Parameters
+- `rotate`: with which user-set parameter will this gradient be rotated (e.g., :bvec). Default is no rotation.
+- `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling.
+"""
+struct ChangingGradientBlock <: GradientBlock
+    gradient_strength_start :: SVector{3, <:VariableType}
+    slew_rate :: SVector{3, <:VariableType}
+    duration :: VariableType
     rotate :: Union{Nothing, Symbol}
     scale :: Union{Nothing, Symbol}
 end
 
-"""
-    ChangingGradientBlock(grad1, grad2, duration, rotate, scale)
 
-Underlying type for any linearly changing part in a gradient waveform.
+duration(cgb::ChangingGradientBlock) = cgb.duration
 
-The corresponding type in a fixed gradient is [`FixedChangingGradientBlock`](@ref)
+grad_start(cgb::ChangingGradientBlock) = cgb.gradient_strength_start
+slew_rate(cgb::ChangingGradientBlock) = cgb.slew_rate
+grad_end(cgb::ChangingGradientBlock) = grad_start(cgb) .+ slew_rate(cgb) .* duration(cgb)
+gradient_strength(cgb::ChangingGradientBlock) = max.(grad_start(cgb), grad_end(cgb))
+qvec(cgb::ChangingGradientBlock) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cgb) * π)
 
-Do not create this directly, it will be created by the gradient waveforms.
-"""
-const ChangingGradientBlock = AbstractChangingGradientBlock{VariableType}
-
-"""
-    FixedChangingGradientBlock(grad1, grad2, duration, rotate, scale)
-
-Fixed equivalent of [`ChangingGradientBlock`](@ref).
-"""
-const FixedChangingGradientBlock = AbstractChangingGradientBlock{Float64}
-
-duration(cgb::AbstractChangingGradientBlock) = cgb.duration
-
-grad_start(cgb::AbstractChangingGradientBlock) = cgb.gradient_strength_start
-slew_rate(cgb::AbstractChangingGradientBlock) = cgb.slew_rate
-grad_end(cgb::AbstractChangingGradientBlock) = grad_start(cgb) .+ slew_rate(cgb) .* duration(cgb)
-gradient_strength(cgb::AbstractChangingGradientBlock) = max.(grad_start(cgb), grad_end(cgb))
-qvec(cgb::AbstractChangingGradientBlock) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cgb) * π)
-
-function bmat_gradient(cgb::AbstractChangingGradientBlock, qstart)
+function bmat_gradient(cgb::ChangingGradientBlock, qstart)
     # grad = (g1 * (duration - t) + g2 * t) / duration
     #      = g1 + (g2 - g1) * t / duration
     # q = qstart + g1 * t + (g2 - g1) * t^2 / (2 * duration)
@@ -60,7 +54,7 @@ function bmat_gradient(cgb::AbstractChangingGradientBlock, qstart)
     )
 end
 
-function bmat_gradient(cgb::AbstractChangingGradientBlock)
+function bmat_gradient(cgb::ChangingGradientBlock)
     diff = slew_rate(cgb) .* duration(cgb)
     return (2π)^2 .* (
         grad_start(cgb) .* permutedims(grad_start(cgb)) ./ 3 .+
@@ -70,6 +64,6 @@ function bmat_gradient(cgb::AbstractChangingGradientBlock)
 end
 
 
-variables(::Type{<:AbstractChangingGradientBlock}) = [duration, slew_rate]
+variables(::Type{<:ChangingGradientBlock}) = [duration, slew_rate, gradient_strength, qvec]
 
 end

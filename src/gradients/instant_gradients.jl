@@ -80,13 +80,9 @@ end
 
 
 qvec(instant::InstantGradientBlock) = instant.qvec
-bmat_gradient(instant::InstantGradientBlock, qstart=nothing) = zeros(3, 3)
+bmat_gradient(::InstantGradientBlock, qstart=nothing) = zeros(3, 3)
 duration(instant::InstantGradientBlock) = 0.
 variables(::Type{<:InstantGradientBlock}) = [qvec, qval]
-
-function fixed(block::InstantGradientBlock)
-    return FixedInstantGradient(qvec(block), block.rotate, block.scale)
-end
 
 
 end

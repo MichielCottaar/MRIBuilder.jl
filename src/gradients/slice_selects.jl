@@ -6,21 +6,6 @@ import ...Variables: VariableType, slice_thickness, get_free_variable, effective
 import ...Variables: flip_angle, amplitude, phase, frequency, bandwidth, inverse_bandwidth, N_left, N_right
 import ..ConstantGradientBlocks: ConstantGradientBlock
 
-struct AbstractSliceSelect{T<:VariableType}
-    model :: Model
-    time_before :: T
-    flat_before :: ConstantGradientBlock
-    pulse :: RFPulseBlock
-    time_after :: T
-    flat_after :: ConstantGradientBlock
-    flat_total :: ConstantGradientBlock
-end
-
-"""
-The fixed equivalent of [`SliceSelect`](@ref).
-"""
-const FixedSliceSelect = AbstractSliceSelect{Float64}
-
 """
     SliceSelect(gradient_strength, time_before_pulse, pulse, time_after_pulse, rotate, scale)
 
@@ -31,9 +16,17 @@ Do not create it directly.
 
 The fixed equivalent is [`FixedSliceSelect`](@ref).
 """
-const SliceSelect = AbstractSliceSelect{VariableType}
+struct SliceSelect
+    model :: Model
+    time_before :: <:VariableType
+    flat_before :: ConstantGradientBlock
+    pulse :: RFPulseBlock
+    time_after :: <:VariableType
+    flat_after :: ConstantGradientBlock
+    flat_total :: ConstantGradientBlock
+end
 
-function AbstractSliceSelect{VariableType}(model::Model, gradient_strength::SVector{3, VariableType}, time_before_pulse, pulse::RFPulseBlock, time_after_pulse, rotate::Symbol, scale::Symbol)
+function SliceSelect(model::Model, gradient_strength::SVector{3, VariableType}, time_before_pulse, pulse::RFPulseBlock, time_after_pulse, rotate::Symbol, scale::Symbol)
     time_before_pulse = get_free_variable(model, time_before_pulse),
     time_after_pulse = get_free_variable(model, time_after_pulse),
     return SliceSelect(
