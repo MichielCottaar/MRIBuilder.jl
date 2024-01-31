@@ -1,9 +1,9 @@
 module Generic
-import ...BuildingBlock: BuildingBlock, ContainerBlock, RFPulseBlock
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, RFPulseBlock
 import ...Wait: WaitBlock
 import ...Readouts: InstantReadout
 import ...Gradients: GradientBlock, split_gradient
-import ...Variables: duration, start_time, qvec, bmat_gradient, gradient_strength, slew_rate
+import ...Variables: duration, start_time, qvec, bmat_gradient, gradient_strength, slew_rate, VariableType
 import ...Variables: flip_angle, amplitude, phase, frequency, bandwidth, inverse_bandwidth, N_left, N_right, slice_thickness, all_variables_symbols
 
 """
