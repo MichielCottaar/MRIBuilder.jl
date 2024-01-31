@@ -72,11 +72,11 @@ get_children_indices(ao::AbstractOverlapping) = 1:length(waveform(ao))
 function Base.getindex(ao::AbstractOverlapping, index::Integer)
     grad_like_block = waveform(ao)[index]
     inter = interruptions(ao)
-    first_interrupt = findfirst(int => int[2] == index, inter)
+    first_interrupt = findfirst(int -> int[2] == index, inter)
     if isnothing(first_interrupt)
         return grad_like_block
     else
-        last_interrupt = findlast(int => int[2] == index, inter)
+        last_interrupt = findlast(int -> int[2] == index, inter)
         return SingleInterrupted(grad_like_block, inter[first_interrupt:last_interrupt])
     end
 end
