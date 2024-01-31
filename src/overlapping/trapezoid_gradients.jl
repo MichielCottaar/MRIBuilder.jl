@@ -100,13 +100,13 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
     return res
 end
 
-waveform(pg::PulsedGradient) = [ 
+waveform(pg::TrapezoidGradient) = [ 
     ChangingGradientBlock(zeros(3), slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
     ConstantGradientBlock(gradient_strength(pg), flat_time(pg), pg.rotate, pg.scale),
     ChangingGradientBlock(gradient_strength(pg), -slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
 ]
 
-interruptions(pg::PulsedGradient) = []
+interruptions(pg::TrapezoidGradient) = []
 
 rise_time(pg::TrapezoidGradient) = pg.rise_time
 flat_time(pg::TrapezoidGradient) = pg.flat_time
