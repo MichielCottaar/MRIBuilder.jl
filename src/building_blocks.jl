@@ -187,6 +187,7 @@ function _robust_value(possible_vector::AbstractVector)
     if any(isnothing.(result))
         return nothing
     end
+    return result
 end
 
 function Base.show(io::IO, printer::BuildingBlockPrinter)
