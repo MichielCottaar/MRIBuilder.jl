@@ -5,7 +5,7 @@ module TrapezoidGradients
 
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
-import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, slice_thickness
+import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed
 import ...BuildSequences: @global_model_constructor
 import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
@@ -135,7 +135,7 @@ inverse_slice_thickness(g::TrapezoidGradient) = isnothing(g.pulse) ? nothing : i
 function variables(tg::TrapezoidGradient) 
     list = [qvec, δ, gradient_strength, duration, rise_time, flat_time]
     if !isnothing(tg.pulse)
-        push!(list, slice_thickness)
+        push!(list, inverse_slice_thickness)
     end
     return list
 end

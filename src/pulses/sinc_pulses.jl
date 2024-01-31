@@ -4,7 +4,7 @@ import JuMP: VariableRef, @constraint, @variable, value, Model
 import QuadGK: quadgk
 import Polynomials: fit, Polynomial
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!, fixed
-import ...Variables: flip_angle, phase, amplitude, frequency, bandwidth, VariableType, variables, get_free_variable, duration, effective_time, inverse_bandwidth
+import ...Variables: flip_angle, phase, amplitude, frequency, VariableType, variables, get_free_variable, duration, effective_time, inverse_bandwidth
 import ...BuildSequences: @global_model_constructor
 import ..FixedPulses: FixedPulse
 
@@ -100,8 +100,7 @@ frequency(pulse::SincPulse) = pulse.frequency
 flip_angle(pulse::SincPulse) = (pulse.nlobe_integral(N_left(pulse)) + pulse.nlobe_integral(N_right(pulse))) * amplitude(pulse) * lobe_duration(pulse) * 360
 lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
-bandwidth(pulse::SincPulse) = 1 / inverse_bandwidth(pulse)
-variables(::Type{<:SincPulse}) = [amplitude, N_left, N_right, duration, phase, frequency, flip_angle, lobe_duration, bandwidth]
+variables(::Type{<:SincPulse}) = [amplitude, N_left, N_right, duration, phase, frequency, flip_angle, lobe_duration, inverse_bandwidth]
 effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
 
 function fixed(block::SincPulse)

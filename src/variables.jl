@@ -20,6 +20,7 @@ all_variables_symbols = [
         :N_left => "The number of zero crossings of the RF pulse before the main peak",
         :N_right => "The number of zero crossings of the RF pulse after the main peak",
         :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient.",
+        :inverse_bandwidth => "Inverse of the [`slice_thickness`](@ref) in 1/um.",
     ],
 
     # gradients
@@ -61,6 +62,9 @@ variables() = [values(symbol_to_func)...]
 
 
 # Some universal truths
+slice_thickness(bb) = inv(inverse_slice_thickness(bb))
+bandwidth(bb) = inv(inverse_bandwidth(bb))
+
 function qval_square(bb; kwargs...)
     vec = qvec(bb; kwargs...)
     return vec[1]^2 + vec[2]^2 + vec[3]^2
