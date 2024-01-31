@@ -47,9 +47,6 @@ struct TrapezoidGradient <: AbstractOverlapping
     slew_rate :: SVector{3, VariableType}
     rotate :: Union{Nothing, Symbol}
     scale :: Union{Nothing, Symbol}
-    time_before_pulse :: VariableType
-    pulse :: Union{Nothing, RFPulseBlock}
-    time_after_pulse :: VariableType
 end
 
 @global_model_constructor TrapezoidGradient
