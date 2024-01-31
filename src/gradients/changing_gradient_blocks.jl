@@ -1,13 +1,13 @@
 module ChangingGradientBlocks
 import StaticArrays: SVector
-import ...Variables: VariableType, variables
-import ...BuildingBlocks: GradientBlock
 import JuMP: @constraint, @variable, Model, owner_model
+import ...Variables: VariableType, variables, get_free_variable
+import ...BuildingBlocks: GradientBlock
 import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
 import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
 
 """
-    ChangingGradientBlock(grad1, slew_rate, duration, rotate, scale)
+    ChangingGradientBlock(model, grad1, slew_rate, duration, rotate, scale)
 
 Underlying type for any linearly changing part in a gradient waveform.
 
@@ -18,6 +18,7 @@ Usually, you do not want to create this object directly, use a gradient waveform
 - `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling.
 """
 struct ChangingGradientBlock <: GradientBlock
+    model :: Model
     gradient_strength_start :: SVector{3, <:VariableType}
     slew_rate :: SVector{3, <:VariableType}
     duration :: VariableType
@@ -65,5 +66,22 @@ end
 
 
 variables(::Type{<:ChangingGradientBlock}) = [duration, slew_rate, gradient_strength, qvec]
+
+"""
+    split_gradient(constant/changing_gradient_block, times...)
+
+Split a single gradient at a given times.
+
+All times are relative to the start of the gradient block (in ms).
+Times are assumed to be in increasing order and between 0 and the duration of the gradient block.
+
+For N times this returns a vector with the N+1 replacement [`ConstantGradientBlock`](@ref) or [`ChangingGradientBlock`](@ref) objects.
+"""
+function split_gradient(cgb::ChangingGradientBlock, times...::VariableType)
+    all_times = [0., times...]
+    durations = [times[1], t[2] - t[1] for t in zip(times[1:end-1], times[2:end]), duration(cgb) - times[end]]
+    return [ChangingGradientBlock(cgb.gradient_strength .+ cgb.slew_rate .* t, cgb.slew_rate, d, cgb.rotate, cgb.scale) for (t, d) in zip(all_times, durations)]
+end
+
 
 end

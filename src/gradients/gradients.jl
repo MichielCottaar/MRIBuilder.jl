@@ -14,8 +14,8 @@ They are still included here for clarity:
 """
 module Gradients
 
-include("constant_gradient_blocks.jl")
 include("changing_gradient_blocks.jl")
+include("constant_gradient_blocks.jl")
 include("slice_selects.jl")
 
 #include("integrate_gradients.jl")

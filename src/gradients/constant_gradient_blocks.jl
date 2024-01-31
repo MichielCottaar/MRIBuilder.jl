@@ -5,6 +5,7 @@ import ...BuildingBlocks: GradientBlock
 import JuMP: @constraint, @variable, Model, owner_model
 import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
 import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
+import ..ChangingGradientBlocks: split_gradient
 
 """
     ConstantGradientBlock(gradient_strength, duration, rotate, scale)
@@ -58,5 +59,10 @@ function bmat_gradient(cgb::ConstantGradientBlock, qstart)
 end
 
 variables(::Type{<:ConstantGradientBlock}) = [duration, gradient_strength, qvec]
+
+function split_gradient(cgb::ConstantGradientBlock, times...::VariableType)
+    durations = [times[1], t[2] - t[1] for t in zip(times[1:end-1], times[2:end]), duration(cgb) - times[end]]
+    return [ConstantGradientBlock(cgb.gradient_strength, d, cgb.rotate, cgb.scale) for d in durations]
+end
 
 end
