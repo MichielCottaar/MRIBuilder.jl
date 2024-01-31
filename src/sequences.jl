@@ -21,7 +21,7 @@ or be embedded as a [`BuildingBlock`](@ref) into higher-order `Sequence` or othe
 ## Variables
 - [`TR`](@ref): repetition time of sequence in ms.
 """
-struct Sequence <: Container
+struct Sequence <: ContainerBlock
     model :: Model
     _blocks :: Vector{<:BuildingBlock}
     TR :: VariableType

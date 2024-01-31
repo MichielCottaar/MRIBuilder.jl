@@ -2,7 +2,7 @@ module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_blocks
-import ..Containers: Sequence
+import ..Sequences: Sequence
 import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration
 import ..Wait: WaitBlock
 import ..Readouts: InstantReadout

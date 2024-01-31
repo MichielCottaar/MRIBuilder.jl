@@ -12,6 +12,7 @@ include("gradients/gradients.jl")
 include("pulses/pulses.jl")
 include("readouts/readouts.jl")
 include("overlapping/overlapping.jl")
+include("sequences.jl")
 include("pathways.jl")
 
 import .BuildSequences: build_sequence
@@ -32,8 +33,8 @@ export WaitBlock
 import .Pulses: InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
 export InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
 
-import .Gradients: PulsedGradient, InstantGradientBlock
-export PulsedGradient, InstantGradientBlock
+import .Gradients: InstantGradientBlock
+export InstantGradientBlock
 
 import .Readouts: InstantReadout
 export InstantReadout
