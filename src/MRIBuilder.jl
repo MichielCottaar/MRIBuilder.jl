@@ -11,7 +11,7 @@ include("wait.jl")
 include("gradients/gradients.jl")
 include("pulses/pulses.jl")
 include("readouts/readouts.jl")
-include("waveforms/waveforms.jl")
+include("overlapping/overlapping.jl")
 include("pathways.jl")
 
 import .BuildSequences: build_sequence
@@ -38,7 +38,7 @@ export PulsedGradient, InstantGradientBlock
 import .Readouts: InstantReadout
 export InstantReadout
 
-import .Waveforms: TrapezoidGradient
+import .Overlapping: TrapezoidGradient
 export TrapezoidGradient
 
 import .Sequences: Sequence

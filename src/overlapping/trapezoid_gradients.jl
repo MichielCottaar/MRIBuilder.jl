@@ -8,7 +8,7 @@ import StaticArrays: SVector
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed
 import ...BuildSequences: @global_model_constructor
-import ..Generic: GenericWaveform, SpecificWaveform
+import ..Abstract: interruptions, waveform, AbstractOverlapping
 import ..ChangingGradientBlocks: ChangingGradientBlock
 import ..ConstantGradientBlocks: ConstantGradientBlock
 
@@ -41,7 +41,7 @@ Any variables defined for the specific pulse added. Also:
 
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
-struct TrapezoidGradient <: SpecificWaveform
+struct TrapezoidGradient <: AbstractOverlapping
     model :: Model
     rise_time :: VariableType
     flat_time :: VariableType
@@ -104,17 +104,13 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
     return res
 end
 
-function GenericWaveform(pg::PulsedGradient)
-    GenericWaveform(
-        duration(pg),
-        [
-            ChangingGradientBlock(zeros(3), slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
-            ConstantGradientBlock(gradient_strength(pg), flat_time(pg), pg.rotate, pg.scale),
-            ChangingGradientBlock(gradient_strength(pg), -slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
-        ],
-        []
-    )
-end
+waveform(pg::PulsedGradient) = [ 
+    ChangingGradientBlock(zeros(3), slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
+    ConstantGradientBlock(gradient_strength(pg), flat_time(pg), pg.rotate, pg.scale),
+    ChangingGradientBlock(gradient_strength(pg), -slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
+]
+
+interruptions(pg::PulsedGradient) = []
 
 rise_time(pg::TrapezoidGradient) = pg.rise_time
 flat_time(pg::TrapezoidGradient) = pg.flat_time
@@ -122,21 +118,9 @@ gradient_strength(g::TrapezoidGradient) = slew_rate(g) .* rise_time(g)
 slew_rate(g::TrapezoidGradient) = g.slew_rate
 δ(g::TrapezoidGradient) = rise_time(g) + flat_time(g)
 duration(g::TrapezoidGradient) = 2 * rise_time(g) + flat_time(g)
-qvec(g::TrapezoidGradient) = δ(g) .* gradient_strength(g) .* 2π
+qvec(g::TrapezoidGradient, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
 
-get_children_indices(::TrapezoidGradient) = (:rise, :flat, :fall)
-Base.getindex(pg::TrapezoidGradient, symbol::Symbol) = pg[Val(symbol)]
-Base.getindex(pg::TrapezoidGradient, ::Val{:rise}) = pg.rise
-Base.getindex(pg::TrapezoidGradient, ::Val{:flat}) = pg.flat
-Base.getindex(pg::TrapezoidGradient, ::Val{:fall}) = pg.fall
-
-start_time(pg::TrapezoidGradient, symbol::Symbol) = start_time(pg, Val(symbol))
-start_time(pg::TrapezoidGradient, ::Val{:rise}) = 0.
-start_time(pg::TrapezoidGradient, ::Val{:flat}) = rise_time(pg)
-start_time(pg::TrapezoidGradient, ::Val{:fall}) = δ(pg)
-
-
-variables(::Type{<:TrapezoidGradient}) = [qval, δ, gradient_strength, duration, rise_time, flat_time]
+variables(::Type{<:TrapezoidGradient}) = [qvec, δ, gradient_strength, duration, rise_time, flat_time]
 
 
 end
