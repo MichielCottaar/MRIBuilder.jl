@@ -6,7 +6,7 @@ import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration
 import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
 
 """
-    ChangingGradientBlock(model, grad1, slew_rate, duration, rotate, scale)
+    ChangingGradientBlock(grad1, slew_rate, duration, rotate, scale)
 
 Underlying type for any linearly changing part in a gradient waveform.
 
