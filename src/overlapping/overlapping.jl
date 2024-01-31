@@ -1,4 +1,4 @@
-module Waveforms
+module Overlapping
 include("abstract.jl")
 include("generic.jl")
 include("trapezoid_gradients.jl")
