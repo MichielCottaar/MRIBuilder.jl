@@ -3,43 +3,51 @@ import JuMP: @variable, Model, @objective, objective_function, owner_model, has_
 import ..Scanners: gradient_strength, slew_rate
 
 all_variables_symbols = [
-    # general
-    :duration => (:block, "duration of the building block in ms."),
-    :TR => (:sequence, "Time on which an MRI sequence repeats itself in ms."),
+    :block => [
+        :duration => "duration of the building block in ms.",
+    ],
+    :sequence => [
+        :TR => "Time on which an MRI sequence repeats itself in ms.",
+    ],
 
-    # RF pulse
-    :flip_angle => (:pulse, "The flip angle of the RF pulse in degrees"),
-    :amplitude => (:pulse, "The maximum amplitude of an RF pulse in kHz"),
-    :phase => (:pulse, "The angle of the phase of an RF pulse in KHz"),
-    :frequency => (:pulse, "The off-resonance frequency of an RF pulse (relative to the Larmor frequency of water) in KHz"),
-    :bandwidth => (:pulse, "Bandwidth of the RF pulse in kHz. If you are going to divide by the bandwidth, it can be more efficient to use the [`inverse_bandwidth`](@ref)."),
-    :inverse_bandwidth => (:pulse, "Inverse of the [`bandwidth`](@ref) of the RF pulse in ms"),
-    :N_left => (:pulse, "The number of zero crossings of the RF pulse before the main peak"),
-    :N_right => (:pulse, "The number of zero crossings of the RF pulse after the main peak"),
-    :slice_thickness => (:pulse, "Slice thickness of an RF pulse that is active during a gradient."),
+    :pulse => [
+        :flip_angle => "The flip angle of the RF pulse in degrees",
+        :amplitude => "The maximum amplitude of an RF pulse in kHz"
+        :phase => "The angle of the phase of an RF pulse in KHz",
+        :frequency => "The off-resonance frequency of an RF pulse (relative to the Larmor frequency of water) in KHz",
+        :bandwidth => "Bandwidth of the RF pulse in kHz. If you are going to divide by the bandwidth, it can be more efficient to use the [`inverse_bandwidth`](@ref).",
+        :inverse_bandwidth => "Inverse of the [`bandwidth`](@ref) of the RF pulse in ms",
+        :N_left => "The number of zero crossings of the RF pulse before the main peak",
+        :N_right => "The number of zero crossings of the RF pulse after the main peak",
+        :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient.",
+    ],
 
     # gradients
-    :qvec => (:gradient, "The spatial range and orientation on which the displacements can be detected due to this gradient in rad/um."),
-    :qval => (:gradient, "The spatial range on which the displacements can be detected due to this gradient in rad/um (i.e., norm of [`qvec`](@ref))."),
-    :δ => (:gradient, "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms."),
-    :rise_time => (:gradient, "Time for gradient pulse to reach its maximum value in ms."),
-    :flat_time => (:gradient, "Time of gradient pulse at maximum value in ms."),
-    :gradient_strength => (:gradient, "vector with maximum strength of a gradient along each dimension (kHz/um)"),
-    :slew_rate => (:gradient, "vector with maximum slew rate of a gradient along each dimension (kHz/um)"),
+    :gradient => [
+        :qvec => "The spatial range and orientation on which the displacements can be detected due to this gradient in rad/um.",
+        :qval => "The spatial range on which the displacements can be detected due to this gradient in rad/um (i.e., norm of [`qvec`](@ref)).",
+        :δ => "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms.",
+        :rise_time => "Time for gradient pulse to reach its maximum value in ms.",
+        :flat_time => "Time of gradient pulse at maximum value in ms.",
+        :gradient_strength => "vector with maximum strength of a gradient along each dimension (kHz/um)",
+        :slew_rate => "vector with maximum slew rate of a gradient along each dimension (kHz/um)",
+    ],
 ]
 
 symbol_to_func = Dict{Symbol, Function}()
 
 
 
-for (func_symbol, (block_symbol, description)) in all_variables_symbols
-    as_string = "    $func_symbol($block_symbol)\n\n$description\n\nThis represents a variable within the sequence. Variables can be set during the construction of a [`BuildingBlock`](@ref) or used to create constraints after the fact."
-    new_func = @eval begin
-        function $func_symbol end
-        @doc $as_string $func_symbol
-        $func_symbol
+for (block_symbol, all_functions) in all_variables_symbols
+    for (func_symbol, description) in all_functions
+        as_string = "    $func_symbol($block_symbol)\n\n$description\n\nThis represents a variable within the sequence. Variables can be set during the construction of a [`BuildingBlock`](@ref) or used to create constraints after the fact."
+        new_func = @eval begin
+            function $func_symbol end
+            @doc $as_string $func_symbol
+            $func_symbol
+        end
+        symbol_to_func[func_symbol] = new_func
     end
-    symbol_to_func[func_symbol] = new_func
 end
 
 
