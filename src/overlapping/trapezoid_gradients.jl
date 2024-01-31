@@ -87,6 +87,7 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
     rise_time = get_free_variable(model, rise_time)
     if isnothing(pulse)
         flat_time = get_free_variable(model, flat_time)
+        time_before_pulse = time_after_pulse = 0.
     elseif pulse isa RFPulseBlock
         flat_time = duration(pulse)
         time_before_pulse = time_after_pulse = 0.
@@ -100,13 +101,11 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
         rise_time,
         flat_time,
         slew_rate,
-        rate_1d,
         rotate,
         scale,
         time_before_pulse,
         pulse,
         time_after_pulse
-        
     )
 
     set_simple_constraints!(model, res, kwargs)
