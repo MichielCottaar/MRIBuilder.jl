@@ -8,7 +8,7 @@ import StaticArrays: SVector
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed
 import ...BuildSequences: @global_model_constructor
-import ..Generic: GenericWaveform
+import ..Generic: GenericWaveform, SpecificWaveform
 import ..ChangingGradientBlocks: ChangingGradientBlock
 import ..ConstantGradientBlocks: ConstantGradientBlock
 
@@ -41,7 +41,7 @@ Any variables defined for the specific pulse added. Also:
 
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
-struct TrapezoidGradient <: ContainerBlock
+struct TrapezoidGradient <: SpecificWaveform
     model :: Model
     rise_time :: VariableType
     flat_time :: VariableType

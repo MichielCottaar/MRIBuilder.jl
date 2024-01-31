@@ -10,7 +10,7 @@ include("building_blocks.jl")
 include("wait.jl")
 include("gradients/gradients.jl")
 include("pulses/pulses.jl")
-include("containers/containers.jl")
+include("waveforms/waveforms.jl")
 include("readouts/readouts.jl")
 include("pathways.jl")
 
@@ -37,6 +37,9 @@ export PulsedGradient, InstantGradientBlock
 
 import .Readouts: InstantReadout
 export InstantReadout
+
+import .Waveforms: TrapezoidGradient
+export TrapezoidGradient
 
 import .Sequences: Sequence
 export Sequence
