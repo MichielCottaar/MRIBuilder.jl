@@ -132,7 +132,13 @@ duration(g::TrapezoidGradient) = 2 * rise_time(g) + flat_time(g)
 qvec(g::TrapezoidGradient, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
 inverse_slice_thickness(g::TrapezoidGradient) = isnothing(g.pulse) ? nothing : inverse_bandwidth(g) .* gradient_strength(g)
 
-variables(::Type{<:TrapezoidGradient}) = [qvec, δ, gradient_strength, duration, rise_time, flat_time]
+function variables(tg::TrapezoidGradient) 
+    list = [qvec, δ, gradient_strength, duration, rise_time, flat_time]
+    if !isnothing(tg.pulse)
+        push!(list, slice_thickness)
+    end
+    return list
+end
 
 
 end
