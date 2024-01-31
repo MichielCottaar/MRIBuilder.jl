@@ -282,6 +282,7 @@ apply_simple_constraint!(model::Model, variable, value::Symbol) = apply_simple_c
 apply_simple_constraint!(model::Model, variable, ::Val{:min}) = @objective model Min objective_function(model) + variable
 apply_simple_constraint!(model::Model, variable, ::Val{:max}) = @objective model Min objective_function(model) - variable
 apply_simple_constraint!(model::Model, variable, value::VariableType) = @constraint model variable == value
+apply_simple_constraint!(model::Model, variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(model, v1, v2) for (v1, v2) in zip(variable, value)]
 
 
 """
