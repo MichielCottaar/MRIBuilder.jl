@@ -1,6 +1,6 @@
 module Abstract
 
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, RFPulseBlock
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, RFPulseBlock, get_children_indices
 import ...Wait: WaitBlock
 import ...Readouts: InstantReadout
 import ...Gradients: GradientBlock, split_gradient
