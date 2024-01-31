@@ -9,10 +9,16 @@ import ...Variables: flip_angle, amplitude, phase, frequency, bandwidth, inverse
 """
 Parent type for all objects, where gradients, RF pulses, and/or readouts might overlap with each other.
 
-All children need to be at least convertable into [`GenericWaveform`](@ref).
-They might also override specific functions that can be computed more efficiently
+Do not sub-type from this type directly, use [`SpecificWaveform`](@ref) instead.
 """
 abstract type AbstractWaveform <: ContainerBlock end
+
+"""
+Parent type for any specific gradient waveform that might overlap with RF pulses and/or readouts.
+
+New waveforms should sub-type from this one.
+At the very least they should implement a conversion to [`GenericWaveform`](@ref).
+"""
 abstract type SpecificWaveform <: AbstractWaveform end
 
 
