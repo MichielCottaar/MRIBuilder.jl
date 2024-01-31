@@ -8,9 +8,8 @@ import StaticArrays: SVector
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed
 import ...BuildSequences: @global_model_constructor
+import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
 import ..Abstract: interruptions, waveform, AbstractOverlapping
-import ..ChangingGradientBlocks: ChangingGradientBlock
-import ..ConstantGradientBlocks: ConstantGradientBlock
 
 
 """
