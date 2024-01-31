@@ -10,8 +10,8 @@ include("building_blocks.jl")
 include("wait.jl")
 include("gradients/gradients.jl")
 include("pulses/pulses.jl")
-include("waveforms/waveforms.jl")
 include("readouts/readouts.jl")
+include("waveforms/waveforms.jl")
 include("pathways.jl")
 
 import .BuildSequences: build_sequence
