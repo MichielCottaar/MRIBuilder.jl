@@ -18,21 +18,12 @@ Usually, you do not want to create this object directly, use a gradient waveform
 - `rotate`: with which user-set parameter will this gradient be rotated (e.g., :bvec). Default is no rotation.
 - `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling.
 """
-struct ConstantGradientBlock{T<:VariableType} <: GradientBlock
-    gradient_strength :: SVector{3, T}
-    duration :: T
+struct ConstantGradientBlock <: GradientBlock
+    gradient_strength :: SVector{3, <:VariableType}
+    duration :: VariableType
     rotate :: Union{Nothing, Symbol}
     scale :: Union{Nothing, Symbol}
 end
-
-const ConstantGradientBlock = ConstantGradientBlock{VariableType}
-
-"""
-    FixedConstantGradientBlock(gradient_strength, duration, rotate, scale)
-
-Fixed equivalent of [`ConstantGradientBlock`](@ref).
-"""
-const FixedConstantGradientBlock = ConstantGradientBlock{Float64}
 
 duration(cgb::ConstantGradientBlock) = cgb.duration
 gradient_strength(cgb::ConstantGradientBlock) = cgb.gradient_strength
@@ -59,8 +50,8 @@ end
 
 variables(::Type{<:ConstantGradientBlock}) = [duration, gradient_strength, qvec]
 
-function split_gradient(cgb::ConstantGradientBlock, times...::VariableType)
-    durations = [times[1], t[2] - t[1] for t in zip(times[1:end-1], times[2:end]), duration(cgb) - times[end]]
+function split_gradient(cgb::ConstantGradientBlock, times::VariableType...)
+    durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(cgb) - times[end]]
     return [ConstantGradientBlock(cgb.gradient_strength, d, cgb.rotate, cgb.scale) for d in durations]
 end
 

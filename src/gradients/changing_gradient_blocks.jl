@@ -75,9 +75,9 @@ Times are assumed to be in increasing order and between 0 and the duration of th
 
 For N times this returns a vector with the N+1 replacement [`ConstantGradientBlock`](@ref) or [`ChangingGradientBlock`](@ref) objects.
 """
-function split_gradient(cgb::ChangingGradientBlock, times...::VariableType)
+function split_gradient(cgb::ChangingGradientBlock, times::VariableType...)
     all_times = [0., times...]
-    durations = [times[1], t[2] - t[1] for t in zip(times[1:end-1], times[2:end]), duration(cgb) - times[end]]
+    durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(cgb) - times[end]]
     return [ChangingGradientBlock(cgb.gradient_strength .+ cgb.slew_rate .* t, cgb.slew_rate, d, cgb.rotate, cgb.scale) for (t, d) in zip(all_times, durations)]
 end
 
