@@ -2,7 +2,6 @@ module ConstantGradientBlocks
 import StaticArrays: SVector
 import ...Variables: VariableType, variables
 import ...BuildingBlocks: GradientBlock
-import JuMP: @constraint, @variable, Model, owner_model
 import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
 import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
 import ..ChangingGradientBlocks: split_gradient

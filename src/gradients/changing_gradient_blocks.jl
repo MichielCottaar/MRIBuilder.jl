@@ -1,6 +1,5 @@
 module ChangingGradientBlocks
 import StaticArrays: SVector
-import JuMP: @constraint, @variable, Model, owner_model
 import ...Variables: VariableType, variables, get_free_variable
 import ...BuildingBlocks: GradientBlock
 import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
@@ -18,7 +17,6 @@ Usually, you do not want to create this object directly, use a gradient waveform
 - `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling.
 """
 struct ChangingGradientBlock <: GradientBlock
-    model :: Model
     gradient_strength_start :: SVector{3, <:VariableType}
     slew_rate :: SVector{3, <:VariableType}
     duration :: VariableType
