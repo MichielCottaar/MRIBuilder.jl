@@ -44,9 +44,9 @@ function build_sequence(f::Function, model::Model)
 end
 
 function build_sequence(f::Function)
-    ipopt_opt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
+    ipopt_opt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 3)
     juniper_opt = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt_opt)
-    model = Model(Ipopt.Optimizer)
+    model = Model(juniper_opt)
     build_sequence(f, model)
 end
 
