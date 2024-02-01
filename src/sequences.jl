@@ -32,7 +32,9 @@ struct Sequence <: ContainerBlock
             to_block.(blocks),
             get_free_variable(model, TR),
         )
-        @constraint model seq.TR >= duration(seq)
+        if !(TR isa Number && isinf(TR))
+            @constraint model seq.TR >= duration(seq)
+        end
         if !isnothing(scanner)
             scanner_constraints!(model, seq, scanner)
         end
