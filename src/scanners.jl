@@ -2,6 +2,9 @@
 Define general [`Scanner`](@ref) type and methods as well as some concrete scanners.
 """
 module Scanners
+import JuMP: Model, @constraint, owner_model
+import ..Variables: gradient_strength, slew_rate
+import ..BuildingBlocks: BuildingBlock, get_children_blocks
 
 const gyromagnetic_ratio = 42576.38476  # (kHz/T)
 
@@ -83,4 +86,50 @@ predefined_scanners = Dict(
     :Siemens_Terra => Siemens_Terra,
     :Siemens_Connectom => Siemens_Connectom,
 )
+
+"""
+    scanner_constraints!([model, ]building_block, scanner)
+
+Adds any constraints from a specific scanner to a [`BuildingBlock`]{@ref}.
+"""
+function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner)
+    scanner_constraints!(owner_model(building_block), building_block, scanner)
+end
+
+function scanner_constraints!(model::Model, building_block::BuildingBlock, scanner::Scanner)
+    for func in [gradient_strength, slew_rate]
+        if isfinite(func(scanner))
+            scanner_constraints!(model, building_block, scanner, func)
+        end
+    end
+end
+
+function scanner_constraints!(model::Model, building_block::BuildingBlock, scanner::Scanner, func::Function)
+    if func in variables(building_block)
+        # apply constraint at this level
+        res_bb = func(building_block)
+        if res_bb isa AbstractVector
+            if isnothing(building_block.rotate)
+                # no rotation; apply constraint to each dimension independently
+                for expr in res_bb
+                    @constraint model expr <= func(scanner)
+                    @constraint model expr >= -func(scanner)
+                end
+            else
+                # with rotation: apply constraint to total squared
+                total_squared = sum(map(n->n^2, res_bb))
+                @constraint model total_squared <= func(scanner)^2
+            end
+        else
+            @constraint model res_bb <= func(scanner)
+            @constraint model res_bb >= -func(scanner)
+        end
+    elseif building_block isa ContainerBlock
+        # apply constraints at lower level
+        for (_, child_block) in get_children_blocks(building_block)
+            scanner_constraints!(model, child_block, scanner, func)
+        end
+    end
+end
+
 end
