@@ -107,15 +107,15 @@ function get_parts(ao::AbstractOverlapping, first::Union{Nothing, Integer}, last
     whole_start_index = isnothing(first) ? 0 : inter[first].index
     whole_final_index = isnothing(last) ? length(form) + 1 : inter[first].index
     if whole_start_index == whole_final_index
-        return [split_gradient(form[whole_start_index].block, inter[first].time, inter[last].time)]
+        return [split_gradient(form[whole_start_index], inter[first].time, inter[last].time)]
     end
 
     parts = form[whole_start_index+1:whole_final_index-1]
     if !isnothing(first)
-        pushfirst!(parts, split_gradient(form[whole_start_index].block, inter[first].time)[2])
+        pushfirst!(parts, split_gradient(form[whole_start_index], inter[first].time)[2])
     end
     if !isnothing(last)
-        push!(parts, split_gradient(form[whole_final_index].block, inter[last].time)[1])
+        push!(parts, split_gradient(form[whole_final_index], inter[last].time)[1])
     end
     return parts
 end
@@ -130,7 +130,7 @@ If `first_interruption` is set to something else than `nothing`, only the gradie
 Similarly, if `last_interruption` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
 """
 function qvec(ao::AbstractOverlapping, index1::Union{Nothing, Integer}, index2::Union{Nothing, Integer})
-    @assert index2 >= index1
+    @assert isnothing(index1) || isnothing(index2) || index2 >= index1
     if (index1 isa Number) && (index1 == index2)
         return zeros(3)
     end
@@ -139,7 +139,7 @@ end
 qvec(ao::AbstractOverlapping) = qvec(ao, nothing, nothing)
 
 function bmat_gradient(ao::AbstractOverlapping, qstart, index1::Union{Nothing, Integer}, index2::Union{Nothing, Integer})
-    @assert index2 >= index1
+    @assert isnothing(index1) || isnothing(index2) || index2 >= index1
     if (index1 isa Number) && (index1 == index2)
         return zeros(3, 3)
     end
