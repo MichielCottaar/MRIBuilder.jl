@@ -135,7 +135,7 @@ qvec(g::TrapezoidGradient, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g)
 inverse_slice_thickness(g::TrapezoidGradient) = isnothing(g.pulse) ? nothing : inverse_bandwidth(g) .* gradient_strength(g) .* 1000
 
 function variables(tg::TrapezoidGradient) 
-    list = [qvec, δ, gradient_strength, duration, rise_time, flat_time]
+    list = [slew_rate, qvec, δ, gradient_strength, duration, rise_time, flat_time]
     if !isnothing(tg.pulse)
         push!(list, inverse_slice_thickness)
     end
