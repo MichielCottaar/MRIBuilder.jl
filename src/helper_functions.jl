@@ -28,7 +28,7 @@ For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_an
 - `scale`: name of the parameter with which the RF pulse amplitude can be modulated after sequence optimisation (default: `:transmit_B1`).
 
 ### Slice selection
-- `min_slice_thickness`: minimum slice thickness that should be possible without adjusting the sequence timings in um (default: no slice selection). Can be set to `:min` to indicate that this should be minimised given the scanner constraints and user values for `bandwidth` or `duration`.
+- `min_slice_thickness`: minimum slice thickness that should be possible without adjusting the sequence timings in um (not mm!) (default: no slice selection). Can be set to `:min` to indicate that this should be minimised given the scanner constraints and user values for `bandwidth` or `duration`.
 - `rephase`: set to false to disable the spin rephasing after the RF pulse.
 - `rotate_grad`: name of the parameter with which the slice selection gradient will be rotated after sequence optimisation (default: `:FOV`).
 """
