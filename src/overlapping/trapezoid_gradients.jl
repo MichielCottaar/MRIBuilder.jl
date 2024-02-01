@@ -5,6 +5,7 @@ module TrapezoidGradients
 
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
+import LinearAlgebra: norm
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed
 import ...BuildSequences: @global_model_constructor
