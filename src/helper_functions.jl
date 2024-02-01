@@ -48,7 +48,7 @@ function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, 
         return pulse
     end
 
-    grad = TrapezoidGradient(pulse=pulse, rise_time=:min, slice_thickness=[Inf, Inf, min_slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
+    grad = TrapezoidGradient(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, min_slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
     if !rephase
         return grad
     end
@@ -57,7 +57,7 @@ function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, 
         TrapezoidGradient(orientation=[0, 0, -1.], rotate=rotate_grad, duration=:min);
         TR=Inf
     )
-    @constraint get_global_model() qvec(grad, 1, nothing)[2] == -qvec(seq[2])[2]
+    @constraint get_global_model() qvec(grad, 1, nothing)[3] == -qvec(seq[2])[3]
     return seq
 end
 
