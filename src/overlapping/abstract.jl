@@ -60,7 +60,7 @@ for (func_symbol, _) in [Dict(all_variables_symbols)[:pulse]..., :effective_time
         single_pulse = pulses(ao)
         if iszero(length(single_pulse))
             error("Building block does not contain any RF pulse, so cannot compute $func_symbol.")
-        elseif lenth(single_pulse) > 1
+        elseif length(single_pulse) > 1
             error("Building block has multipl pulses, so cannot compute $func_symbol.")
         end
         $func_symbol(single_pulse[1], args...; kwargs...)
