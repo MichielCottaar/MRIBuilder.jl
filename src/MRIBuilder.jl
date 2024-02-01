@@ -49,8 +49,8 @@ export Sequence
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
 export Pathway, duration_transverse, duration_dephase, bval, bmat
 
-import .HelperFunctions: excitation_pulse
-export excitation_pulse
+import .HelperFunctions: excitation_pulse, refocus_pulse
+export excitation_pulse, refocus_pulse
 
 import JuMP: @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
 export @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
