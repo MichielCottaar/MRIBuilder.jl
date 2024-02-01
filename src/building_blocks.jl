@@ -258,14 +258,18 @@ function set_simple_constraints!(model::Model, block::BuildingBlock, kwargs)
     invert_value(value) = value
 
     for (key, value) in kwargs
-        if key == :qval
-            apply_simple_constraint!(model, qval_square(block), value isa VariableType ? value^2 : value)
-        elseif key == :slice_thickness && :inverse_slice_thickness in keys(to_funcs)
-            apply_simple_constraint!(model, inverse_slice_thickness(block), invert_value(value))
-        elseif key == :bandwidth && :inverse_bandwidth in keys(to_funcs)
-            apply_simple_constraint!(model, inverse_bandwidth(block), invert_value(value))
-        else
+        if key in keys(to_funcs)
             apply_simple_constraint!(model, to_funcs[key](block), value)
+        else
+            if key == :qval
+                apply_simple_constraint!(model, to_funcs[:qval_square](block), value isa VariableType ? value^2 : value)
+            elseif key == :slice_thickness && :inverse_slice_thickness in keys(to_funcs)
+                apply_simple_constraint!(model, to_funcs[:inverse_slice_thickness](block), invert_value(value))
+            elseif key == :bandwidth && :inverse_bandwidth in keys(to_funcs)
+                apply_simple_constraint!(model, to_funcs[:inverse_bandwidth](block), invert_value(value))
+            else
+                error("Trying to set an unrecognised variable $key.")
+            end
         end
     end
     nothing
