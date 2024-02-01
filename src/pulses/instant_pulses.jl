@@ -9,15 +9,17 @@ struct InstantRFPulseBlock <: RFPulseBlock
     model :: Model
     flip_angle :: VariableType
     phase :: VariableType
+    scale :: Union{Nothing, Symbol}
 end
 
 @global_model_constructor InstantRFPulseBlock
 
-function InstantRFPulseBlock(model::Model; flip_angle=nothing, phase=nothing) 
+function InstantRFPulseBlock(model::Model; flip_angle=nothing, phase=nothing, scale=nothing) 
     res = InstantRFPulseBlock(
         model,
         get_free_variable(model, flip_angle),
-        get_free_variable(model, phase)
+        get_free_variable(model, phase),
+        scale
     )
     @constraint model res.flip_angle >= 0
     return res

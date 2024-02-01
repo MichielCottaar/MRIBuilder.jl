@@ -23,14 +23,17 @@ struct ConstantPulse <: RFPulseBlock
     duration :: VariableType
     phase :: VariableType
     frequency :: VariableType
+    scale :: Union{Nothing, Symbol}
 end
 
 @global_model_constructor ConstantPulse
 
-function ConstantPulse(model::Model; amplitude=nothing, duration=nothing, phase=nothing, frequency=nothing, kwargs...) 
+function ConstantPulse(model::Model; amplitude=nothing, duration=nothing, phase=nothing, frequency=nothing, scale=nothing, kwargs...) 
     res = ConstantPulse(
         model,
-        [get_free_variable(model, value) for value in (amplitude, duration, phase, frequency)]...
+        [get_free_variable(model, value) for value in (amplitude, duration, phase, frequency)]...,
+        scale
+
     )
     @constraint model res.amplitude >= 0
     set_simple_constraints!(model, res, kwargs)

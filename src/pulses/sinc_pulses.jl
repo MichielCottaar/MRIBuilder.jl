@@ -39,13 +39,14 @@ struct SincPulse <: RFPulseBlock
     phase :: VariableType
     frequency :: VariableType
     lobe_duration :: VariableType
+    scale :: Union{Nothing, Symbol}
 end
 
 @global_model_constructor SincPulse
 
 function SincPulse(model::Model; 
     symmetric=true, max_Nlobes=nothing, apodise=true, N_lobes=nothing, N_left=nothing, N_right=nothing, 
-    amplitude=nothing, phase=nothing, frequency=nothing, lobe_duration=nothing, kwargs...
+    amplitude=nothing, phase=nothing, frequency=nothing, lobe_duration=nothing, scale=nothing, kwargs...
 ) 
     if symmetric
         N_lobes = get_free_variable(model, N_lobes)
@@ -63,7 +64,8 @@ function SincPulse(model::Model;
         nlobe_integral_params(max_Nlobes, apodise),
         N_left_var,
         N_right_var,
-        [get_free_variable(model, value) for value in (amplitude, phase, frequency, lobe_duration)]...
+        [get_free_variable(model, value) for value in (amplitude, phase, frequency, lobe_duration)]...,
+        scale
     )
     @constraint model res.amplitude >= 0
     @constraint model res.N_left >= 1
