@@ -145,6 +145,9 @@ function _robust_value(possible_vector::AbstractVector)
     return result
 end
 
+_robust_value(possible_tuple::Tuple) = _robust_value([possible_tuple...])
+
+
 function Base.show(io::IO, printer::BuildingBlockPrinter)
     block = printer.bb
     print(io, string(typeof(block)), "(")

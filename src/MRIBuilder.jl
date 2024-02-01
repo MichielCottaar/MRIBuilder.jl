@@ -40,8 +40,8 @@ export InstantGradientBlock
 import .Readouts: InstantReadout
 export InstantReadout
 
-import .Overlapping: TrapezoidGradient
-export TrapezoidGradient
+import .Overlapping: TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform
+export TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform
 
 import .Sequences: Sequence
 export Sequence
