@@ -14,6 +14,7 @@ include("readouts/readouts.jl")
 include("overlapping/overlapping.jl")
 include("sequences.jl")
 include("pathways.jl")
+include("helper_functions.jl")
 
 import .BuildSequences: build_sequence
 export build_sequence
@@ -47,6 +48,9 @@ export Sequence
 
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
 export Pathway, duration_transverse, duration_dephase, bval, bmat
+
+import .HelperFunctions: excitation_pulse
+export excitation_pulse
 
 import JuMP: @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
 export @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
