@@ -105,7 +105,7 @@ function get_parts(ao::AbstractOverlapping, first::Union{Nothing, Integer}, last
     inter = interruptions(ao)
     form = waveform(ao)
     whole_start_index = isnothing(first) ? 0 : inter[first].index
-    whole_final_index = isnothing(last) ? length(form) + 1 : inter[first].index
+    whole_final_index = isnothing(last) ? length(form) + 1 : inter[last].index
     if whole_start_index == whole_final_index
         return [split_gradient(form[whole_start_index], inter[first].time, inter[last].time)]
     end
