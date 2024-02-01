@@ -79,7 +79,7 @@ function Base.show(io::IO, printer::BuildingBlockPrinter{<:Sequence})
         end
     end
     TR = _robust_value(seq.TR)
-    if !isnothing(TR)
+    if !isnothing(TR) && isfinite(TR)
         print(io, "TR=", Int(round(TR)))
     end
     print(io, "):")
