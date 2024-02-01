@@ -7,7 +7,7 @@ import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
 import LinearAlgebra: norm
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness
-import ...BuildingBlocks: duration, set_simple_constraints!, fixed
+import ...BuildingBlocks: duration, set_simple_constraints!, fixed, RFPulseBlock
 import ...BuildSequences: @global_model_constructor
 import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
 import ..Abstract: interruptions, waveform, AbstractOverlapping
@@ -49,7 +49,7 @@ struct TrapezoidGradient <: AbstractOverlapping
     rotate :: Union{Nothing, Symbol}
     scale :: Union{Nothing, Symbol}
     time_before_pulse :: VariableType
-    pulse :: Union{Nothing, Symbol}
+    pulse :: Union{Nothing, RFPulseBlock}
     time_after_pulse :: VariableType
 end
 
