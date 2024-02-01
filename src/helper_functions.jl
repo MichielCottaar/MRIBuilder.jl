@@ -46,7 +46,8 @@ function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, 
     if isinf(min_slice_thickness)
         return pulse
     end
-    grad = TrapezoidGradient(pulse=pulse, rise_time=:min, slice_thickness=min_slice_thickness, orientation=[0, 0, 1.], rotate=rotate_grad)
+
+    grad = TrapezoidGradient(pulse=pulse, rise_time=:min, slice_thickness=[Inf, Inf, min_slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
     if !rephase
         return grad
     end
