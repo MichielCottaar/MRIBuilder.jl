@@ -19,8 +19,8 @@ all_variables_symbols = [
         :inverse_bandwidth => "Inverse of the [`bandwidth`](@ref) of the RF pulse in ms",
         :N_left => "The number of zero crossings of the RF pulse before the main peak",
         :N_right => "The number of zero crossings of the RF pulse after the main peak",
-        :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient.",
-        :inverse_slice_thickness => "Inverse of the [`slice_thickness`](@ref) in 1/um.",
+        :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient in mm.",
+        :inverse_slice_thickness => "Inverse of the [`slice_thickness`](@ref) in 1/mm.",
     ],
 
     # gradients

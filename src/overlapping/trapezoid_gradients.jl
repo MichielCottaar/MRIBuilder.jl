@@ -37,7 +37,7 @@ If not set, they will be determined during the sequence optimisation.
 - [`qval`](@ref)/[`qvec`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
 ### Pulse variables
 Any variables defined for the specific pulse added. Also:
-- [`slice_thickness`](@ref): vector with the slice thickness
+- [`slice_thickness`](@ref): vector with the slice thickness in mm.
 
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
@@ -130,7 +130,7 @@ slew_rate(g::TrapezoidGradient) = g.slew_rate
 δ(g::TrapezoidGradient) = rise_time(g) + flat_time(g)
 duration(g::TrapezoidGradient) = 2 * rise_time(g) + flat_time(g)
 qvec(g::TrapezoidGradient, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
-inverse_slice_thickness(g::TrapezoidGradient) = isnothing(g.pulse) ? nothing : inverse_bandwidth(g) .* gradient_strength(g)
+inverse_slice_thickness(g::TrapezoidGradient) = isnothing(g.pulse) ? nothing : inverse_bandwidth(g) .* gradient_strength(g) .* 1000
 
 function variables(tg::TrapezoidGradient) 
     list = [qvec, δ, gradient_strength, duration, rise_time, flat_time]
