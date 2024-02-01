@@ -4,6 +4,7 @@ import ..BuildSequences: get_global_model
 import ..Sequences: Sequence
 import ..Pulses: SincPulse, ConstantPulse, InstantRFPulseBlock
 import ..Overlapping: TrapezoidGradient
+import ..Variables: qvec
 
 """
     excitation_pulse(; parameters...)
