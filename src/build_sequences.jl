@@ -2,9 +2,13 @@ module BuildSequences
 import JuMP: Model, optimizer_with_attributes, optimize!
 import Ipopt
 import Juniper
+import ..Scanners: Scanner, scanner_constraints!
+import ..BuildingBlocks: BuildingBlock
 
 const GLOBAL_MODEL = Ref(Model())
 const IGNORE_MODEL = GLOBAL_MODEL[]
+
+const GLOBAL_SCANNER = Ref(Scanner())
 
 """
 Wrapper to build a sequence.
@@ -31,23 +35,28 @@ You can also add any arbitrary constraints or objectives using the same syntax a
 
 As soon as the code block is the optimal sequence matching all your constraints and objectives will be returned.
 """
-function build_sequence(f::Function, model::Model)
+function build_sequence(f::Function, scanner::Scanner, model::Model)
     prev_model = GLOBAL_MODEL[]
     GLOBAL_MODEL[] = model
+    prev_scanner = GLOBAL_SCANNER[]
+    if !isnothing(scanner)
+        GLOBAL_SCANNER[] = scanner
+    end
     try
         sequence = f(model)
         optimize!(model)
         return sequence
     finally
         GLOBAL_MODEL[] = prev_model
+        GLOBAL_SCANNER[] = prev_scanner
     end
 end
 
-function build_sequence(f::Function)
+function build_sequence(f::Function, scanner::Scanner)
     ipopt_opt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 3)
     juniper_opt = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt_opt)
     model = Model(juniper_opt)
-    build_sequence(f, model)
+    build_sequence(f, scanner, model)
 end
 
 
@@ -57,6 +66,8 @@ function get_global_model()
     end
     return GLOBAL_MODEL[]
 end
+
+scanner_constraints!(bb::BuildingBlock)  = scanner_constraints!(bb, GLOBAL_SCANNER[])
 
 
 """

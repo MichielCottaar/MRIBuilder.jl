@@ -10,6 +10,7 @@ import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, v
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed, RFPulseBlock
 import ...BuildSequences: @global_model_constructor
 import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
+import ...Scanners: scanner_constraints!
 import ..Abstract: interruptions, waveform, AbstractOverlapping
 
 
@@ -112,6 +113,7 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
     set_simple_constraints!(model, res, kwargs)
     @constraint model flat_time >= 0
     @constraint model rise_time >= 0
+    scanner_constraints!(res)
     return res
 end
 

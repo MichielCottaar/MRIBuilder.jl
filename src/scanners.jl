@@ -4,7 +4,8 @@ Define general [`Scanner`](@ref) type and methods as well as some concrete scann
 module Scanners
 import JuMP: Model, @constraint, owner_model
 import ..Variables: gradient_strength, slew_rate
-import ..BuildingBlocks: BuildingBlock, get_children_blocks
+import ..BuildingBlocks: BuildingBlock, get_children_blocks, ContainerBlock
+import ..Variables: variables
 
 const gyromagnetic_ratio = 42576.38476  # (kHz/T)
 
@@ -88,7 +89,7 @@ predefined_scanners = Dict(
 )
 
 """
-    scanner_constraints!([model, ]building_block, scanner)
+    scanner_constraints!([model, ]building_block[, scanner])
 
 Adds any constraints from a specific scanner to a [`BuildingBlock`]{@ref}.
 """
