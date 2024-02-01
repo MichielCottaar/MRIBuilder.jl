@@ -22,7 +22,7 @@ Adds slice selection to the `pulse` and surrounds it with spoiler gradients.
 ## Variables
 - `duration`: total duration of the block in ms.
 - `slice_thickness`: slice thickness in mm.
-- `spoiler_scale`: length scale on which the spoilers achieve 2π dephasing in mm.
+- `spoiler_scale`: length scale on which the spoilers achieve 2π dephasing in mm. This sets the minimum spoiling. If this spoiling level is not achieved by the slice-select gradient alone, then there will be additional gradients added.
 """
 struct SpoiltSliceSelect <: AbstractOverlapping
     orientation :: SVector{3, Float64}
@@ -79,7 +79,7 @@ duration_trap2(spoilt::SpoiltSliceSelect) = 2 * spoilt.fall_time2 + spoilt.flat_
 
 function waveform(spoilt::SpoiltSliceSelect)
     slew = slew_rate(spoilt)
-    (grad1, grad2, grad3) = [g .* slew_rate(spoilt) for g in all_gradient_strengths(spoilt)]
+    (grad1, grad2, grad3) = [g .* spoilt.orientation for g in all_gradient_strengths(spoilt)]
     return [
         ChangingGradientBlock(zeros(3), slew, rise_time(spoilt)[1], spoilt.rotate, nothing),
         ConstantGradientBlock(grad1, flat_time(spoilt)[1], spoilt.rotate, nothing),
@@ -90,7 +90,7 @@ function waveform(spoilt::SpoiltSliceSelect)
         ChangingGradientBlock(grad3, -slew, fall_time(spoilt)[2], spoilt.rotate, nothing),
     ]
 end
-interruptions(spoilt::SpoiltSliceSelect) = [(index=4, time=duration_trap1(spoilt) + effective_time(spoilt.pulse), object=spoilt.pulse)]
+interruptions(spoilt::SpoiltSliceSelect) = [(index=4, time=effective_time(spoilt.pulse), object=spoilt.pulse)]
 
 rise_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1, spoilt.fall_time2 - spoilt.diff_time)
 flat_time(spoilt::SpoiltSliceSelect) = (spoilt.flat_time1, spoilt.flat_time2)
