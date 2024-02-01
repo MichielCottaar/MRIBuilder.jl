@@ -6,7 +6,7 @@ module TrapezoidGradients
 import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness
+import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness, inverse_bandwidth, effective_time
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed, RFPulseBlock
 import ...BuildSequences: @global_model_constructor
 import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
@@ -121,7 +121,7 @@ waveform(pg::TrapezoidGradient) = [
     ChangingGradientBlock(gradient_strength(pg), -slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
 ]
 
-interruptions(pg::TrapezoidGradient) = isnothing(pg.pulse) ? [] : [(index=2, time=pg.time_before_pulse + effective_time(pulse), object=pg.pulse)]
+interruptions(pg::TrapezoidGradient) = isnothing(pg.pulse) ? [] : [(index=2, time=pg.time_before_pulse + effective_time(pg.pulse), object=pg.pulse)]
 
 rise_time(pg::TrapezoidGradient) = pg.rise_time
 flat_time(pg::TrapezoidGradient) = pg.flat_time
