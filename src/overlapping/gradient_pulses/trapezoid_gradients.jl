@@ -6,7 +6,7 @@ module TrapezoidGradients
 import JuMP: @constraint, @variable, VariableRef, value
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ....Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness, inverse_bandwidth, effective_time
+import ....Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness, inverse_bandwidth, effective_time, qval_square
 import ....BuildingBlocks: duration, set_simple_constraints!, RFPulseBlock, scanner_constraints!
 import ....BuildSequences: global_model
 import ....Gradients: ChangingGradientBlock, ConstantGradientBlock
@@ -132,7 +132,7 @@ qvec(g::TrapezoidGradient, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g)
 inverse_slice_thickness(g::TrapezoidGradient) = isnothing(g.pulse) ? nothing : inverse_bandwidth(g) .* gradient_strength(g) .* 1000
 
 function variables(tg::TrapezoidGradient) 
-    list = [slew_rate, qvec, δ, gradient_strength, duration, rise_time, flat_time]
+    list = [slew_rate, qvec, δ, gradient_strength, duration, rise_time, flat_time, qval_square]
     if !isnothing(tg.pulse)
         push!(list, inverse_slice_thickness)
     end

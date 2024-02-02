@@ -22,7 +22,7 @@ struct WaitBlock <: BuildingBlock
         res = new(
             get_free_variable(duration),
         )
-        @constraint model res.duration >= 0
+        @constraint global_model() res.duration >= 0
         return res
     end
 end
