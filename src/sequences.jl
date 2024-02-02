@@ -36,7 +36,7 @@ struct Sequence <: ContainerBlock
 end
 
 Sequence(blocks...; TR=nothing) = Sequence([blocks...]; TR=TR)
-fixed(seq::Sequence) = fixed.(seq._blocks, TR=fixed(seq.TR))
+fixed(seq::Sequence) = Sequence(fixed.(seq._blocks), TR=fixed(seq.TR))
 
 Base.length(seq::Sequence) = length(seq._blocks)
 Base.getindex(seq::Sequence, index) = seq._blocks[index]
