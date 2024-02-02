@@ -14,7 +14,7 @@ function SingleLine(; nsamples=nothing, dwell_time=nothing, time_to_center=nothi
     readout = ADC(nsamples=nsamples, dwell_time=dwell_time, time_to_center=time_to_center, duration=adc_duration, center_halfway=center_halfway)
     res = SingleLine(
         readout,
-        TrapezoidGradient(orientation=[1, 0, 0], rotate=:FOV, flat_time=duration(readout), duration=:min, rotate=rotate)
+        TrapezoidGradient(orientation=[1, 0, 0], flat_time=duration(readout), duration=:min, rotate=rotate)
     )
     set_simple_constraints!(res, kwargs)
     return res
