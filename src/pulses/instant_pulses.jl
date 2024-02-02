@@ -11,7 +11,7 @@ struct InstantRFPulseBlock <: RFPulseBlock
     scale :: Union{Nothing, Symbol}
 end
 
-function InstantRFPulseBlock(flip_angle=nothing, phase=nothing, scale=nothing) 
+function InstantRFPulseBlock(; flip_angle=nothing, phase=nothing, scale=nothing) 
     res = InstantRFPulseBlock(
         get_free_variable(flip_angle),
         get_free_variable(phase),
