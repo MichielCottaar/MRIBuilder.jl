@@ -32,7 +32,7 @@ function ADC(nsamples; dwell_time=nothing, time_to_center=nothing, center_halfwa
     )
     @constraint global_model() res.dwell_time >= 0
     if center_halfway
-        @constraint global_model() 2 * res.time_to_center == duration(res)
+        apply_simple_constraint!(duration(res), 2 * res.time_to_center)
     else
         @constraint global_model() res.time_to_center >= 0
         @constraint global_model() res.time_to_center <= duration(res)
