@@ -3,8 +3,8 @@ Define the [`Sequence`](@ref) building block.
 """
 module Sequences
 import Printf: @sprintf
-import JuMP: Model, @constraint
-import ...BuildSequences: @global_model_constructor
+import JuMP: @constraint
+import ...BuildSequences: global_model
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR, end_time
 import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_indices, fixed, BuildingBlockPrinter, _robust_value, get_children_blocks
 
@@ -21,25 +21,21 @@ or be embedded as a [`BuildingBlock`](@ref) into higher-order `Sequence` or othe
 - [`TR`](@ref): repetition time of sequence in ms.
 """
 struct Sequence <: ContainerBlock
-    model :: Model
     _blocks :: Vector{<:BuildingBlock}
     TR :: VariableType
-    function Sequence(model::Model, blocks::AbstractVector; TR=nothing)
+    function Sequence(blocks::AbstractVector; TR=nothing)
         seq = new(
-            model,
             to_block.(blocks),
-            get_free_variable(model, TR),
+            get_free_variable(TR),
         )
         if !(TR isa Number && isinf(TR))
-            @constraint model seq.TR >= duration(seq)
+            @constraint global_model() seq.TR >= duration(seq)
         end
         return seq
     end
 end
 
-@global_model_constructor Sequence
-
-Sequence(model::Model, blocks...; TR=nothing) = Sequence(model, [blocks...]; TR=TR)
+Sequence(blocks...; TR=nothing) = Sequence([blocks...]; TR=TR)
 
 Base.length(seq::Sequence) = length(seq._blocks)
 Base.getindex(seq::Sequence, index) = seq._blocks[index]

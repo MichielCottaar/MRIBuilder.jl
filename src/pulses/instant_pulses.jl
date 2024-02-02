@@ -1,27 +1,23 @@
 module InstantPulses
-import JuMP: @constraint, @variable, VariableRef, value, Model
+import JuMP: @constraint, @variable, VariableRef, value
 import ...BuildingBlocks: RFPulseBlock, fixed
 import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType, effective_time, inverse_bandwidth
-import ...BuildSequences: @global_model_constructor
+import ...BuildSequences: global_model
 import ..FixedPulses: FixedInstantPulse
 
 struct InstantRFPulseBlock <: RFPulseBlock
-    model :: Model
     flip_angle :: VariableType
     phase :: VariableType
     scale :: Union{Nothing, Symbol}
 end
 
-@global_model_constructor InstantRFPulseBlock
-
-function InstantRFPulseBlock(model::Model; flip_angle=nothing, phase=nothing, scale=nothing) 
+function InstantRFPulseBlock(flip_angle=nothing, phase=nothing, scale=nothing) 
     res = InstantRFPulseBlock(
-        model,
-        get_free_variable(model, flip_angle),
-        get_free_variable(model, phase),
+        get_free_variable(flip_angle),
+        get_free_variable(phase),
         scale
     )
-    @constraint model res.flip_angle >= 0
+    @constraint global_model() res.flip_angle >= 0
     return res
 end
 

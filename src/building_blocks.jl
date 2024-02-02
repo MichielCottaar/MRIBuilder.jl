@@ -1,5 +1,5 @@
 module BuildingBlocks
-import JuMP: has_values, value, Model, @constraint, @objective, owner_model, objective_function, optimize!, AbstractJuMPScalar
+import JuMP: value, Model, @constraint, @objective, objective_function, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, qval_square
 
@@ -167,7 +167,7 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
     for name in propertynames(block)
         ft = fieldtype(typeof(block), name)
         if (
-            ft in (VariableType, Model) ||
+            ft == VariableType ||
             (ft <: AbstractVector && eltype(ft) == VariableType) ||
             string(name)[1] == '_'
         )
@@ -197,15 +197,15 @@ end
 
 
 """
-    set_simple_constraints!(model, block, kwargs)
+    set_simple_constraints!(block, kwargs)
 
-Add any constraints or objective functions to the variables of a [`BuildingBlock`](@ref) in the JuMP `model`.
+Add any constraints or objective functions to the variables of a [`BuildingBlock`](@ref).
 
 Each keyword argument has to match one of the functions in [`variables`](@ref)(block).
 If set to a numeric value, a constraint will be added to fix the function value to that numeric value.
 If set to `:min` or `:max`, minimising or maximising this function will be added to the cost function.
 """
-function set_simple_constraints!(model::Model, block::BuildingBlock, kwargs)
+function set_simple_constraints!(block::BuildingBlock, kwargs)
     to_funcs = Dict(nameof(fn) => fn for fn in variables(block))
 
     invert_value(value::VariableType) = 1 / value
@@ -217,14 +217,14 @@ function set_simple_constraints!(model::Model, block::BuildingBlock, kwargs)
 
     for (key, value) in kwargs
         if key in keys(to_funcs)
-            apply_simple_constraint!(model, to_funcs[key](block), value)
+            apply_simple_constraint!(to_funcs[key](block), value)
         else
             if key == :qval
-                apply_simple_constraint!(model, to_funcs[:qval_square](block), value isa VariableType ? value^2 : value)
+                apply_simple_constraint!(to_funcs[:qval_square](block), value isa VariableType ? value^2 : value)
             elseif key == :slice_thickness && :inverse_slice_thickness in keys(to_funcs)
-                apply_simple_constraint!(model, to_funcs[:inverse_slice_thickness](block), invert_value(value))
+                apply_simple_constraint!(to_funcs[:inverse_slice_thickness](block), invert_value(value))
             elseif key == :bandwidth && :inverse_bandwidth in keys(to_funcs)
-                apply_simple_constraint!(model, to_funcs[:inverse_bandwidth](block), invert_value(value))
+                apply_simple_constraint!(to_funcs[:inverse_bandwidth](block), invert_value(value))
             else
                 error("Trying to set an unrecognised variable $key.")
             end
@@ -234,7 +234,7 @@ function set_simple_constraints!(model::Model, block::BuildingBlock, kwargs)
 end
 
 """
-    apply_simple_constraint!(model, variable, value)
+    apply_simple_constraint!([model, ]variable, value)
 
 Add a single constraint or objective to the JuMP `model`.
 This is an internal function used by [`set_simple_constraints`](@ref).
@@ -253,9 +253,7 @@ apply_simple_constraint!(model::Model, variable::AbstractVector, value::Abstract
 Matches the listed variables between two [`BuildingBlock`](@ref) objects.
 By default all shared variables (i.e., those with the same name) are matched.
 """
-function match_blocks!(block1::BuildingBlock, block2::BuildingBlock, property_list)
-    model = owner_model(block1)
-    @assert model == owner_model(block2)
+function match_blocks!(model::Model, block1::BuildingBlock, block2::BuildingBlock, property_list)
     for fn in property_list
         @constraint model fn(block1) == fn(block2)
     end
@@ -264,31 +262,6 @@ end
 function match_blocks!(block1::BuildingBlock, block2::BuildingBlock)
     property_list = intersect(variables(block1), variables(block2))
     match_blocks!(block1, block2, property_list)
-end
-
-
-optimize!(bb::BuildingBlock) = optimize!(owner_model(bb))
-function owner_model(bb::BuildingBlock)
-    if hasproperty(bb, :model)
-        return bb.model
-    else
-        for name in propertynames(bb)
-            value = getproperty(bb, name)
-            if value isa AbstractJuMPScalar
-                return owner_model(value)
-            end
-        end
-    end
-    error("Cannot find owner model")
-end
-
-function has_values(bb::BuildingBlock) 
-    try 
-        return has_values(owner_model(bb))
-    catch
-        # return true for building blocks without a model
-        return true
-    end
 end
 
 end

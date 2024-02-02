@@ -1,8 +1,8 @@
 module ConstantPulses
-import JuMP: VariableRef, @constraint, @variable, value, Model
+import JuMP: VariableRef, @constraint, @variable, value
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!, fixed
 import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, start_time, end_time, VariableType, duration, effective_time, inverse_bandwidth
-import ...BuildSequences: @global_model_constructor
+import ...BuildSequences: global_model
 import ..FixedPulses: FixedPulse
 
 """
@@ -18,7 +18,6 @@ Represents an radio-frequency pulse with a constant amplitude and frequency (i.e
 - [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
 """
 struct ConstantPulse <: RFPulseBlock
-    model :: Model
     amplitude :: VariableType
     duration :: VariableType
     phase :: VariableType
@@ -26,17 +25,14 @@ struct ConstantPulse <: RFPulseBlock
     scale :: Union{Nothing, Symbol}
 end
 
-@global_model_constructor ConstantPulse
-
-function ConstantPulse(model::Model; amplitude=nothing, duration=nothing, phase=nothing, frequency=nothing, scale=nothing, kwargs...) 
+function ConstantPulse(amplitude=nothing, duration=nothing, phase=nothing, frequency=nothing, scale=nothing, kwargs...) 
     res = ConstantPulse(
-        model,
-        [get_free_variable(model, value) for value in (amplitude, duration, phase, frequency)]...,
+        [get_free_variable(value) for value in (amplitude, duration, phase, frequency)]...,
         scale
 
     )
-    @constraint model res.amplitude >= 0
-    set_simple_constraints!(model, res, kwargs)
+    @constraint global_model() res.amplitude >= 0
+    set_simple_constraints!(res, kwargs)
     return res
 end
 

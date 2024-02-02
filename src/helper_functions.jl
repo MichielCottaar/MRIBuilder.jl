@@ -1,6 +1,6 @@
 module HelperFunctions
 import JuMP: @constraint
-import ..BuildSequences: get_global_model
+import ..BuildSequences: global_model
 import ..Sequences: Sequence
 import ..Pulses: SincPulse, ConstantPulse, InstantRFPulseBlock
 import ..Overlapping: TrapezoidGradient, SpoiltSliceSelect
@@ -65,7 +65,7 @@ function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, 
         TrapezoidGradient(orientation=[0, 0, -1.], rotate=rotate_grad, duration=:min);
         TR=Inf
     )
-    @constraint get_global_model() qvec(grad, 1, nothing)[3] == -qvec(seq[2])[3]
+    @constraint global_model() qvec(grad, 1, nothing)[3] == -qvec(seq[2])[3]
     return seq
 end
 
@@ -112,7 +112,7 @@ function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, sl
         orientation=isnothing(rotate_grad) ? [1, 1, 1] : [0, 0, 1]
         if isinf(slice_thickness)
             grad = TrapezoidGradient(orientation=orientation, duration=:min, rotate=rotate_grad)
-            @constraint get_global_model() qvec(grad)[3] == 2π * 1e-3 / spoiler
+            @constraint global_model() qvec(grad)[3] == 2π * 1e-3 / spoiler
             return Sequence(grad, pulse, grad; TR=Inf)
         else
             res = SpoiltSliceSelect(pulse; orientation=orientation, duration=:min, rotate=rotate_grad, slice_thickness=slice_thickness, spoiler_scale=spoiler)

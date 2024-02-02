@@ -16,8 +16,8 @@ include("sequences.jl")
 include("pathways.jl")
 include("helper_functions.jl")
 
-import .BuildSequences: build_sequence
-export build_sequence
+import .BuildSequences: build_sequence, global_model, global_scanner
+export build_sequence, global_model, global_scanner
 
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
@@ -52,7 +52,7 @@ export Pathway, duration_transverse, duration_dephase, bval, bmat
 import .HelperFunctions: excitation_pulse, refocus_pulse
 export excitation_pulse, refocus_pulse
 
-import JuMP: @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
-export @constraint, @objective, objective_function, optimize!, has_values, value, owner_model, Model
+import JuMP: @constraint, @objective, objective_function, value, Model
+export @constraint, @objective, objective_function, value, Model
 
 end

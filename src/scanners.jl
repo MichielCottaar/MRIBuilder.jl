@@ -2,7 +2,7 @@
 Define general [`Scanner`](@ref) type and methods as well as some concrete scanners.
 """
 module Scanners
-import JuMP: Model, @constraint, owner_model
+import JuMP: Model, @constraint
 import ..Variables: gradient_strength, slew_rate
 import ..BuildingBlocks: BuildingBlock, get_children_blocks, ContainerBlock
 import ..Variables: variables
@@ -89,18 +89,14 @@ predefined_scanners = Dict(
 )
 
 """
-    scanner_constraints!([model, ]building_block[, scanner])
+    scanner_constraints!(building_block[, scanner])
 
 Adds any constraints from a specific scanner to a [`BuildingBlock`]{@ref}.
 """
 function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner)
-    scanner_constraints!(owner_model(building_block), building_block, scanner)
-end
-
-function scanner_constraints!(model::Model, building_block::BuildingBlock, scanner::Scanner)
     for func in [gradient_strength, slew_rate]
         if isfinite(func(scanner))
-            scanner_constraints!(model, building_block, scanner, func)
+            scanner_constraints!(building_block, scanner, func)
         end
     end
 end

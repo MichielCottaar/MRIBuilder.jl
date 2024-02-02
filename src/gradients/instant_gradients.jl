@@ -1,9 +1,9 @@
 module InstantGradients
 import StaticArrays: SVector
-import JuMP: @constraint, @variable, Model, owner_model, AbstractJuMPScalar
+import JuMP: @constraint, @variable, AbstractJuMPScalar
 import ...Variables: qvec, bmat_gradient, duration, variables, get_free_variable, VariableType
 import ...BuildingBlocks: GradientBlock, fixed
-import ...BuildSequences: @global_model_constructor
+import ...BuildSequences: global_model
 
 """
     InstantGradientBlock(; orientation=nothing, qval=nothing, qvec=nothing, rotate=nothing, scale=nothing)
@@ -20,13 +20,10 @@ Defines an instantaneous gradient.
 - [`qval`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um.
 """
 struct InstantGradientBlock <: GradientBlock
-    model::Model
     qvec :: SVector{3, VariableType}
     rotate :: Union{Nothing, Symbol}
     scale :: Union{Nothing, Symbol}
 end
-
-@global_model_constructor InstantGradientBlock
 
 function interpret_orientation(orientation, qval, qvec, will_rotate)
     if !isnothing(qvec)
@@ -60,10 +57,10 @@ function interpret_orientation(orientation, qval, qvec, will_rotate)
     end
 end
 
-function InstantGradientBlock(model::Model; orientation=nothing, qval=nothing, qvec=nothing, rotate=nothing, scale=nothing)
+function InstantGradientBlock(; orientation=nothing, qval=nothing, qvec=nothing, rotate=nothing, scale=nothing)
+    model = global_model()
     (used_qval, qvec) = interpret_orientation(orientation, qval, qvec, !isnothing(rotate))
     res = InstantGradientBlock(
-        model,
         qvec,
         rotate,
         scale

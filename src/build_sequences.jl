@@ -3,7 +3,7 @@ import JuMP: Model, optimizer_with_attributes, optimize!
 import Ipopt
 import Juniper
 import ..Scanners: Scanner, scanner_constraints!
-import ..BuildingBlocks: BuildingBlock
+import ..BuildingBlocks: BuildingBlock, apply_simple_constraint!, match_blocks!
 
 const GLOBAL_MODEL = Ref(Model())
 const IGNORE_MODEL = GLOBAL_MODEL[]
@@ -60,29 +60,26 @@ function build_sequence(f::Function, scanner::Scanner)
 end
 
 
-function get_global_model()
+function global_model()
     if GLOBAL_MODEL[] == IGNORE_MODEL
         error("No global model has been set. Please explicitly set one in the constructor or set a global model using `set_model`.")
     end
     return GLOBAL_MODEL[]
 end
 
-scanner_constraints!(bb::BuildingBlock)  = scanner_constraints!(bb, GLOBAL_SCANNER[])
-
-
-"""
-    @global_model_constructor BuildingBlockType
-
-Add a constructor to the [`BuildingBlock`](@ref) subtype that fetches the global JuMP model (set by [`set_model`](@ref)) and assigns it to the first argument.
-```
-BuildingBlockType(args...; kwargs...) = BuildingBlockType(global_model::JuMP.Model, args...; kwargs...)
-```
-"""
-macro global_model_constructor(bb)
-    quote
-        $(esc(bb))(args...; kwargs...) = $(esc(bb))(get_global_model(), args...; kwargs...)
+function global_scanner()
+    if !isfinite(GLOBAL_SCANNER[].gradient)
+        error("No valid scanner has been set. Please provide one when calling `build_sequence`.")
     end
+    return GLOBAL_SCANNER[]
 end
 
+
+scanner_constraints!(bb::BuildingBlock)  = scanner_constraints!(bb, global_scanner())
+
+apply_simple_constraint!(variable, value) = apply_simple_constraint!(global_model(), variable, value)
+match_blocks!(block1::BuildingBlock, block2::BuildingBlock, property_list) = match_blocks!(global_model(), block1, block2, property_list)
+scanner_constraints!(building_block::BuildingBlock, scanner::Scanner, func::Function) = scanner_constraints!(building_block, scanner, func)
+scanner_constraints!(building_block::BuildingBlock) = scanner_constraints!(building_block, global_scanner())
 
 end

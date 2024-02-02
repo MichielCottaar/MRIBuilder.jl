@@ -3,12 +3,12 @@ Defines a set of different options for MRI gradients.
 """
 module TrapezoidGradients
 
-import JuMP: @constraint, @variable, Model, VariableRef, owner_model, value
+import JuMP: @constraint, @variable, VariableRef, value
 import StaticArrays: SVector
 import LinearAlgebra: norm
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness, inverse_bandwidth, effective_time
 import ...BuildingBlocks: duration, set_simple_constraints!, fixed, RFPulseBlock
-import ...BuildSequences: @global_model_constructor
+import ...BuildSequences: global_model
 import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
 import ...Scanners: scanner_constraints!
 import ..Abstract: interruptions, waveform, AbstractOverlapping
@@ -43,7 +43,6 @@ Any variables defined for the specific pulse added. Also:
 The [`bvalue`](@ref) can be constrained for multiple gradient pulses.
 """
 struct TrapezoidGradient <: AbstractOverlapping
-    model :: Model
     rise_time :: VariableType
     flat_time :: VariableType
     slew_rate :: SVector{3, VariableType}
@@ -54,21 +53,19 @@ struct TrapezoidGradient <: AbstractOverlapping
     time_after_pulse :: VariableType
 end
 
-@global_model_constructor TrapezoidGradient
-
-function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, pulse=nothing,kwargs...)
+function TrapezoidGradient(orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, pulse=nothing,kwargs...)
     if isnothing(orientation) && isnothing(rotate)
         rate_1d = nothing
         slew_rate = (
-            get_free_variable(model, nothing),
-            get_free_variable(model, nothing),
-            get_free_variable(model, nothing),
+            get_free_variable(nothing),
+            get_free_variable(nothing),
+            get_free_variable(nothing),
         )
     else
-        rate_1d = get_free_variable(model, nothing)
-        @constraint model rate_1d >= 0
+        rate_1d = get_free_variable(nothing)
+        @constraint global_model() rate_1d >= 0
         if isnothing(orientation)
-            rate_1d = get_free_variable(model, nothing)
+            rate_1d = get_free_variable(nothing)
             slew_rate = (
                 rate_1d,
                 0.,
@@ -86,9 +83,9 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
         end
     end
     slew_rate = SVector{3}(slew_rate)
-    rise_time = get_free_variable(model, rise_time)
+    rise_time = get_free_variable(rise_time)
     if isnothing(pulse)
-        flat_time = get_free_variable(model, flat_time)
+        flat_time = get_free_variable(flat_time)
         time_before_pulse = time_after_pulse = 0.
     elseif pulse isa RFPulseBlock
         flat_time = duration(pulse)
@@ -99,7 +96,6 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
     end
 
     res = TrapezoidGradient(
-        model,
         rise_time,
         flat_time,
         slew_rate,
@@ -110,9 +106,9 @@ function TrapezoidGradient(model::Model; orientation=nothing, rise_time=nothing,
         time_after_pulse
     )
 
-    set_simple_constraints!(model, res, kwargs)
-    @constraint model flat_time >= 0
-    @constraint model rise_time >= 0
+    set_simple_constraints!(res, kwargs)
+    @constraint flat_time >= 0
+    @constraint rise_time >= 0
     scanner_constraints!(res)
     return res
 end

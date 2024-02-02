@@ -1,5 +1,6 @@
 module Variables
-import JuMP: @variable, Model, @objective, objective_function, owner_model, has_values, value, AbstractJuMPScalar
+import JuMP: @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
+import ..
 
 all_variables_symbols = [
     :block => [
@@ -82,29 +83,23 @@ const VariableType = Union{Number, AbstractJuMPScalar}
 
 
 """
-    get_free_variable(model, value; integer=false)
+    get_free_variable(value; integer=false)
 
 Get a representation of a given `variable` given a user-defined constraint.
 """
-get_free_variable(::Model, value::Number; integer=false) = integer ? Int(value) : Float64(value)
-function get_free_variable(model::Model, value::VariableType; integer=false)
-    if owner_model(value) != model
-        if has_values(value)
-            return value(value)
-        end
-        error("Cannot set any constraints between sequences stored in different JuMP models.")
-    end
-    return value
-end
-get_free_variable(model::Model, ::Nothing; integer=false) = @variable(model, start=0.01, integer=integer)
-get_free_variable(model::Model, value::Symbol; integer=false) = integer ? error("Cannot maximise or minimise an integer variable") : get_free_variable(model, Val(value))
-function get_free_variable(model::Model, ::Val{:min})
-    var = get_free_variable(model, nothing)
+get_free_variable(value::Number; integer=false) = integer ? Int(value) : Float64(value)
+get_free_variable(value::VariableType; integer=false) = value
+get_free_variable(::Nothing; integer=false) = @variable(global_model(), start=0.01, integer=integer)
+get_free_variable(value::Symbol; integer=false) = integer ? error("Cannot maximise or minimise an integer variable") : get_free_variable(Val(value))
+function get_free_variable(::Val{:min})
+    var = get_free_variable(nothing)
+    model = global_model()
     @objective model Min objective_function(model) + var
     return var
 end
-function get_free_variable(model::Model, ::Val{:max})
-    var = get_free_variable(model, nothing)
+function get_free_variable(::Val{:max})
+    var = get_free_variable(nothing)
+    model = global_model()
     @objective model Min objective_function(model) - var
     return var
 end

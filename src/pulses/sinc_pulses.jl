@@ -1,11 +1,11 @@
 module SincPulses
 
-import JuMP: VariableRef, @constraint, @variable, value, Model
+import JuMP: VariableRef, @constraint, @variable, value
 import QuadGK: quadgk
 import Polynomials: fit, Polynomial
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!, fixed
 import ...Variables: flip_angle, phase, amplitude, frequency, VariableType, variables, get_free_variable, duration, effective_time, inverse_bandwidth
-import ...BuildSequences: @global_model_constructor
+import ...BuildSequences: global_model
 import ..FixedPulses: FixedPulse
 
 """
@@ -29,7 +29,6 @@ Represents an radio-frequency pulse with a constant amplitude and frequency.
 - [`bandwidth`](@ref): width of the rectangular function in frequency space (in kHz). If the `duration` is short (compared with 1/`bandwidth`), this bandwidth will only be approximate.
 """
 struct SincPulse <: RFPulseBlock
-    model :: Model
     symmetric :: Bool
     apodise :: Bool
     nlobe_integral :: Polynomial
@@ -42,31 +41,29 @@ struct SincPulse <: RFPulseBlock
     scale :: Union{Nothing, Symbol}
 end
 
-@global_model_constructor SincPulse
-
-function SincPulse(model::Model; 
+function SincPulse(; 
     symmetric=true, max_Nlobes=nothing, apodise=true, N_lobes=nothing, N_left=nothing, N_right=nothing, 
     amplitude=nothing, phase=nothing, frequency=nothing, lobe_duration=nothing, scale=nothing, kwargs...
 ) 
     if symmetric
-        N_lobes = get_free_variable(model, N_lobes)
+        N_lobes = get_free_variable(N_lobes)
         @assert isnothing(N_left) && isnothing(N_right) "N_left and N_right cannot be set if symmetric=true (default)"
         N_left_var = N_right_var = N_lobes
     else
         @assert isnothing(N_lobes) "N_lobes cannot be set if symmetric=true (default)"
-        N_left_var = get_free_variable(model, N_left)
-        N_right_var = get_free_variable(model, N_right)
+        N_left_var = get_free_variable(N_left)
+        N_right_var = get_free_variable(N_right)
     end
     res = SincPulse(
-        model,
         symmetric,
         apodise,
         nlobe_integral_params(max_Nlobes, apodise),
         N_left_var,
         N_right_var,
-        [get_free_variable(model, value) for value in (amplitude, phase, frequency, lobe_duration)]...,
+        [get_free_variable(value) for value in (amplitude, phase, frequency, lobe_duration)]...,
         scale
     )
+    model = global_model()
     @constraint model res.amplitude >= 0
     @constraint model res.N_left >= 1
     if !symmetric

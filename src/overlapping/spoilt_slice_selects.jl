@@ -4,7 +4,7 @@ import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @variable, @constraint, @objective, objective_function
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!
-import ...BuildSequences: GLOBAL_SCANNER, get_global_model
+import ...BuildSequences: global_model, global_scanner
 import ...Variables: VariableType, variables, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate
 import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
 import ..Abstract: interruptions, waveform, AbstractOverlapping
@@ -37,7 +37,7 @@ struct SpoiltSliceSelect <: AbstractOverlapping
 end
 
 function SpoiltSliceSelect(pulse; orientation=[0, 0, 1], rotate=nothing, spoiler_scale=nothing, kwargs...)
-    model = get_global_model()
+    model = global_model()
     res = SpoiltSliceSelect(
         orientation ./ norm(orientation),
         @variable(model, start=0.1),
@@ -47,7 +47,7 @@ function SpoiltSliceSelect(pulse; orientation=[0, 0, 1], rotate=nothing, spoiler
         @variable(model, start=0.1),
         @variable(model, start=0.1),
         rotate,
-        slew_rate(GLOBAL_SCANNER[])
+        slew_rate(global_scanner())
     )
     for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
         @constraint model time_var >= 0
@@ -68,7 +68,7 @@ function SpoiltSliceSelect(pulse; orientation=[0, 0, 1], rotate=nothing, spoiler
     end
     set_simple_constraints!(model, res, kwargs)
 
-    max_time = gradient_strength(GLOBAL_SCANNER[]) / slew_rate(GLOBAL_SCANNER[])
+    max_time = gradient_strength(global_scanner()) / res.slew_rate
     @constraint model rise_time(res)[1] <= max_time
     @constraint model fall_time(res)[2] <= max_time
     return res
