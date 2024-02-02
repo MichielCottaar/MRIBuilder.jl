@@ -36,6 +36,10 @@ all_variables_symbols = [
     ],
     :readout => [
         :dwell_time => "Time between two samples in an `ADC` in ms.",
+        :nsamples => "Number of samples during a readout. During the optimisation this might produce non-integer values (also see [`resolution`](@ref)).",
+        :fov => "Size of the field of view in mm.",
+        :voxel_size => "Size of each voxel in mm.",
+        :resolution => "Number of voxels in the final readout (also see [`nsamples`](@ref)).",
     ]
 ]
 

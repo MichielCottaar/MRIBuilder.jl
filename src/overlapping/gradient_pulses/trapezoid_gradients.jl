@@ -50,6 +50,7 @@ struct TrapezoidGradient <: AbstractOverlapping
     time_before_pulse :: VariableType
     pulse :: Union{Nothing, RFPulseBlock}
     time_after_pulse :: VariableType
+    slew_rate_1d :: Union{Nothing, VariableType}
 end
 
 function TrapezoidGradient(; orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, pulse=nothing,kwargs...)
@@ -102,7 +103,8 @@ function TrapezoidGradient(; orientation=nothing, rise_time=nothing, flat_time=n
         scale,
         time_before_pulse,
         pulse,
-        time_after_pulse
+        time_after_pulse,
+        rate_1d
     )
 
     set_simple_constraints!(res, kwargs)

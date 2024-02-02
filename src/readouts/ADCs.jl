@@ -1,6 +1,6 @@
 module ADCs
 import JuMP: @constraint
-import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType, nsamples
+import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType, nsamples, resolution
 import ...BuildingBlocks: BuildingBlock, apply_simple_constraint!, set_simple_constraints!, fixed
 import ...BuildSequences: global_model
 
@@ -24,7 +24,7 @@ struct ADC <: BuildingBlock
     time_to_center :: VariableType
 end
 
-function ADC(nsamples=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, kwargs...)
+function ADC(; nsamples=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, kwargs...)
     res = ADC(
         get_free_variable(nsamples),
         get_free_variable(dwell_time),
@@ -46,8 +46,9 @@ dwell_time(adc::ADC) = adc.dwell_time
 duration(adc::ADC) = nsamples(adc) * dwell_time(adc)
 time_to_center(adc::ADC) = adc.time_to_center
 effective_time(adc::ADC) = time_to_center(adc)
+resolution(adc::ADC) = adc.nsamples
 
-variables(::Type{<:ADC}) = [nsamples, dwell_time, duration, time_to_center]
+variables(::Type{<:ADC}) = [nsamples, dwell_time, duration, time_to_center, resolution]
 
 function fixed(adc::ADC)
     # round nsamples during fixing
