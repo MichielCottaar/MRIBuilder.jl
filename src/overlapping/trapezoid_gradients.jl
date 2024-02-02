@@ -106,8 +106,8 @@ function TrapezoidGradient(orientation=nothing, rise_time=nothing, flat_time=not
     )
 
     set_simple_constraints!(res, kwargs)
-    @constraint flat_time >= 0
-    @constraint rise_time >= 0
+    @constraint global_model() flat_time >= 0
+    @constraint global_model() rise_time >= 0
     scanner_constraints!(res)
     return res
 end
