@@ -78,10 +78,16 @@ Siemens 3T Connectom MRI scanner ([fan22_MappingHumanConnectome](@cite)).
 """
 Siemens_Connectom = Scanner(B0=3., gradient=300, slew_rate=200, units=:Tesla)
 
+"""
+Siemens 3T Connectom 2.0 MRI scanner ([huang21_ConnectomeDevelopingnextgeneration](@cite))
+"""
+Siemens_Connectom_v2 = Scanner(B0=3., gradient=500, slew_rate=600, units=:Tesla)
+
 predefined_scanners = Dict(
     :Siemens_Prisma => Siemens_Prisma,
     :Siemens_Terra => Siemens_Terra,
     :Siemens_Connectom => Siemens_Connectom,
+    :Siemens_Connectom_v2 => Siemens_Connectom_v2,
 )
 
 end
