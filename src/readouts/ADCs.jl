@@ -21,7 +21,7 @@ Adds a readout event with `nsamples` readouts.
 struct ADC <: BuildingBlock
     nsamples :: Integer
     dwell_time :: VariableType
-    time_to_center :: Union{Nothing, VariableType}
+    time_to_center :: VariableType
 end
 
 function ADC(nsamples; dwell_time=nothing, time_to_center=nothing, center_halfway=true, kwargs...)
