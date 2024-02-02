@@ -5,7 +5,7 @@ import ...Wait: WaitBlock
 import ...Readouts: InstantReadout
 import ...Pulses: RFPulseBlock
 import ...Gradients: GradientBlock
-import ...Scanners: scanner_constraints!
+import ...BuildingBlocks: scanner_constraints!
 
 """
     GenericWaveform(duration, waveform, interruptions)

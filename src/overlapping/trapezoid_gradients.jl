@@ -7,10 +7,9 @@ import JuMP: @constraint, @variable, VariableRef, value
 import StaticArrays: SVector
 import LinearAlgebra: norm
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_slice_thickness, inverse_bandwidth, effective_time
-import ...BuildingBlocks: duration, set_simple_constraints!, fixed, RFPulseBlock
+import ...BuildingBlocks: duration, set_simple_constraints!, fixed, RFPulseBlock, scanner_constraints!
 import ...BuildSequences: global_model
 import ...Gradients: ChangingGradientBlock, ConstantGradientBlock
-import ...Scanners: scanner_constraints!
 import ..Abstract: interruptions, waveform, AbstractOverlapping
 
 
