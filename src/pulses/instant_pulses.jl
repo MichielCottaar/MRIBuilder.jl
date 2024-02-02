@@ -1,6 +1,6 @@
 module InstantPulses
 import JuMP: @constraint, @variable, VariableRef, value
-import ...BuildingBlocks: RFPulseBlock, fixed
+import ...BuildingBlocks: RFPulseBlock
 import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType, effective_time, inverse_bandwidth
 import ...BuildSequences: global_model
 import ..FixedPulses: FixedInstantPulse

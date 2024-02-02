@@ -1,5 +1,5 @@
 module BuildSequences
-import JuMP: Model, optimizer_with_attributes, optimize!
+import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value
 import Ipopt
 import Juniper
 import ..Scanners: Scanner
@@ -44,7 +44,7 @@ function build_sequence(f::Function, scanner::Scanner, model::Model)
     try
         sequence = f(model)
         optimize!(model)
-        return sequence
+        return fixed(sequence)
     finally
         GLOBAL_MODEL[] = prev_model
         GLOBAL_SCANNER[] = prev_scanner
@@ -72,6 +72,19 @@ function global_scanner()
     end
     return GLOBAL_SCANNER[]
 end
+
+
+"""
+    fixed(building_block)
+
+Returns an equiavalent [`BuildingBlock`](@ref) with all free variables replaced by numbers.
+This will only work after calling [`optimize!`](@ref)([`global_model`](@ref)()).
+It is used internally by [`build_sequence`](@ref).
+"""
+fixed(some_value) = some_value
+fixed(jump_variable::AbstractJuMPScalar) = value(jump_variable)
+fixed(jump_variable::AbstractArray) = fixed.(jump_variable)
+
 
 
 end

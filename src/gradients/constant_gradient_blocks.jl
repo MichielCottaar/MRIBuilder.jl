@@ -3,7 +3,7 @@ import StaticArrays: SVector
 import ...Variables: VariableType, variables
 import ...BuildingBlocks: GradientBlock
 import ...Variables: qvec, bmat_gradient, gradient_strength, slew_rate, duration, variables, VariableType
-import ...BuildingBlocks: GradientBlock, fixed, RFPulseBlock
+import ...BuildingBlocks: GradientBlock, RFPulseBlock
 import ..ChangingGradientBlocks: split_gradient
 
 """

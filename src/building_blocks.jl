@@ -2,7 +2,7 @@ module BuildingBlocks
 import JuMP: value, Model, @constraint, @objective, objective_function, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, qval_square
-import ..BuildSequences: global_model, global_scanner
+import ..BuildSequences: global_model, global_scanner, fixed
 import ..Scanners: Scanner
 
 """
@@ -10,7 +10,6 @@ Parent type for all individual components out of which a sequence can be built.
 
 Required methods:
 - [`duration`](@ref)(block, parameters): Return block duration in ms.
-- [`fixed`](block): Return the equivalent fixed BuildingBlock (i.e., `FixedBlock`, `FixedPulse`, `FixedGradient`, `FixedInstantPulse`, `FixedInstantGradient`, or `InstantReadout`). These all have in common that they have no free variables and explicitly set any gradient and RF pulse profiles.
 - [`variables`](@ref): A list of all functions that are used to compute variables of the building block. Any of these can be used in constraints or objective functions.
 """
 abstract type BuildingBlock end
@@ -99,17 +98,6 @@ end_time(container::ContainerBlock, index1, indices...) = start_time(container, 
 Function used internally to convert a wide variety of objects into [`BuildingBlock`](@ref) objects.
 """
 to_block(bb::BuildingBlock) = bb
-
-
-"""
-    fixed(block::BuildingBlock)
-
-Return the fixed equivalent of the `BuildingBlock`
-
-Possible return types are `FixedSequence`, `FixedBlock`, `FixedPulse`, `FixedGradient`, `FixedInstantPulse`, `FixedInstantGradient`, or `InstantReadout`. 
-These all have in common that they have no free variables and explicitly set any gradient and RF pulse profiles.
-"""
-function fixed end
 
 
 
@@ -251,7 +239,7 @@ apply_simple_constraint!(variable, ::Nothing) = nothing
 apply_simple_constraint!(variable, value::Symbol) = apply_simple_constraint!(variable, Val(value))
 apply_simple_constraint!(variable, ::Val{:min}) = @objective global_model() Min objective_function(global_model()) + variable
 apply_simple_constraint!(variable, ::Val{:max}) = @objective global_model() Min objective_function(global_model()) - variable
-apply_simple_constraint!(variable, value::VariableType) = @constraint model variable == value
+apply_simple_constraint!(variable, value::VariableType) = @constraint global_model() variable == value
 apply_simple_constraint!(variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(v1, v2) for (v1, v2) in zip(variable, value)]
 
 
@@ -316,6 +304,15 @@ function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner, f
             scanner_constraints!(child_block, scanner, func)
         end
     end
+end
+
+
+function fixed(bb::BuildingBlock)
+    arguments = []
+    for name in propertynames(bb)
+        push!(arguments, fixed(getproperty(bb, name)))
+    end
+    return typeof(bb)(arguments...)
 end
 
 end

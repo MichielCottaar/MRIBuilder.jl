@@ -3,7 +3,7 @@ module SincPulses
 import JuMP: VariableRef, @constraint, @variable, value
 import QuadGK: quadgk
 import Polynomials: fit, Polynomial
-import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!, fixed
+import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!
 import ...Variables: flip_angle, phase, amplitude, frequency, VariableType, variables, get_free_variable, duration, effective_time, inverse_bandwidth
 import ...BuildSequences: global_model
 import ..FixedPulses: FixedPulse
@@ -69,7 +69,7 @@ function SincPulse(;
     if !symmetric
         @constraint model res.N_right >= 1
     end
-    set_simple_constraints!(model, res, kwargs)
+    set_simple_constraints!(res, kwargs)
     return res
 end
 

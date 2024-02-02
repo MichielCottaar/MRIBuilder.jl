@@ -1,5 +1,5 @@
 module InstantReadouts
-import ...BuildingBlocks: BuildingBlock, to_block, fixed, effective_time
+import ...BuildingBlocks: BuildingBlock, to_block, effective_time
 import ...Variables: variables, duration
 
 """
@@ -15,6 +15,5 @@ end
 variables(::Type{<:InstantReadout}) = []
 to_block(::Type{<:InstantReadout}) = InstantReadout()
 duration(::InstantReadout) = 0.
-fixed(i::InstantReadout) = i
 effective_time(::InstantReadout) = 0.
 end

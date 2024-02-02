@@ -66,7 +66,7 @@ function SpoiltSliceSelect(pulse; orientation=[0, 0, 1], rotate=nothing, spoiler
             @constraint model (qvec(res, nothing, 1)[dim] ./ res.orientation[dim]) >= 2π * 1e-3 / spoiler_scale
         end
     end
-    set_simple_constraints!(model, res, kwargs)
+    set_simple_constraints!(res, kwargs)
 
     max_time = gradient_strength(global_scanner()) / res.slew_rate
     @constraint model rise_time(res)[1] <= max_time
