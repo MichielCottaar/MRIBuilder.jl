@@ -14,7 +14,7 @@ Wrapper to build a sequence.
 
 Use as 
 ```julia
-build_sequence([model]) do model
+build_sequence(scanner[, optimiser_constructor];) do
     ...
 end
 ```
@@ -29,33 +29,53 @@ seq = Sequence(
 
 You can also add any arbitrary constraints or objectives using the same syntax as for [`JuMP`](https://jump.dev/JuMP.jl):
 ```
-@constraint model duration(seq) == 30.
+@constraint global_model() duration(seq) == 30.
 ```
 
 As soon as the code block is the optimal sequence matching all your constraints and objectives will be returned.
+
+## Parameters
+- `scanner`: Set to a [`Scanner`](@ref) to limit the gradient strength and slew rate. When this call to `build_sequence` is embedded in another, this parameter can be set to `nothing` to indicate that the same scanner should be used. 
+- `optimiser_constructor`: A `JuMP` solver optimiser as described in the [JuMP documentation](https://jump.dev/JuMP.jl/stable/tutorials/getting_started/getting_started_with_JuMP/#What-is-a-solver?). Defaults to using [Ipopt](https://github.com/jump-dev/Ipopt.jl).
+
+## Variables
+- `optimise`: Whether to optimise and fix the sequence as soon as it is returned. This defaults to `true` if a scanner is provided and `false` if no scanner is provided.
+- `kwargs...`: Other keywords are passed on as attributes to the `optimiser_constructor` (e.g., set `print_level=3` to make the Ipopt optimiser quieter).
 """
-function build_sequence(f::Function, scanner::Scanner, model::Model)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Model, optimise::Bool)
     prev_model = GLOBAL_MODEL[]
     GLOBAL_MODEL[] = model
     prev_scanner = GLOBAL_SCANNER[]
     if !isnothing(scanner)
         GLOBAL_SCANNER[] = scanner
+    elseif !isfinite(gradient_strength(GLOBAL_SCANNER[]))
+        error("Scanner should be explicitly set when creating a new top-level sequence.")
     end
     try
-        sequence = f(model)
-        optimize!(model)
-        return fixed(sequence)
+        sequence = f()
+        if optimise
+            optimize!(model)
+            return fixed(sequence)
+        else
+            return sequence
+        end
     finally
         GLOBAL_MODEL[] = prev_model
         GLOBAL_SCANNER[] = prev_scanner
     end
 end
 
-function build_sequence(f::Function, scanner::Scanner)
-    ipopt_opt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 3)
-    juniper_opt = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt_opt)
-    model = Model(ipopt_opt)
-    build_sequence(f, scanner, model)
+function build_sequence(f::Function, ::Nothing; optimise=false)
+    build_sequence(f, nothing, global_model(), optimise)
+end
+
+function build_sequence(f::Function, scanner::Scanner, optimiser_constructor; optimise=true, kwargs...)
+    model = Model(optimizer_with_attributes(optimiser_constructor, pairs(kwargs)...))
+    build_sequence(f, scanner, model, optimise)
+end
+
+function build_sequence(f::Function, scanner::Scanner; kwargs...)
+    build_sequence(f, scanner, Ipopt.Optimizer; kwargs...)
 end
 
 

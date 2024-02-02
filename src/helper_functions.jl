@@ -1,6 +1,6 @@
 module HelperFunctions
 import JuMP: @constraint
-import ..BuildSequences: global_model
+import ..BuildSequences: global_model, build_sequence
 import ..Sequences: Sequence
 import ..Pulses: SincPulse, ConstantPulse, InstantRFPulseBlock
 import ..Overlapping: TrapezoidGradient, SpoiltSliceSelect
@@ -29,6 +29,8 @@ If `min_slice_thickness` is not set or is set to `:min`, then either `bandwidth`
 
 ## Parameters
 For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `scale` will be used. All other parameters are ignored.
+- `optimise`: set to true to optimise this RF pulse separately from the embedding sequence.
+
 ### Pulse parameters
 - `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantRFPulseBlock`](@ref)).
 - `flip_angle`: size of the flip due to the RF pulse in degrees (default: 90).
@@ -43,30 +45,33 @@ For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_an
 - `slice_thickness`: minimum slice thickness that should be possible without adjusting the sequence timings in um (not mm!) (default: no slice selection). Can be set to `:min` to indicate that this should be minimised given the scanner constraints and user values for `bandwidth` or `duration`.
 - `rephase`: set to false to disable the spin rephasing after the RF pulse.
 - `rotate_grad`: name of the parameter with which the slice selection gradient will be rotated after sequence optimisation (default: `:FOV`).
+- `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
 """
-function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, rephase=true, Nzero=3, scale=:transmit_B1, rotate_grad=:FOV, bandwidth=nothing, duration=nothing)
-    pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzero, scale, bandwidth, duration)
-    if pulse isa InstantRFPulseBlock
-        if !isinf(slice_thickness)
-            error("An instant RF pulse always affects all spins equally, so using `shape=:instant` is incompatible with setting `slice_thickness`.")
+function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, rephase=true, Nzero=3, scale=:transmit_B1, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, scanner=nothing, optimise=false)
+    build_sequence(scanner; optimise=optimise) do
+        pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzero, scale, bandwidth, duration)
+        if pulse isa InstantRFPulseBlock
+            if !isinf(slice_thickness)
+                error("An instant RF pulse always affects all spins equally, so using `shape=:instant` is incompatible with setting `slice_thickness`.")
+            end
+            return pulse
         end
-        return pulse
-    end
-    if isinf(slice_thickness)
-        return pulse
-    end
+        if isinf(slice_thickness)
+            return pulse
+        end
 
-    grad = TrapezoidGradient(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
-    if !rephase
-        return grad
+        grad = TrapezoidGradient(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
+        if !rephase
+            return grad
+        end
+        seq = Sequence(
+            grad,
+            TrapezoidGradient(orientation=[0, 0, -1.], rotate=rotate_grad, duration=:min);
+            TR=Inf
+        )
+        @constraint global_model() qvec(grad, 1, nothing)[3] == -qvec(seq[2])[3]
+        return seq
     end
-    seq = Sequence(
-        grad,
-        TrapezoidGradient(orientation=[0, 0, -1.], rotate=rotate_grad, duration=:min);
-        TR=Inf
-    )
-    @constraint global_model() qvec(grad, 1, nothing)[3] == -qvec(seq[2])[3]
-    return seq
 end
 
 
@@ -82,6 +87,8 @@ If `slice_thickness` is not set or is set to `:min`, then either `bandwidth` or 
 
 ## Parameters
 For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `scale` will be used. All other parameters are ignored.
+- `optimise`: set to true to optimise this RF pulse separately from the embedding sequence.
+
 ### Pulse parameters
 - `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantRFPulseBlock`](@ref)).
 - `flip_angle`: size of the flip due to the RF pulse in degrees (default: 180).
@@ -96,27 +103,30 @@ For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_an
 - `slice_thickness`: minimum slice thickness that should be possible without adjusting the sequence timings in um (not mm!) (default: no slice selection). Can be set to `:min` to indicate that this should be minimised given the scanner constraints and user values for `bandwidth` or `duration`.
 - `spoiler`: set to the spatial scale on which the spins should be dephased in mm. For rotating spoilers, this does include the contribution from the slice select gradient as well.
 - `rotate_grad`: name of the parameter with which the slice selection and spoiler gradient will be rotated after sequence optimisation (default: `:FOV`).
+- `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
 """
-function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzero=3, scale=:transmit_B1, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, spoiler=Inf)
-    pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzero, scale, bandwidth, duration)
-    if pulse isa InstantRFPulseBlock && !isinf(slice_thickness)
-        error("An instant RF pulse always affects all spins equally, so using `shape=:instant` is incompatible with setting `slice_thickness`.")
-    end
-    if isinf(spoiler)
-        if isinf(slice_thickness)
-            return pulse
-        else
-            return TrapezoidGradient(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
+function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzero=3, scale=:transmit_B1, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false)
+    build_sequence(scanner; optimise=optimise) do
+        pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzero, scale, bandwidth, duration)
+        if pulse isa InstantRFPulseBlock && !isinf(slice_thickness)
+            error("An instant RF pulse always affects all spins equally, so using `shape=:instant` is incompatible with setting `slice_thickness`.")
         end
-    else
-        orientation=isnothing(rotate_grad) ? [1, 1, 1] : [0, 0, 1]
-        if isinf(slice_thickness)
-            grad = TrapezoidGradient(orientation=orientation, duration=:min, rotate=rotate_grad)
-            @constraint global_model() qvec(grad)[3] == 2π * 1e-3 / spoiler
-            return Sequence(grad, pulse, grad; TR=Inf)
+        if isinf(spoiler)
+            if isinf(slice_thickness)
+                return pulse
+            else
+                return TrapezoidGradient(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
+            end
         else
-            res = SpoiltSliceSelect(pulse; orientation=orientation, duration=:min, rotate=rotate_grad, slice_thickness=slice_thickness, spoiler_scale=spoiler)
-            return res
+            orientation=isnothing(rotate_grad) ? [1, 1, 1] : [0, 0, 1]
+            if isinf(slice_thickness)
+                grad = TrapezoidGradient(orientation=orientation, duration=:min, rotate=rotate_grad)
+                @constraint global_model() qvec(grad)[3] == 2π * 1e-3 / spoiler
+                return Sequence(grad, pulse, grad; TR=Inf)
+            else
+                res = SpoiltSliceSelect(pulse; orientation=orientation, duration=:min, rotate=rotate_grad, slice_thickness=slice_thickness, spoiler_scale=spoiler)
+                return res
+            end
         end
     end
 end
