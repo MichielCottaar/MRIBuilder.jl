@@ -1,5 +1,5 @@
 module BuildSequences
-import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL
+import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables
 import Ipopt
 import Juniper
 import ..Scanners: Scanner
@@ -54,10 +54,12 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
     try
         sequence = f()
         if optimise
-            optimize!(model)
-            if !(termination_status(model) in (LOCALLY_SOLVED, OPTIMAL))
-                @warn "Optimisation did not report successful convergence. Please check the output sequence."
-                println(solution_summary(model))
+            if !iszero(num_variables(model))
+                optimize!(model)
+                if !(termination_status(model) in (LOCALLY_SOLVED, OPTIMAL))
+                    @warn "Optimisation did not report successful convergence. Please check the output sequence."
+                    println(solution_summary(model))
+                end
             end
             return fixed(sequence)
         else
