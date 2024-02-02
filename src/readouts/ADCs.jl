@@ -1,6 +1,8 @@
 module ADCs
+import JuMP: @constraint
 import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType
 import ...BuildingBlocks: BuildingBlock, apply_simple_constraint!, set_simple_constraints!
+import ...BuildSequences: global_model
 
 """
     ADC(nsamples; dwell_time=nothing, duration=nothing, time_to_center=duration/2)
@@ -27,7 +29,11 @@ function ADC(nsamples; dwell_time=nothing, time_to_center=nothing, kwargs...)
         get_free_variable(dwell_time),
         time_to_center isa VariableType ? time_to_center : nothing
     )
-    if !(time_to_center isa VariableType)
+    @constraint global_model() res.dwell_time >= 0
+    if time_to_center isa VariableType
+        @constraint global_model() time_to_center >= 0
+        @constraint global_model() time_to_center <= duration(res)
+    else
         apply_simple_constraint!(effective_time(res), time_to_center)
     end
     set_simple_constraints!(res, kwargs)
