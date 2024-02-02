@@ -32,7 +32,7 @@ You can also add any arbitrary constraints or objectives using the same syntax a
 @constraint global_model() duration(seq) == 30.
 ```
 
-As soon as the code block is the optimal sequence matching all your constraints and objectives will be returned.
+As soon as the code block ends the sequence is optimised (if `optimise=true`) and returned.
 
 ## Parameters
 - `scanner`: Set to a [`Scanner`](@ref) to limit the gradient strength and slew rate. When this call to `build_sequence` is embedded in another, this parameter can be set to `nothing` to indicate that the same scanner should be used. 
