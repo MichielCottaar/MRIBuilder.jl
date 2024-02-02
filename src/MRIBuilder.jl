@@ -37,8 +37,8 @@ export InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
 import .Gradients: InstantGradientBlock
 export InstantGradientBlock
 
-import .Readouts: InstantReadout
-export InstantReadout
+import .Readouts: InstantReadout, ADC
+export InstantReadout, ADC
 
 import .Overlapping: TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform
 export TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform

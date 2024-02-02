@@ -81,7 +81,7 @@ end
 
 function global_model()
     if GLOBAL_MODEL[] == IGNORE_MODEL
-        error("No global model has been set. Please explicitly set one in the constructor or set a global model using `set_model`.")
+        error("No global model has been set. Please embed any sequence creation within an `build_sequence` block.")
     end
     return GLOBAL_MODEL[]
 end

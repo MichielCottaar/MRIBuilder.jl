@@ -34,6 +34,9 @@ all_variables_symbols = [
         :gradient_strength => "vector with maximum strength of a gradient along each dimension (kHz/um)",
         :slew_rate => "vector with maximum slew rate of a gradient along each dimension (kHz/um)",
     ],
+    :readout => [
+        :dwell_time => "Time between two samples in an `ADC` in ms.",
+    ]
 ]
 
 symbol_to_func = Dict{Symbol, Function}()
