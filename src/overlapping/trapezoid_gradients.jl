@@ -52,7 +52,7 @@ struct TrapezoidGradient <: AbstractOverlapping
     time_after_pulse :: VariableType
 end
 
-function TrapezoidGradient(orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, pulse=nothing,kwargs...)
+function TrapezoidGradient(; orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, pulse=nothing,kwargs...)
     if isnothing(orientation) && isnothing(rotate)
         rate_1d = nothing
         slew_rate = (
