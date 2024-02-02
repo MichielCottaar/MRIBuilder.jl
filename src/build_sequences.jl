@@ -70,12 +70,12 @@ function build_sequence(f::Function, ::Nothing; optimise=false)
 end
 
 function build_sequence(f::Function, scanner::Scanner, optimiser_constructor; optimise=true, kwargs...)
-    model = Model(optimizer_with_attributes(optimiser_constructor, pairs(kwargs)...))
+    model = Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...))
     build_sequence(f, scanner, model, optimise)
 end
 
-function build_sequence(f::Function, scanner::Scanner; kwargs...)
-    build_sequence(f, scanner, Ipopt.Optimizer; kwargs...)
+function build_sequence(f::Function, scanner::Scanner; print_level=2, kwargs...)
+    build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, kwargs...)
 end
 
 
