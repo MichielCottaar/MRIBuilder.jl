@@ -1,8 +1,8 @@
 module Wait
-import JuMP: Model, @constraint, @variable, VariableRef, owner_model, value
+import JuMP: @constraint, @variable, VariableRef, value
 import ..Variables: VariableType, variables, duration, get_free_variable
 import ..BuildingBlocks: BuildingBlock, to_block
-import ..BuildSequences: @global_model_constructor
+import ..BuildSequences: global_model
 import ...Scanners: Scanner
 
 """
@@ -17,19 +17,15 @@ Duration can be set to one of:
 - `nothing` to make it fully determined by external constraints and objectives
 """
 struct WaitBlock <: BuildingBlock
-    model :: Model
     duration :: VariableType
-    function WaitBlock(model::Model, duration=nothing)
+    function WaitBlock(duration=nothing)
         res = new(
-            model, 
-            get_free_variable(model, duration),
+            get_free_variable(duration),
         )
         @constraint model res.duration >= 0
         return res
     end
 end
-
-@global_model_constructor WaitBlock
 
 """
     to_block(JuMP variable/:min or :max/nothing/number)
