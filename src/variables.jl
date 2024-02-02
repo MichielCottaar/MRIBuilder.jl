@@ -1,6 +1,7 @@
 module Variables
 import JuMP: @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
-import ..
+import ..Scanners: gradient_strength, slew_rate
+import ..BuildSequences: global_model
 
 all_variables_symbols = [
     :block => [

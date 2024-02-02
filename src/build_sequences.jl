@@ -2,8 +2,7 @@ module BuildSequences
 import JuMP: Model, optimizer_with_attributes, optimize!
 import Ipopt
 import Juniper
-import ..Scanners: Scanner, scanner_constraints!
-import ..BuildingBlocks: BuildingBlock, apply_simple_constraint!, match_blocks!
+import ..Scanners: Scanner
 
 const GLOBAL_MODEL = Ref(Model())
 const IGNORE_MODEL = GLOBAL_MODEL[]
@@ -74,12 +73,5 @@ function global_scanner()
     return GLOBAL_SCANNER[]
 end
 
-
-scanner_constraints!(bb::BuildingBlock)  = scanner_constraints!(bb, global_scanner())
-
-apply_simple_constraint!(variable, value) = apply_simple_constraint!(global_model(), variable, value)
-match_blocks!(block1::BuildingBlock, block2::BuildingBlock, property_list) = match_blocks!(global_model(), block1, block2, property_list)
-scanner_constraints!(building_block::BuildingBlock, scanner::Scanner, func::Function) = scanner_constraints!(building_block, scanner, func)
-scanner_constraints!(building_block::BuildingBlock) = scanner_constraints!(building_block, global_scanner())
 
 end

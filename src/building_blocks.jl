@@ -2,6 +2,8 @@ module BuildingBlocks
 import JuMP: value, Model, @constraint, @objective, objective_function, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, qval_square
+import ..BuildSequences: global_model, global_scanner
+import ..Scanners: Scanner
 
 """
 Parent type for all individual components out of which a sequence can be built.
@@ -234,17 +236,23 @@ function set_simple_constraints!(block::BuildingBlock, kwargs)
 end
 
 """
-    apply_simple_constraint!([model, ]variable, value)
+    apply_simple_constraint!(variable, value)
 
-Add a single constraint or objective to the JuMP `model`.
-This is an internal function used by [`set_simple_constraints`](@ref).
+Add a single constraint or objective to the `variable`.
+
+`value` can be one of:
+- `nothing`: do nothing
+- `:min`: minimise the variable
+- `:max`: maximise the variable
+- `number`: fix variable to this value
+- `equation`: fix variable to the result of this equation
 """
-apply_simple_constraint!(model::Model, variable, ::Nothing) = nothing
-apply_simple_constraint!(model::Model, variable, value::Symbol) = apply_simple_constraint!(model, variable, Val(value))
-apply_simple_constraint!(model::Model, variable, ::Val{:min}) = @objective model Min objective_function(model) + variable
-apply_simple_constraint!(model::Model, variable, ::Val{:max}) = @objective model Min objective_function(model) - variable
-apply_simple_constraint!(model::Model, variable, value::VariableType) = @constraint model variable == value
-apply_simple_constraint!(model::Model, variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(model, v1, v2) for (v1, v2) in zip(variable, value)]
+apply_simple_constraint!(variable, ::Nothing) = nothing
+apply_simple_constraint!(variable, value::Symbol) = apply_simple_constraint!(variable, Val(value))
+apply_simple_constraint!(variable, ::Val{:min}) = @objective global_model() Min objective_function(global_model()) + variable
+apply_simple_constraint!(variable, ::Val{:max}) = @objective global_model() Min objective_function(global_model()) - variable
+apply_simple_constraint!(variable, value::VariableType) = @constraint model variable == value
+apply_simple_constraint!(variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(v1, v2) for (v1, v2) in zip(variable, value)]
 
 
 """
@@ -253,15 +261,61 @@ apply_simple_constraint!(model::Model, variable::AbstractVector, value::Abstract
 Matches the listed variables between two [`BuildingBlock`](@ref) objects.
 By default all shared variables (i.e., those with the same name) are matched.
 """
-function match_blocks!(model::Model, block1::BuildingBlock, block2::BuildingBlock, property_list)
+function match_blocks!(block1::BuildingBlock, block2::BuildingBlock, property_list)
     for fn in property_list
-        @constraint model fn(block1) == fn(block2)
+        @constraint global_model() fn(block1) == fn(block2)
     end
 end
 
 function match_blocks!(block1::BuildingBlock, block2::BuildingBlock)
     property_list = intersect(variables(block1), variables(block2))
     match_blocks!(block1, block2, property_list)
+end
+
+"""
+    scanner_constraints!(building_block[, scanner])
+
+Adds the gradient strength and slew rate constraints from a specific [`Scanner`](@ref) to a [`BuildingBlock`]{@ref}.
+
+This is applied iteratively to each part of a `Sequence`.
+"""
+scanner_constraints!(building_block::BuildingBlock) = scanner_constraints!(building_block, global_scanner())
+
+function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner)
+    for func in [gradient_strength, slew_rate]
+        if isfinite(func(scanner))
+            scanner_constraints!(building_block, scanner, func)
+        end
+    end
+end
+
+function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner, func::Function)
+    model = global_model()
+    if func in variables(building_block)
+        # apply constraint at this level
+        res_bb = func(building_block)
+        if res_bb isa AbstractVector
+            if isnothing(building_block.rotate)
+                # no rotation; apply constraint to each dimension independently
+                for expr in res_bb
+                    @constraint model expr <= func(scanner)
+                    @constraint model expr >= -func(scanner)
+                end
+            else
+                # with rotation: apply constraint to total squared
+                total_squared = sum(map(n->n^2, res_bb))
+                @constraint model total_squared <= func(scanner)^2
+            end
+        else
+            @constraint model res_bb <= func(scanner)
+            @constraint model res_bb >= -func(scanner)
+        end
+    elseif building_block isa ContainerBlock
+        # apply constraints at lower level
+        for (_, child_block) in get_children_blocks(building_block)
+            scanner_constraints!(child_block, scanner, func)
+        end
+    end
 end
 
 end
