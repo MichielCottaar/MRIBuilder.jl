@@ -50,8 +50,6 @@ time_to_center(adc::ADC) = adc.time_to_center
 effective_time(adc::ADC) = time_to_center(adc)
 resolution(adc::ADC) = adc.resolution
 
-variables(::Type{<:ADC}) = [nsamples, dwell_time, duration, time_to_center, resolution, oversample]
-
 function fixed(adc::ADC)
     # round nsamples during fixing
     nsamples = Int(round(adc.nsamples))

@@ -105,7 +105,5 @@ function all_gradient_strengths(spoilt::SpoiltSliceSelect)
     return [grad1, grad2, grad3]
 end
 
-variables(::Type{<:SpoiltSliceSelect}) = [duration, qvec, slew_rate, inverse_slice_thickness, all_gradient_strengths, rise_time, flat_time, fall_time]
-
 
 end

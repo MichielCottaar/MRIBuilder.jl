@@ -38,9 +38,6 @@ Converts object into a [`WaitBlock`](@ref).
 """
 to_block(time::Union{VariableType, Symbol, Nothing, Val{:min}, Val{:max}}) = WaitBlock(time)
 
-
-variables(::Type{WaitBlock}) = [duration]
-
 duration(wb::WaitBlock) = wb.duration
 
 end

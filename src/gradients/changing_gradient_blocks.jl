@@ -63,8 +63,6 @@ function bmat_gradient(cgb::ChangingGradientBlock)
 end
 
 
-variables(::Type{<:ChangingGradientBlock}) = [duration, slew_rate, gradient_strength, qvec]
-
 """
     split_gradient(constant/changing_gradient_block, times...)
 

@@ -16,12 +16,10 @@ all_variables_symbols = [
         :amplitude => "The maximum amplitude of an RF pulse in kHz",
         :phase => "The angle of the phase of an RF pulse in KHz",
         :frequency => "The off-resonance frequency of an RF pulse (relative to the Larmor frequency of water) in KHz",
-        :bandwidth => "Bandwidth of the RF pulse in kHz. If you are going to divide by the bandwidth, it can be more efficient to use the [`inverse_bandwidth`](@ref).",
-        :inverse_bandwidth => "Inverse of the [`bandwidth`](@ref) of the RF pulse in ms",
+        :bandwidth => "Bandwidth of the RF pulse in kHz. To set constraints it is often better to use [`inverse_bandwidth`](@ref)",
         :N_left => "The number of zero crossings of the RF pulse before the main peak",
         :N_right => "The number of zero crossings of the RF pulse after the main peak",
-        :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient in mm.",
-        :inverse_slice_thickness => "Inverse of the [`slice_thickness`](@ref) in 1/mm.",
+        :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient in mm. To set constraints it is often better to use [`inverse_slice_thickness`](@ref).",
     ],
 
     # gradients
@@ -44,7 +42,7 @@ all_variables_symbols = [
     ]
 ]
 
-symbol_to_func = Dict{Symbol, Function}()
+variables = Dict{Symbol, Function}()
 
 
 
@@ -56,30 +54,68 @@ for (block_symbol, all_functions) in all_variables_symbols
             @doc $as_string $func_symbol
             $func_symbol
         end
-        symbol_to_func[func_symbol] = new_func
+        variables[func_symbol] = new_func
     end
 end
 
 
+# helper functions
 """
-    variables(building_block)
-    variables()
+    inverse_slice_thickness(pulse)
 
-Returns all functions representing properties of a [`BuildingBlock`](@ref) object.
+Inverse of [`slice_thickness`](@ref) in ms.
+
+It is defined separately from `slice_thickness` to avoid unnecessary divisions in any constraint.
 """
-variables() = [values(symbol_to_func)...]
+function inverse_slice_thickness end
 
+"""
+    inverse_bandwidth(pulse)
 
-# Some universal truths
-slice_thickness(bb) = inv(inverse_slice_thickness(bb))
-bandwidth(bb) = inv(inverse_bandwidth(bb))
+Inverse of [`bandwidth`](@ref) in 1/mm.
 
-function qval_square(bb; kwargs...)
-    vec = qvec(bb; kwargs...)
+It is defined separately from `bandwidth` to avoid unnecessary divisions in any constraint.
+"""
+function inverse_bandwidth end
+
+"""
+    inverse_fov(readout)
+
+Inverse of [`fov`](@ref) in 1/mm.
+
+It is defined separately from `fov` to avoid unnecessary divisions in any constraint.
+"""
+function inverse_fov end
+
+"""
+    inverse_voxel_size(readout)
+
+Inverse of [`voxel_size`](@ref) in 1/mm.
+
+It is defined separately from `voxel_size` to avoid unnecessary divisions in any constraint.
+"""
+function inverse_voxel_size end
+
+"""
+    qval_square(gradient)
+
+Square of [`qval`](@ref) in rad/um.
+
+It is defined separately from `qval` to avoid unnecessary square root in any constraint.
+"""
+function qval_square(bb, args...; kwargs...)
+    vec = qvec(bb, args...; kwargs...)
     return vec[1]^2 + vec[2]^2 + vec[3]^2
 end
 qval(bb; kwargs...) = sqrt(qval_square(bb))
 
+alternative_variables = Dict(
+    qval => (qval_square, n->n^2, sqrt, false),
+    slice_thickness => (inverse_slice_thickness, inv, inv, true),
+    bandwidth => (inverse_bandwidth, inv, inv, true),
+    fov => (inverse_fov, inv, inv, true),
+    voxel_size => (inverse_voxel_size, inv, inv, true),
+)
 
 
 # These functions are more fully defined in building_blocks.jl

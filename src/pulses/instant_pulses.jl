@@ -24,7 +24,6 @@ end
 flip_angle(instant::InstantRFPulseBlock) = instant.flip_angle
 phase(instant::InstantRFPulseBlock) = instant.phase
 duration(::InstantRFPulseBlock) = 0.
-variables(::Type{<:InstantRFPulseBlock}) = [flip_angle, phase]
 effective_time(::InstantRFPulseBlock) = 0.
 inverse_bandwidth(::InstantRFPulseBlock) = 0.
 

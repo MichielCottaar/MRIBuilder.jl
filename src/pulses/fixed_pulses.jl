@@ -32,8 +32,6 @@ function FixedPulse(time::AbstractVector{<:Number}, amplitude::AbstractVector{<:
     return FixedPulse(time, amplitude, (time .- time[1]) .* (frequency * 360) .+ phase)
 end
 
-variables(::Type{<:FixedPulse}) = [duration, flip_angle, effective_time]
-
 duration(fp::FixedPulse) = maximum(fp.time)
 amplitude(fp::FixedPulse) = maximum(abs.(fp.amplitude))
 effective_time(pulse::FixedPulse) = pulse.time[argmax(abs.(pulse.amplitude))]

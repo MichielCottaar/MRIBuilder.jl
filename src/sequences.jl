@@ -54,7 +54,6 @@ start_time(seq::Sequence, index::Integer) = isone(index) ? start_time(seq) : (st
 duration(seq::Sequence) = end_time(seq, length(seq))
 
 TR(seq::Sequence) = seq.TR
-variables(::Type{<:Sequence}) = [TR]
 
 # print timings when printing sequences
 Base.show(io::IO, seq::Sequence) = print(io, BuildingBlockPrinter(seq, 0., 0))

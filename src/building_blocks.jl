@@ -1,7 +1,7 @@
 module BuildingBlocks
 import JuMP: value, Model, @constraint, @objective, objective_function, AbstractJuMPScalar
 import Printf: @sprintf
-import ..Variables: variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, qval_square
+import ..Variables: Variables, variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, alternative_variables
 import ..BuildSequences: global_model, global_scanner, fixed
 import ..Scanners: Scanner
 
@@ -100,13 +100,49 @@ Function used internally to convert a wide variety of objects into [`BuildingBlo
 to_block(bb::BuildingBlock) = bb
 
 
-
 """
-    variables(building_block)
+    VariableNotAvailable(building_block, variable, alt_variable)
 
-Returns a list of function that can be called to constrain the `building_block`.
+Exception raised when a variable function does not support a specific `BuildingBlock`.
 """
-variables(bb::BuildingBlock) = variables(typeof(bb))
+mutable struct VariableNotAvailable <: Exception
+    bb :: Type{<:BuildingBlock}
+    variable :: Function
+    alt_variable :: Union{Nothing, Function}
+end
+VariableNotAvailable(bb::Type{<:BuildingBlock}, variable::Function) = VariableNotAvailable(bb, variable, nothing)
+
+function Base.showerror(io::IO, e::VariableNotAvailable)
+    if isnothing(e.alt_variable)
+        print(io, e.variable, " is not available for block of type ", e.bb, ".")
+    else
+        print(io, e.variable, " is not available for block of type ", e.bb, ". Please use ", e.alt_variable, " instead to set any contsraints or objective functions.")
+    end
+end
+
+
+for variable_func in keys(variables)
+    @eval function Variables.$variable_func(bb::BuildingBlock)
+        if Variables.$variable_func in keys(alternative_variables)
+            alt_var, forward, backward, _ = alternative_variables[Variables.$variable_func]
+            try
+                value = alt_var(bb)
+            catch e
+                if e isa VariableNotAvailable
+                    throw(VariableNotAvailable(typeof(bb), variable_func))
+                end
+                rethrow()
+            end
+            if value isa Number
+                return backward(value)
+            elseif value isa AbstractArray{<:Number}
+                return backward.(value)
+            end
+            throw(VariableNotAvailable(typeof(bb), variable_func, alt_var))
+        end
+        throw(VariableNotAvailable(typeof(bb), variable_func))
+    end
+end
 
 
 struct BuildingBlockPrinter{T<:BuildingBlock}
@@ -141,7 +177,6 @@ _robust_value(possible_tuple::Tuple) = _robust_value([possible_tuple...])
 function Base.show(io::IO, printer::BuildingBlockPrinter)
     block = printer.bb
     print(io, string(typeof(block)), "(")
-    variable_names = nameof.(variables(block))
     printed_duration = false
     if !isnothing(printer.start_time)
         print(io, "t=", @sprintf("%.3g", printer.start_time))
@@ -167,11 +202,18 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         print(io, name, "=", repr(getproperty(block, name)), ", ")
     end
 
-    for fn in variables(block)
+    for fn in values(variables)
         if printed_duration && fn == duration
             continue
         end
-        numeric_value = _robust_value(fn(block))
+        try
+            numeric_value = _robust_value(fn(block))
+        catch e
+            if e isa VariableNotAvailable
+                continue
+            end
+            rethrow()
+        end
         if isnothing(numeric_value)
             continue
         end
@@ -196,29 +238,25 @@ If set to a numeric value, a constraint will be added to fix the function value 
 If set to `:min` or `:max`, minimising or maximising this function will be added to the cost function.
 """
 function set_simple_constraints!(block::BuildingBlock, kwargs)
-    to_funcs = Dict(nameof(fn) => fn for fn in variables(block))
-
-    invert_value(value::VariableType) = 1 / value
-    invert_value(value::Symbol) = invert_value(Val(value))
-    invert_value(::Val{:min}) = Val(:max)
-    invert_value(::Val{:max}) = Val(:min)
-    invert_value(value::AbstractVector) = invert_value.(value)
-    invert_value(value) = value
-
     for (key, value) in kwargs
-        if key in keys(to_funcs)
-            apply_simple_constraint!(to_funcs[key](block), value)
-        else
-            if key == :qval
-                apply_simple_constraint!(to_funcs[:qval_square](block), value isa VariableType ? value^2 : value)
-            elseif key == :slice_thickness && :inverse_slice_thickness in keys(to_funcs)
-                apply_simple_constraint!(to_funcs[:inverse_slice_thickness](block), invert_value(value))
-            elseif key == :bandwidth && :inverse_bandwidth in keys(to_funcs)
-                apply_simple_constraint!(to_funcs[:inverse_bandwidth](block), invert_value(value))
-            else
-                error("Trying to set an unrecognised variable $key.")
+        if key in keys(alternative_variables)
+            alt_var, forward, backward, to_invert = alternative_variables[Variables.$variable_func]
+            invert_value(value::VariableType) = forward(value)
+            invert_value(value::Symbol) = invert_value(Val(value))
+            invert_value(::Val{:min}) = to_invert ? Val(:max) : Val(:min)
+            invert_value(::Val{:max}) = to_invert ? Val(:min) : Val(:max)
+            invert_value(value::AbstractVector) = invert_value.(value)
+            invert_value(value) = value
+            try
+                apply_simple_constraint!(alt_var(block), invert_value(value))
+                return
+            catch e
+                if !(e isa VariableNotAvailable)
+                    rethrow()
+                end
             end
         end
+        apply_simple_constraint!(variables[key](block), value)
     end
     nothing
 end
@@ -245,20 +283,14 @@ apply_simple_constraint!(variable::Number, value::Number) = @assert variable ≈
 
 
 """
-    match_blocks!(block1, block2[, property_list])
+    match_blocks!(block1, block2, property_list)
 
 Matches the listed variables between two [`BuildingBlock`](@ref) objects.
-By default all shared variables (i.e., those with the same name) are matched.
 """
 function match_blocks!(block1::BuildingBlock, block2::BuildingBlock, property_list)
     for fn in property_list
         @constraint global_model() fn(block1) == fn(block2)
     end
-end
-
-function match_blocks!(block1::BuildingBlock, block2::BuildingBlock)
-    property_list = intersect(variables(block1), variables(block2))
-    match_blocks!(block1, block2, property_list)
 end
 
 """
@@ -280,7 +312,7 @@ end
 
 function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner, func::Function)
     model = global_model()
-    if func in variables(building_block)
+    try
         # apply constraint at this level
         res_bb = func(building_block)
         if res_bb isa AbstractVector
@@ -299,10 +331,15 @@ function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner, f
             @constraint model res_bb <= func(scanner)
             @constraint model res_bb >= -func(scanner)
         end
-    elseif building_block isa ContainerBlock
-        # apply constraints at lower level
-        for (_, child_block) in get_children_blocks(building_block)
-            scanner_constraints!(child_block, scanner, func)
+
+    catch e
+        if !(e isa VariableNotAvailable)
+            rethrow()
+        end
+        if building_block isa ContainerBlock
+            for (_, child_block) in get_children_blocks(building_block)
+                scanner_constraints!(child_block, scanner, func)
+            end
         end
     end
 end

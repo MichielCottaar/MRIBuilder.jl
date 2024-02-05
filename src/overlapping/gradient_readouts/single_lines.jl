@@ -33,6 +33,4 @@ nsamples(sl::SingleLine) = nsamples(sl.adc)
 resolution(sl::SingleLine) = resolution(sl.adc)
 duration(sl::SingleLine) = duration(sl.grad)
 
-variables(::Type{<:SingleLine}) = [dwell_time, gradient_strenth, fov_inverse, voxel_size_inverse, resolution, duration]
-
 end

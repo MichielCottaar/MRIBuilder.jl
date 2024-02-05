@@ -43,8 +43,6 @@ flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
 inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
 effective_time(pulse::ConstantPulse) = duration(pulse) / 2
 
-variables(::Type{<:ConstantPulse}) = [amplitude, duration, phase, frequency, flip_angle, inverse_bandwidth]
-
 function fixed(block::ConstantPulse)
     d = value(duration(block))
     final_phase = phase(block) + d * frequency(block) * 360

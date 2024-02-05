@@ -99,7 +99,6 @@ frequency(pulse::SincPulse) = pulse.frequency
 flip_angle(pulse::SincPulse) = (pulse.nlobe_integral(N_left(pulse)) + pulse.nlobe_integral(N_right(pulse))) * amplitude(pulse) * lobe_duration(pulse) * 360
 lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
-variables(::Type{<:SincPulse}) = [amplitude, N_left, N_right, duration, phase, frequency, flip_angle, lobe_duration, inverse_bandwidth]
 effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
 
 function fixed(block::SincPulse)

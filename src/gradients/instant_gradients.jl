@@ -78,7 +78,6 @@ end
 qvec(instant::InstantGradientBlock) = instant.qvec
 bmat_gradient(::InstantGradientBlock, qstart=nothing) = zeros(3, 3)
 duration(instant::InstantGradientBlock) = 0.
-variables(::Type{<:InstantGradientBlock}) = [qvec, qval]
 
 
 end
