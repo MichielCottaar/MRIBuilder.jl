@@ -1,6 +1,6 @@
 module Abstract
 
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, RFPulseBlock, get_children_indices
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, RFPulseBlock, get_children_indices, VariableNotAvailable
 import ...Wait: WaitBlock
 import ...Readouts: InstantReadout
 import ...Gradients: GradientBlock, split_gradient
@@ -59,9 +59,9 @@ for (func_symbol, _) in [Dict(all_variables_symbols)[:pulse]..., :effective_time
     @eval function $func_symbol(ao::AbstractOverlapping, args...; kwargs...)
         single_pulse = pulses(ao)
         if iszero(length(single_pulse))
-            error("Building block does not contain any RF pulse, so cannot compute $func_symbol.")
+            throw(VariableNotAvailable(typeof(ao), $func_symbol))
         elseif length(single_pulse) > 1
-            error("Building block has multipl pulses, so cannot compute $func_symbol.")
+            error("Building block has multipl pulses, so cannot compute ", $func_symbol, ".")
         end
         $func_symbol(single_pulse[1], args...; kwargs...)
     end

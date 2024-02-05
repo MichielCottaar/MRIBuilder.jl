@@ -1,7 +1,7 @@
 module SingleLines
 import ....BuildingBlocks: set_simple_constraints!
 import ....Readouts: ADC
-import ....Variables: dwell_time, fov, resolution, nsamples, effective_time, gradient_strength, slew_rate, voxel_size, rise_time, duration, variables
+import ....Variables: dwell_time, inverse_fov, resolution, nsamples, effective_time, gradient_strength, slew_rate, inverse_voxel_size, rise_time, duration, variables
 import ...Abstract: AbstractOverlapping, waveform, interruptions
 import ...GradientPulses: TrapezoidGradient
 
@@ -27,8 +27,8 @@ effective_time(sl::SingleLine) = rise_time(sl.grad) + effective_time(sl.adc)
 dwell_time(sl::SingleLine) = dwell_time(sl.adc)
 slew_rate(sl::SingleLine) = slew_rate(sl.grad)[1]
 gradient_strenth(sl::SingleLine) = slew_rate(sl) * rise_time(sl.grad)
-fov_inverse(sl::SingleLine) = 1e3 * dwell_time(sl) * gradient_strenth(sl)
-voxel_size_inverse(sl::SingleLine) = 1e3 * duration(sl.adc) * gradient_strenth(sl)
+inverse_fov(sl::SingleLine) = 1e3 * dwell_time(sl) * gradient_strenth(sl)
+inverse_voxel_size(sl::SingleLine) = 1e3 * duration(sl.adc) * gradient_strenth(sl)
 nsamples(sl::SingleLine) = nsamples(sl.adc)
 resolution(sl::SingleLine) = resolution(sl.adc)
 duration(sl::SingleLine) = duration(sl.grad)

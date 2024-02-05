@@ -129,7 +129,7 @@ for variable_func in keys(variables)
                 value = alt_var(bb)
             catch e
                 if e isa VariableNotAvailable
-                    throw(VariableNotAvailable(typeof(bb), variable_func))
+                    throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
                 end
                 rethrow()
             end
@@ -138,9 +138,9 @@ for variable_func in keys(variables)
             elseif value isa AbstractArray{<:Number}
                 return backward.(value)
             end
-            throw(VariableNotAvailable(typeof(bb), variable_func, alt_var))
+            throw(VariableNotAvailable(typeof(bb), Variables.$variable_func, alt_var))
         end
-        throw(VariableNotAvailable(typeof(bb), variable_func))
+        throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
     end
 end
 
@@ -208,21 +208,21 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         end
         try
             numeric_value = _robust_value(fn(block))
+            if isnothing(numeric_value)
+                continue
+            end
+            if numeric_value isa AbstractVector
+                printed_value = "[" * join(map(v -> @sprintf("%.3g", v), numeric_value), ", ") * "]"
+            else
+                printed_value = @sprintf("%.3g", numeric_value)
+            end
+            print(io, "$(nameof(fn))=$(printed_value), ")
         catch e
             if e isa VariableNotAvailable
                 continue
             end
             rethrow()
         end
-        if isnothing(numeric_value)
-            continue
-        end
-        if numeric_value isa AbstractVector
-            printed_value = "[" * join(map(v -> @sprintf("%.3g", v), numeric_value), ", ") * "]"
-        else
-            printed_value = @sprintf("%.3g", numeric_value)
-        end
-        print(io, "$(nameof(fn))=$(printed_value), ")
     end
     print(io, ")")
 end
@@ -239,8 +239,8 @@ If set to `:min` or `:max`, minimising or maximising this function will be added
 """
 function set_simple_constraints!(block::BuildingBlock, kwargs)
     for (key, value) in kwargs
-        if key in keys(alternative_variables)
-            alt_var, forward, backward, to_invert = alternative_variables[Variables.$variable_func]
+        if variables[key] in keys(alternative_variables)
+            alt_var, forward, backward, to_invert = alternative_variables[variables[key]]
             invert_value(value::VariableType) = forward(value)
             invert_value(value::Symbol) = invert_value(Val(value))
             invert_value(::Val{:min}) = to_invert ? Val(:max) : Val(:min)

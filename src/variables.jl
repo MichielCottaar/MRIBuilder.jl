@@ -16,16 +16,19 @@ all_variables_symbols = [
         :amplitude => "The maximum amplitude of an RF pulse in kHz",
         :phase => "The angle of the phase of an RF pulse in KHz",
         :frequency => "The off-resonance frequency of an RF pulse (relative to the Larmor frequency of water) in KHz",
-        :bandwidth => "Bandwidth of the RF pulse in kHz. To set constraints it is often better to use [`inverse_bandwidth`](@ref)",
+        :bandwidth => "Bandwidth of the RF pulse in kHz. To set constraints it is often better to use [`inverse_bandwidth`](@ref).",
+        :inverse_bandwidth => "Inverse of bandwidth of the RF pulse in 1/kHz. Also see [`bandwidth`](@ref).",
         :N_left => "The number of zero crossings of the RF pulse before the main peak",
         :N_right => "The number of zero crossings of the RF pulse after the main peak",
         :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient in mm. To set constraints it is often better to use [`inverse_slice_thickness`](@ref).",
+        :inverse_slice_thickness => "Inverse of slice thickness of an RF pulse that is active during a gradient in 1/mm. Also, see [`slice_thickness`](@ref).",
     ],
 
     # gradients
     :gradient => [
         :qvec => "The spatial range and orientation on which the displacements can be detected due to this gradient in rad/um.",
-        :qval => "The spatial range on which the displacements can be detected due to this gradient in rad/um (i.e., norm of [`qvec`](@ref)).",
+        :qval => "The spatial range on which the displacements can be detected due to this gradient in rad/um (i.e., norm of [`qvec`](@ref)). To set constraints it is often better to use [`qvec`](@ref) or [`qval_square`](@ref).",
+        :qval_square => "Square of [`qval`](@ref) in rad^2/um^2.",
         :δ => "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms.",
         :rise_time => "Time for gradient pulse to reach its maximum value in ms.",
         :flat_time => "Time of gradient pulse at maximum value in ms.",
@@ -35,8 +38,10 @@ all_variables_symbols = [
     :readout => [
         :dwell_time => "Time between two samples in an `ADC` in ms.",
         :nsamples => "Number of samples during a readout. During the optimisation this might produce non-integer values.",
-        :fov => "Size of the field of view in mm.",
-        :voxel_size => "Size of each voxel in mm.",
+        :fov => "Size of the field of view in mm. To set constraints it is often better to use [`inverse_fov`](@ref).",
+        :inverse_fov => "Inverse of size of the field of view in 1/mm. Also see [`fov`](@ref).",
+        :voxel_size => "Size of each voxel in mm. To set constraints it is often better to use [`inverse_voxel_size`](@ref).",
+        :inverse_voxel_size => "Inverse of voxel size in 1/mm. Also see [`voxel_size`](@ref).",
         :resolution => "Number of voxels in the final readout. During the optimisation this might produce non-integer values, but this will be fixed after optimsation.",
         :oversample => "How much to oversample with ([`nsamples`](@ref) / [`resolution`](@ref))",
     ]
@@ -60,54 +65,10 @@ end
 
 
 # helper functions
-"""
-    inverse_slice_thickness(pulse)
-
-Inverse of [`slice_thickness`](@ref) in ms.
-
-It is defined separately from `slice_thickness` to avoid unnecessary divisions in any constraint.
-"""
-function inverse_slice_thickness end
-
-"""
-    inverse_bandwidth(pulse)
-
-Inverse of [`bandwidth`](@ref) in 1/mm.
-
-It is defined separately from `bandwidth` to avoid unnecessary divisions in any constraint.
-"""
-function inverse_bandwidth end
-
-"""
-    inverse_fov(readout)
-
-Inverse of [`fov`](@ref) in 1/mm.
-
-It is defined separately from `fov` to avoid unnecessary divisions in any constraint.
-"""
-function inverse_fov end
-
-"""
-    inverse_voxel_size(readout)
-
-Inverse of [`voxel_size`](@ref) in 1/mm.
-
-It is defined separately from `voxel_size` to avoid unnecessary divisions in any constraint.
-"""
-function inverse_voxel_size end
-
-"""
-    qval_square(gradient)
-
-Square of [`qval`](@ref) in rad/um.
-
-It is defined separately from `qval` to avoid unnecessary square root in any constraint.
-"""
 function qval_square(bb, args...; kwargs...)
     vec = qvec(bb, args...; kwargs...)
     return vec[1]^2 + vec[2]^2 + vec[3]^2
 end
-qval(bb; kwargs...) = sqrt(qval_square(bb))
 
 alternative_variables = Dict(
     qval => (qval_square, n->n^2, sqrt, false),

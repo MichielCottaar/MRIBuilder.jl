@@ -1,5 +1,5 @@
 module ADCs
-import JuMP: @constraint
+import JuMP: @constraint, value
 import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType, nsamples, resolution, oversample
 import ...BuildingBlocks: BuildingBlock, apply_simple_constraint!, set_simple_constraints!, fixed
 import ...BuildSequences: global_model
@@ -53,9 +53,10 @@ resolution(adc::ADC) = adc.resolution
 
 function fixed(adc::ADC)
     # round nsamples during fixing
-    nsamples = Int(round(adc.nsamples))
-    dwell_time = duration(adc) / nsamples
-    return ADC(nsamples, dwell_time, time_to_center(adc))
+    r = Int(round(value(resolution(adc))))
+    n = Int(round(value(nsamples(adc))))
+    oversample = n // r
+    return ADC(r, value(adc.dwell_time), value(adc.time_to_center), oversample)
 end
 
 end
