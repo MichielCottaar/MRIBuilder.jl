@@ -127,16 +127,16 @@ for variable_func in keys(variables)
             alt_var, forward, backward, _ = alternative_variables[Variables.$variable_func]
             try
                 value = alt_var(bb)
+                if value isa Number
+                    return backward(value)
+                elseif value isa AbstractArray{<:Number}
+                    return backward.(value)
+                end
             catch e
                 if e isa VariableNotAvailable
                     throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
                 end
                 rethrow()
-            end
-            if value isa Number
-                return backward(value)
-            elseif value isa AbstractArray{<:Number}
-                return backward.(value)
             end
             throw(VariableNotAvailable(typeof(bb), Variables.$variable_func, alt_var))
         end
