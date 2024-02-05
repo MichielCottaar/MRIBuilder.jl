@@ -25,11 +25,12 @@ struct ADC <: BuildingBlock
     oversample :: VariableType
 end
 
-function ADC(; nsamples=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, kwargs...)
+function ADC(; nsamples=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, oversample=1, kwargs...)
     res = ADC(
         get_free_variable(nsamples),
         get_free_variable(dwell_time),
         get_free_variable(time_to_center),
+        get_free_variable(oversample),
     )
     @constraint global_model() res.dwell_time >= 0
     if center_halfway
