@@ -1,6 +1,6 @@
 module ADCs
 import JuMP: @constraint
-import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType, nsamples, resolution
+import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType, nsamples, resolution, oversample
 import ...BuildingBlocks: BuildingBlock, apply_simple_constraint!, set_simple_constraints!, fixed
 import ...BuildSequences: global_model
 
@@ -19,9 +19,10 @@ Adds a readout event with `nsamples` readouts.
 - `time_to_center`: time till the center of k-space.
 """
 struct ADC <: BuildingBlock
-    nsamples :: VariableType
+    resolution :: VariableType
     dwell_time :: VariableType
     time_to_center :: VariableType
+    oversample :: VariableType
 end
 
 function ADC(; nsamples=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, kwargs...)
@@ -41,14 +42,15 @@ function ADC(; nsamples=nothing, dwell_time=nothing, time_to_center=nothing, cen
     return res
 end
 
-nsamples(adc::ADC) = adc.nsamples
+oversample(adc::ADC) = adc.oversample
+nsamples(adc::ADC) = resolution(adc) * oversample(adc)
 dwell_time(adc::ADC) = adc.dwell_time
 duration(adc::ADC) = nsamples(adc) * dwell_time(adc)
 time_to_center(adc::ADC) = adc.time_to_center
 effective_time(adc::ADC) = time_to_center(adc)
-resolution(adc::ADC) = adc.nsamples
+resolution(adc::ADC) = adc.resolution
 
-variables(::Type{<:ADC}) = [nsamples, dwell_time, duration, time_to_center, resolution]
+variables(::Type{<:ADC}) = [nsamples, dwell_time, duration, time_to_center, resolution, oversample]
 
 function fixed(adc::ADC)
     # round nsamples during fixing
