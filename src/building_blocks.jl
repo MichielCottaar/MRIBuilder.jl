@@ -206,6 +206,9 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         if printed_duration && fn == duration
             continue
         end
+        if fn in [fn_alt for (fn_alt, _, _, _) in values(alternative_variables)]
+            continue
+        end
         try
             numeric_value = _robust_value(fn(block))
             if isnothing(numeric_value)
