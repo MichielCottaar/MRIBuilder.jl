@@ -5,18 +5,21 @@ import ...BuildingBlocks: BuildingBlock, apply_simple_constraint!, set_simple_co
 import ...BuildSequences: global_model
 
 """
-    ADC(nsamples; dwell_time=nothing, duration=nothing, time_to_center=duration/2)
+    ADC(; center_halfway=true, oversample=1, variables...)
 
 Adds a readout event with `nsamples` readouts.
 
 ## Parameters
 - `center_halfway`: by default the `time_to_center` is assumed to be half of the `duration`. Set this to false to disable this assumption.
+- `oversample`: by how much the ADC should oversample (default: 2, unless both `resolution` and `nsamples` are set).
 
 ## Variables
-- `nsamples`: number of samples in the readout. This can be a non-integer value during optimisation
+- `resolution`: number of voxels in the readout direction. This can be a non-integer value during optimisation.
+- `nsamples`: number of samples in the readout. This can be a non-integer value during optimisation.
 - `dwell_time`: Time between each readout sample in ms.
 - `duration`: Total duration of the ADC event in ms.
-- `time_to_center`: time till the center of k-space.
+- `time_to_center`: time till the center of k-space from start of ADC in ms.
+- `effective_time`: same as `time_to_center`.
 """
 struct ADC <: BuildingBlock
     resolution :: VariableType
@@ -25,9 +28,13 @@ struct ADC <: BuildingBlock
     oversample :: VariableType
 end
 
-function ADC(; nsamples=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, oversample=1, kwargs...)
+function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, oversample=nothing, kwargs...)
+    if !(:nsamples in keys(kwargs) && !isnothing(resolution)) && isnothing(oversample)
+        oversample = 2.
+    end
+
     res = ADC(
-        get_free_variable(nsamples),
+        get_free_variable(resolution),
         get_free_variable(dwell_time),
         get_free_variable(time_to_center),
         get_free_variable(oversample),
