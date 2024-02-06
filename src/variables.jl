@@ -44,6 +44,7 @@ all_variables_symbols = [
         :inverse_voxel_size => "Inverse of voxel size in 1/mm. Also see [`voxel_size`](@ref).",
         :resolution => "Number of voxels in the final readout. During the optimisation this might produce non-integer values, but this will be fixed after optimsation.",
         :oversample => "How much to oversample with ([`nsamples`](@ref) / [`resolution`](@ref))",
+        :ramp_overlap => "Fraction of overlap between ADC event and underlying gradient pulse ramp (between 0 and 1)."
     ]
 ]
 
