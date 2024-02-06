@@ -22,7 +22,7 @@ Defines a trapezoidal pulsed gradient
 ## Parameters
 - `orientation` sets the gradient orienation (ignored if `qvec` is set). Can be set to a vector for a fixed orientation. Otherwise the orientation will be aligned with the `rotate` (if set) or fully free (if `rotate` is nothing). Set to :flip to point in the inverse of the user-provided `rotate`.
 - `rotate`: with which user-set parameter will this gradient be rotated (e.g., :bvec). Default is no rotation.
-- `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling.
+- `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling. Can be set to a tuple (e.g., (nothing, :phase_encode, nothing)) to only scale the gradient along specific axes. Such scaling should be applied before any rotation.
 - `pulse`: RF pulse that will play during the flat part of the trapezoidal gradient. If you want to add dead time around the pulse, you can set it to a tuple (e.g., `pulse=(2, pulse, :min)`).
 
 ## Variables

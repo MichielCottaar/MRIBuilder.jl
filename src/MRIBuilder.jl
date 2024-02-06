@@ -49,8 +49,8 @@ export Sequence
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
 export Pathway, duration_transverse, duration_dephase, bval, bmat
 
-import .HelperFunctions: excitation_pulse, refocus_pulse
-export excitation_pulse, refocus_pulse
+import .HelperFunctions: excitation_pulse, refocus_pulse, epi_readout, single_line_readout
+export excitation_pulse, refocus_pulse, epi_readout, single_line_readout
 
 import JuMP: @constraint, @objective, objective_function, value, Model
 export @constraint, @objective, objective_function, value, Model
