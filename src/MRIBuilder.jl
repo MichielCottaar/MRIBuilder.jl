@@ -40,8 +40,8 @@ export InstantGradientBlock
 import .Readouts: InstantReadout, ADC
 export InstantReadout, ADC
 
-import .Overlapping: TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine
-export TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine
+import .Overlapping: TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine, opposite_kspace_lines
+export TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine, opposite_kspace_lines
 
 import .Sequences: Sequence
 export Sequence

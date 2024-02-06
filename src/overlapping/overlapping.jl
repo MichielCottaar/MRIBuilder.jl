@@ -7,6 +7,6 @@ include("gradient_readouts/gradient_readouts.jl")
 import .Abstract: AbstractOverlapping, interruptions, waveform
 import .Generic: GenericOverlapping
 import .GradientPulses: TrapezoidGradient, SpoiltSliceSelect
-import .GradientReadouts: SingleLine
+import .GradientReadouts: SingleLine, opposite_kspace_lines
 
 end

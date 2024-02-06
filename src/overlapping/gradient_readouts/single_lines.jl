@@ -14,9 +14,9 @@ struct SingleLine <: AbstractOverlapping
 end
 
 """
-    SingleLine(adc; rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., variables...)
+    SingleLine(rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., variables...)
 
-Adds a [`TrapezoidGradient`](@ref) to underly the [`ADC`](@ref) event.
+Overlays a [`TrapezoidGradient`](@ref) and [`ADC`](@ref) event.
 
 ## Parameters
 - `rotate`: with which user-set parameter will this gradient be rotated (default: :FOV).
@@ -37,9 +37,9 @@ ADC variables:
 Gradient variables:
 - [`gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
 """
-function SingleLine(adc; rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., kwargs...)
+function SingleLine(rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., resolution=nothing, oversample=nothing, nsamples=nothing, dwell_time=nothing, kwargs...)
     res = SingleLine(
-        adc,
+        ADC(; resolution=resolution, oversample=oversample, nsamples=nsamples, dwell_time=dwell_time),
         TrapezoidGradient(orientation=orientation, duration=:min, rotate=rotate),
         get_free_variable(ramp_overlap),
     )
@@ -61,5 +61,36 @@ inverse_voxel_size(sl::SingleLine) = 1e3 * duration(sl.adc) * gradient_strenth(s
 nsamples(sl::SingleLine) = nsamples(sl.adc)
 resolution(sl::SingleLine) = resolution(sl.adc)
 duration(sl::SingleLine) = duration(sl.grad)
+
+
+"""
+    opposite_kspace_lines(rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., variables...)
+
+Create two [`SingleLine`](@ref) objects that run in the opposite direction through k-space.
+
+The first will run in the `+orientation` direction, the other in the `-orienation` direction.
+
+Parameters and variables are the same as for [`SingleLine`](@ref).
+"""
+function opposite_kspace_lines(; kwargs...)
+    positive_line = SingleLine(; kwargs...)
+    grad = positive_line.grad
+    negative_grad = TrapezoidGradient(
+        grad.rise_time,
+        grad.flat_time,
+        -grad.slew_rate,
+        grad.rotate,
+        grad.scale,
+        grad.time_before_pulse,
+        grad.pulse,
+        grad.time_after_pulse
+    )
+    negative_line = SingleLine(
+        positive_line.adc,
+        negative_grad,
+        positive_line.ramp_overlap
+    )
+    return (positive_line, negative_line)
+end
 
 end
