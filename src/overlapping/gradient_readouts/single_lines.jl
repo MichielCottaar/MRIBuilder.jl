@@ -3,7 +3,7 @@ import JuMP: @constraint
 import ....BuildingBlocks: set_simple_constraints!
 import ....BuildSequences: global_model
 import ....Readouts: ADC
-import ....Variables: dwell_time, inverse_fov, resolution, nsamples, effective_time, gradient_strength, slew_rate, inverse_voxel_size, rise_time, duration, variables, fov, voxel_size, flat_time, ramp_overlap, VariableType
+import ....Variables: dwell_time, inverse_fov, resolution, nsamples, effective_time, gradient_strength, slew_rate, inverse_voxel_size, rise_time, duration, variables, fov, voxel_size, flat_time, ramp_overlap, VariableType, get_free_variable
 import ...Abstract: AbstractOverlapping, waveform, interruptions
 import ...GradientPulses: TrapezoidGradient
 
@@ -43,7 +43,7 @@ function SingleLine(; rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., resol
         TrapezoidGradient(orientation=orientation, duration=:min, rotate=rotate),
         get_free_variable(ramp_overlap),
     )
-    @constraint global_model() (res.ramp_overlap * rise_time(res.grad) + flat_time(res.grad)) == duration(adc)
+    @constraint global_model() (res.ramp_overlap * rise_time(res.grad) + flat_time(res.grad)) == duration(res.adc)
     set_simple_constraints!(res, kwargs)
     return res
 end
@@ -83,7 +83,8 @@ function opposite_kspace_lines(; kwargs...)
         grad.scale,
         grad.time_before_pulse,
         grad.pulse,
-        grad.time_after_pulse
+        grad.time_after_pulse,
+        grad.slew_rate_1d
     )
     negative_line = SingleLine(
         positive_line.adc,
