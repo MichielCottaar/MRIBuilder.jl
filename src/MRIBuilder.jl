@@ -13,6 +13,7 @@ include("pulses/pulses.jl")
 include("readouts/readouts.jl")
 include("overlapping/overlapping.jl")
 include("sequences.jl")
+include("alternatives.jl")
 include("pathways.jl")
 include("helper_functions.jl")
 
@@ -45,6 +46,9 @@ export TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine
 
 import .Sequences: Sequence
 export Sequence
+
+import .Alternatives: AlternativeBlocks
+export AlternativeBlocks
 
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
 export Pathway, duration_transverse, duration_dephase, bval, bmat

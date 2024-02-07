@@ -5,7 +5,8 @@ import ..BuildSequences: global_model, build_sequence
 import ..Sequences: Sequence
 import ..Pulses: SincPulse, ConstantPulse, InstantRFPulseBlock
 import ..Overlapping: TrapezoidGradient, SpoiltSliceSelect, opposite_kspace_lines
-import ..Variables: qvec
+import ..Variables: qvec, flat_time, rise_time
+import ..Alternatives: AlternativeBlocks, match_blocks!
 
 
 function _get_pulse(shape, flip_angle, phase, frequency, Nzero, scale, bandwidth, duration)
@@ -198,10 +199,18 @@ Helper function used to build the readout for any Cartesian readout, i.e.:
 function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanner=nothing, optimise=false, kwargs...)
     @assert iszero(readout_lines[1])
     build_sequence(scanner; optimise=optimise) do
-        max_ky = maximum(abs.(start_lines)) * 1e-3 / fov[2]
-        to_scale_ky = length(start_lines) == 1 ? nothing : (nothing, :phase_encode, nothing)
-        prepare_kspace = TrapezoidGradient(scale=to_scale_ky, rotate=:FOV, duration=:min)
         (pos_line, neg_line) = opposite_kspace_lines(; rotate=:FOV, fov=fov[1], resolution=resolution_x, kwargs...)
+        ky = @. start_lines * 1e-3 / fov[2]
+        if length(start_lines) == 1
+            prepare_kspace = TrapezoidGradient(rotate=:FOV, duration=:min, qvec=[-qvec(pos_line, nothing, 1)[1], ky[1], 0.])
+        else
+            prepare_kspace = AlternativeBlocks(
+                :readout_segment,
+                [TrapezoidGradient(rotate=:FOV, duration=:min, qvec=[-qvec(pos_line, nothing, 1)[1], ky_prep, 0.]) for ky_prep in ky]
+            )
+            match_blocks!(prepare_kspace, flat_time)
+            match_blocks!(prepare_kspace, rise_time)
+        end
 
         steps = (readout_lines[2:end] - readout_lines[1:end-1])
         blips = Dict(
@@ -218,9 +227,6 @@ function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanne
             append!(result, [blips[s], next_line])
             next_line = next_line == pos_line ? neg_line : pos_line
         end
-        @constraint global_model() qvec(prepare_kspace)[1] == -qvec(pos_line, nothing, 1)[1]
-        @constraint global_model() qvec(prepare_kspace)[2] == max_ky
-        @constraint global_model() qvec(prepare_kspace)[3] == 0.
         return Sequence(result...; TR=Inf)
     end
 end
