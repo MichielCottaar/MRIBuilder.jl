@@ -144,7 +144,7 @@ Creates an EPI readout with given `resolution` and `fov` or `voxel_size`.
 - `voxel_size`: 2-element vector with size of the voxels in the output image in the x- and y-direction in mm. Either this parameter or `fov` should be set.
 - `oversample`: by how much to oversample in the x-direction.
 """
-function epi_readout(; resolution, fov=nothing, voxel_size=nothing; kwargs...)
+function epi_readout(; resolution, fov=nothing, voxel_size=nothing, kwargs...)
     start_lines = [-resolution[2]]
     readout_lines = 0:(2 * resolution[2])
     fov = _get_fov(fov, voxel_size, resolution)
@@ -164,7 +164,7 @@ Creates a readout that scans a single line in k-space at a time with given `reso
 - `voxel_size`: 2-element vector with size of the voxels in the output image in the x- and y-direction in mm. Either this parameter or `fov` should be set.
 - `oversample`: by how much to oversample in the x-direction.
 """
-function single_line_readout(; resolution, fov=nothing, voxel_size=nothing; kwargs...)
+function single_line_readout(; resolution, fov=nothing, voxel_size=nothing, kwargs...)
     start_lines = -resolution[2]:resolution[2]
     readout_lines = [0]
     fov = _get_fov(fov, voxel_size, resolution)
