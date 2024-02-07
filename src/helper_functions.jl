@@ -1,5 +1,6 @@
 module HelperFunctions
 import JuMP: @constraint
+import ..BuildingBlocks: BuildingBlock
 import ..BuildSequences: global_model, build_sequence
 import ..Sequences: Sequence
 import ..Pulses: SincPulse, ConstantPulse, InstantRFPulseBlock
@@ -195,6 +196,7 @@ Helper function used to build the readout for any Cartesian readout, i.e.:
 - [`single_line_readout`](@ref)
 """
 function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanner=nothing, optimise=false, kwargs...)
+    @show start_lines readout_lines fov
     build_sequence(scanner; optimise=optimise) do
         max_ky = maximum(abs.(start_lines)) * 1e3 / fov[2]
         to_scale_ky = length(start_lines) == 1 ? nothing : (nothing, :phase_encode, nothing)
@@ -203,7 +205,7 @@ function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanne
 
         steps = (readout_lines[2:end] - readout_lines[1:end-1])
         blips = Dict(
-            s => TrapezoidGradient(orientation[0, 1, 0], rotate=:FOV, duration=:min)
+            s => TrapezoidGradient(orientation=[0, 1, 0], rotate=:FOV, duration=:min)
             for s in steps
         )
         for (s, trap) in blips
@@ -213,15 +215,15 @@ function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanne
         result = BuildingBlock[prepare_kspace, pos_line]
         next_line = neg_line
         for s in steps
-            append!(result, blips[s], next_line)
+            append!(result, [blips[s], next_line])
             next_line = next_line == pos_line ? neg_line : pos_line
         end
-        @constraint global_model() qvec(prepare_kspace) == [
-            -qvec(pos_line, nothing, 1),
-            max_ky,
-            0.
-        ]
-        return Sequence(result...; TR=inf)
+        #@constraint global_model() qvec(prepare_kspace) == [
+        #    -qvec(pos_line, nothing, 1),
+        #    max_ky,
+        #    0.
+        #]
+        return Sequence(result...; TR=Inf)
     end
 end
 
