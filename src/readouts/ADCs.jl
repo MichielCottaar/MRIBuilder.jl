@@ -28,8 +28,8 @@ struct ADC <: BuildingBlock
     oversample :: VariableType
 end
 
-function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, oversample=nothing, kwargs...)
-    if !(:nsamples in keys(kwargs) && !isnothing(resolution)) && isnothing(oversample)
+function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, oversample=nothing, nsamples=nothing, kwargs...)
+    if (isnothing(resolution) || isnothing(nsamples)) && isnothing(oversample)
         oversample = 2.
     end
 
@@ -46,6 +46,7 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
         @constraint global_model() res.time_to_center >= 0
         @constraint global_model() res.time_to_center <= duration(res)
     end
+    apply_simple_constraint!(res.resolution * res.oversample, nsamples)
     set_simple_constraints!(res, kwargs)
     return res
 end
