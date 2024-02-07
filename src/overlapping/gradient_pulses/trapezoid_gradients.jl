@@ -20,7 +20,7 @@ import ...Abstract: interruptions, waveform, AbstractOverlapping
 Defines a trapezoidal pulsed gradient
 
 ## Parameters
-- `orientation` sets the gradient orienation (ignored if `qvec` is set). Can be set to a vector for a fixed orientation. Otherwise the orientation will be aligned with the `rotate` (if set) or fully free (if `rotate` is nothing). Set to :flip to point in the inverse of the user-provided `rotate`.
+- `orientation` sets the gradient orienation (completely free by default). Can be set to a vector for a fixed orientation.
 - `rotate`: with which user-set parameter will this gradient be rotated (e.g., :bvec). Default is no rotation.
 - `scale`: with which user-set parameter will this gradient be scaled (e.g., :bval). Default is no scaling. Can be set to a tuple (e.g., (nothing, :phase_encode, nothing)) to only scale the gradient along specific axes. Such scaling should be applied before any rotation.
 - `pulse`: RF pulse that will play during the flat part of the trapezoidal gradient. If you want to add dead time around the pulse, you can set it to a tuple (e.g., `pulse=(2, pulse, :min)`).
@@ -55,7 +55,7 @@ struct TrapezoidGradient <: AbstractOverlapping
 end
 
 function TrapezoidGradient(; orientation=nothing, rise_time=nothing, flat_time=nothing, rotate=nothing, scale=nothing, pulse=nothing,kwargs...)
-    if isnothing(orientation) && isnothing(rotate)
+    if isnothing(orientation)
         rate_1d = nothing
         slew_rate = (
             get_free_variable(nothing),
@@ -65,23 +65,7 @@ function TrapezoidGradient(; orientation=nothing, rise_time=nothing, flat_time=n
     else
         rate_1d = get_free_variable(nothing)
         @constraint global_model() rate_1d >= 0
-        if isnothing(orientation)
-            rate_1d = get_free_variable(nothing)
-            slew_rate = (
-                rate_1d,
-                0.,
-                0.,
-            )
-        elseif orientation == :flip
-            @assert !isnothing(rotate) "setting `orientation=:flip` only makes sense if the `rotate` is set as well."
-            slew_rate = (
-                -rate_1d,
-                0.,
-                0.,
-            )
-        else
-            slew_rate = rate_1d .* (orientation ./ norm(orientation))
-        end
+        slew_rate = rate_1d .* (orientation ./ norm(orientation))
     end
     slew_rate = SVector{3}(slew_rate)
     rise_time = get_free_variable(rise_time)
