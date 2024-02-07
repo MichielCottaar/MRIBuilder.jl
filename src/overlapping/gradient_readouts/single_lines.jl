@@ -3,7 +3,7 @@ import JuMP: @constraint
 import ....BuildingBlocks: set_simple_constraints!
 import ....BuildSequences: global_model
 import ....Readouts: ADC
-import ....Variables: dwell_time, inverse_fov, resolution, nsamples, effective_time, gradient_strength, slew_rate, inverse_voxel_size, rise_time, duration, variables, fov, voxel_size, flat_time, ramp_overlap
+import ....Variables: dwell_time, inverse_fov, resolution, nsamples, effective_time, gradient_strength, slew_rate, inverse_voxel_size, rise_time, duration, variables, fov, voxel_size, flat_time, ramp_overlap, VariableType
 import ...Abstract: AbstractOverlapping, waveform, interruptions
 import ...GradientPulses: TrapezoidGradient
 
@@ -37,7 +37,7 @@ ADC variables:
 Gradient variables:
 - [`gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
 """
-function SingleLine(rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., resolution=nothing, oversample=nothing, nsamples=nothing, dwell_time=nothing, kwargs...)
+function SingleLine(; rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., resolution=nothing, oversample=nothing, nsamples=nothing, dwell_time=nothing, kwargs...)
     res = SingleLine(
         ADC(; resolution=resolution, oversample=oversample, nsamples=nsamples, dwell_time=dwell_time),
         TrapezoidGradient(orientation=orientation, duration=:min, rotate=rotate),
