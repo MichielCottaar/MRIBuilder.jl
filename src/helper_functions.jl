@@ -196,9 +196,9 @@ Helper function used to build the readout for any Cartesian readout, i.e.:
 - [`single_line_readout`](@ref)
 """
 function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanner=nothing, optimise=false, kwargs...)
-    @show start_lines readout_lines fov
+    @assert iszero(readout_lines[1])
     build_sequence(scanner; optimise=optimise) do
-        max_ky = maximum(abs.(start_lines)) * 1e3 / fov[2]
+        max_ky = maximum(abs.(start_lines)) * 1e-3 / fov[2]
         to_scale_ky = length(start_lines) == 1 ? nothing : (nothing, :phase_encode, nothing)
         prepare_kspace = TrapezoidGradient(scale=to_scale_ky, rotate=:FOV, duration=:min)
         (pos_line, neg_line) = opposite_kspace_lines(; rotate=:FOV, fov=fov[1], resolution=resolution_x, kwargs...)
@@ -209,7 +209,7 @@ function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanne
             for s in steps
         )
         for (s, trap) in blips
-            @constraint global_model() qvec(trap)[2] == s / fov[2]
+            @constraint global_model() qvec(trap)[2] == 1e-3 * s / fov[2]
         end
 
         result = BuildingBlock[prepare_kspace, pos_line]
@@ -218,11 +218,9 @@ function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanne
             append!(result, [blips[s], next_line])
             next_line = next_line == pos_line ? neg_line : pos_line
         end
-        #@constraint global_model() qvec(prepare_kspace) == [
-        #    -qvec(pos_line, nothing, 1),
-        #    max_ky,
-        #    0.
-        #]
+        @constraint global_model() qvec(prepare_kspace)[1] == -qvec(pos_line, nothing, 1)[1]
+        @constraint global_model() qvec(prepare_kspace)[2] == max_ky
+        @constraint global_model() qvec(prepare_kspace)[3] == 0.
         return Sequence(result...; TR=Inf)
     end
 end
