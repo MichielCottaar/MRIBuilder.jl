@@ -2,7 +2,7 @@ module BuildSequences
 import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables
 import Ipopt
 import Juniper
-import ..Scanners: Scanner
+import ..Scanners: Scanner, gradient_strength
 
 const GLOBAL_MODEL = Ref(Model())
 const IGNORE_MODEL = GLOBAL_MODEL[]
