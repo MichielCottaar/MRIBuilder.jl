@@ -286,6 +286,7 @@ end
 walk_pathway!(wait::WaitBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) = false
 
 function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
+    @show block_start_time, nreadout[]
     current_index = nothing
     current_time = block_start_time
     for (index_inter, interruption) in enumerate(interruptions(ao))
@@ -300,8 +301,9 @@ function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_eff
         elseif (interruption.object isa InstantReadout || interruption.object isa ADC)
             if length(pulse_effects) > 0
                 continue
-            elseif nreadout[] > 0
-                nreadout[] -= 1
+            end
+            nreadout[] -= 1
+            if nreadout[] > 0
                 continue
             end
         end 
@@ -314,6 +316,7 @@ function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_eff
         end
         current_index = index_inter
         if length(pulse_effects) == 0 && nreadout[] == 0
+            update_walker_till_time!(walker, current_time)
             return true
         end
     end
