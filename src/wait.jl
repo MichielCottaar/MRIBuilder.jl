@@ -19,6 +19,9 @@ Duration can be set to one of:
 struct WaitBlock <: BuildingBlock
     duration :: VariableType
     function WaitBlock(duration=nothing)
+        if duration isa Number
+            return new(duration)
+        end
         res = new(
             get_free_variable(duration),
         )
