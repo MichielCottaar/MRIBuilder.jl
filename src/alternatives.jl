@@ -1,6 +1,6 @@
 module Alternatives
 import JuMP: @constraint
-import ..BuildingBlocks: BuildingBlock, match_blocks!
+import ..BuildingBlocks: BuildingBlock, match_blocks!, BuildingBlockPrinter
 import ..BuildSequences: global_model
 import ..Variables: duration
 
@@ -15,12 +15,15 @@ The `name` is a symbol that is used to identify this `AlternativeBlocks` in the 
 """
 struct AlternativeBlocks <: BuildingBlock
     name :: Symbol
-    options :: Vector{<:BuildingBlock}
+    options :: Dict{Any, BuildingBlock}
 end
 
-Base.getindex(alt::AlternativeBlocks, index::Int) = alt.options[index]
+AlternativeBlocks(name::Symbol, options_vector::AbstractVector) = AlternativeBlocks(name, Dict(index => value for (index, value) in enumerate(options_vector)))
 
-duration(alt::AlternativeBlocks) = maximum(duration.(alt.options))
+Base.getindex(alt::AlternativeBlocks, index) = alt.options[index]
+Base.length(alt::AlternativeBlocks) = length(alt.options)
+
+duration(alt::AlternativeBlocks) = maximum(duration.(values(alt.options)))
 
 """
     match_blocks!(alternatives, function)
@@ -30,8 +33,9 @@ Matches the outcome of given `function` on each of the building blocks in [`Alte
 For example, `match_blocks!(alternatives, duration)` will ensure that all the alternative building blocks have the same duration.
 """
 function match_blocks!(alternatives::AlternativeBlocks, func)
-    baseline = func(alternatives[1])
-    for other_block in alternatives.options[2:end]
+    options = [values(alternatives.options)...]
+    baseline = func(options[1])
+    for other_block in options[2:end]
         if baseline isa AbstractVector
             @constraint global_model() baseline == func(other_block)
         else
@@ -40,6 +44,10 @@ function match_blocks!(alternatives::AlternativeBlocks, func)
     end
 end
 
+function Base.show(io::IO, alt_printer::BuildingBlockPrinter{<:AlternativeBlocks})
+    block = alt_printer.bb
+    print(io, "AlternativeBlocks(", block.name, ", ", length(block), " options)")
+end
 
 
 end
