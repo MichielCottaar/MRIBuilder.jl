@@ -49,7 +49,7 @@ function SingleLine(; rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., resol
 end
 
 waveform(sl::SingleLine) = waveform(sl.grad)
-interruptions(sl::SingleLine) = [(index=2, time=effective_time(sl.adc), object=sl.adc)]
+interruptions(sl::SingleLine) = [(index=2, time=effective_time(sl.adc) - rise_time(sl.grad), object=sl.adc)]
 
 ramp_overlap(sl::SingleLine) = sl.ramp_overlap
 effective_time(sl::SingleLine) = (1. - ramp_overlap(sl)) * rise_time(sl.grad) + effective_time(sl.adc)
