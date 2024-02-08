@@ -1,7 +1,7 @@
 module BuildingBlocks
 import JuMP: value, Model, @constraint, @objective, objective_function, AbstractJuMPScalar
 import Printf: @sprintf
-import ..Variables: Variables, variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, alternative_variables
+import ..Variables: Variables, variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, alternative_variables, qval_square
 import ..BuildSequences: global_model, global_scanner, fixed
 import ..Scanners: Scanner
 
@@ -122,6 +122,9 @@ end
 
 
 for variable_func in keys(variables)
+    if variable_func in [:qval_square, :qval]
+        continue
+    end
     @eval function Variables.$variable_func(bb::BuildingBlock)
         if Variables.$variable_func in keys(alternative_variables)
             alt_var, forward, backward, _ = alternative_variables[Variables.$variable_func]
@@ -143,6 +146,13 @@ for variable_func in keys(variables)
         throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
     end
 end
+
+function Variables.qval_square(bb::BuildingBlock, args...; kwargs...)
+    vec = Variables.qvec(bb, args...; kwargs...)
+    return vec[1]^2 + vec[2]^2 + vec[3]^2
+end
+
+Variables.qval(bb::BuildingBlock, args...; kwargs...) = sqrt(Variables.qval_square(bb, args...; kwargs...))
 
 
 struct BuildingBlockPrinter{T<:BuildingBlock}

@@ -65,12 +65,6 @@ for (block_symbol, all_functions) in all_variables_symbols
 end
 
 
-# helper functions
-function qval_square(bb, args...; kwargs...)
-    vec = qvec(bb, args...; kwargs...)
-    return vec[1]^2 + vec[2]^2 + vec[3]^2
-end
-
 alternative_variables = Dict(
     qval => (qval_square, n->n^2, sqrt, false),
     slice_thickness => (inverse_slice_thickness, inv, inv, true),
