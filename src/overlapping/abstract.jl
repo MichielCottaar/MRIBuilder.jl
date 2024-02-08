@@ -56,6 +56,9 @@ readouts(ao::AbstractOverlapping) = [readout for (_, _, readout) in interruption
 
 # For any overlapping building blocks with a single RF pulse, get information about that RF pulse.
 for (func_symbol, _) in [Dict(all_variables_symbols)[:pulse]..., :effective_time => ""]
+    if func_symbol == :slice_thickness
+        continue
+    end
     @eval function $func_symbol(ao::AbstractOverlapping, args...; kwargs...)
         single_pulse = pulses(ao)
         if iszero(length(single_pulse))
