@@ -286,7 +286,6 @@ end
 walk_pathway!(wait::WaitBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) = false
 
 function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
-    @show block_start_time, nreadout[]
     current_index = nothing
     current_time = block_start_time
     for (index_inter, interruption) in enumerate(interruptions(ao))
