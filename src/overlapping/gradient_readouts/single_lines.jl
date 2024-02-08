@@ -43,7 +43,7 @@ function SingleLine(; rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., resol
         TrapezoidGradient(orientation=orientation, duration=:min, rotate=rotate),
         get_free_variable(ramp_overlap),
     )
-    @constraint global_model() (res.ramp_overlap * rise_time(res.grad) + flat_time(res.grad)) == duration(res.adc)
+    @constraint global_model() (res.ramp_overlap * rise_time(res.grad) * 2 + flat_time(res.grad)) == duration(res.adc)
     set_simple_constraints!(res, kwargs)
     return res
 end
@@ -52,7 +52,7 @@ waveform(sl::SingleLine) = waveform(sl.grad)
 interruptions(sl::SingleLine) = [(index=2, time=effective_time(sl.adc), object=sl.adc)]
 
 ramp_overlap(sl::SingleLine) = sl.ramp_overlap
-effective_time(sl::SingleLine) = rise_time(sl.grad) + effective_time(sl.adc)
+effective_time(sl::SingleLine) = (1. - ramp_overlap(sl)) * rise_time(sl.grad) + effective_time(sl.adc)
 dwell_time(sl::SingleLine) = dwell_time(sl.adc)
 slew_rate(sl::SingleLine) = slew_rate(sl.grad)[1]
 gradient_strenth(sl::SingleLine) = slew_rate(sl) * rise_time(sl.grad)
