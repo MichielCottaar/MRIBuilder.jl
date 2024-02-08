@@ -5,7 +5,7 @@ import StaticArrays: SVector
 import JuMP: @variable, @constraint, @objective, objective_function
 import ....BuildingBlocks: RFPulseBlock, set_simple_constraints!
 import ....BuildSequences: global_model, global_scanner
-import ....Variables: VariableType, variables, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate
+import ....Variables: VariableType, variables, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate, inverse_slice_thickness
 import ....Gradients: ChangingGradientBlock, ConstantGradientBlock
 import ...Abstract: interruptions, waveform, AbstractOverlapping
 
