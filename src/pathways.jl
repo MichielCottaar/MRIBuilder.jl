@@ -3,9 +3,10 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_blocks
 import ..Sequences: Sequence
-import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration
+import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration, qval_square
 import ..Wait: WaitBlock
-import ..Readouts: InstantReadout
+import ..Readouts: InstantReadout, ADC
+import ..Overlapping: AbstractOverlapping, interruptions, waveform, get_parts
 
 
 """
@@ -125,6 +126,12 @@ By default gradients that are affected by user-provided `scale` or `rotate` para
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
 qvec(pathway::Pathway; scale=nothing, rotate=nothing) = get(pathway.qvec, (scale, rotate), zero(SVector{3, Float64}))
+
+function qval_square(pathway::Pathway; kwargs...)
+    vec = qvec(pathway; kwargs...)
+    return vec[1]^2 + vec[2]^2 + vec[3]^2
+end
+qval(pathway::Pathway; kwargs...) = sqrt(qval_square(pathway; kwargs...))
 
 
 """
@@ -278,7 +285,46 @@ end
 
 walk_pathway!(wait::WaitBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) = false
 
-function walk_pathway!(::InstantReadout, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
+function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
+    current_index = nothing
+    current_time = block_start_time
+    for (index_inter, interruption) in enumerate(interruptions(ao))
+        if interruption.object isa RFPulseBlock
+            if iszero(length(pulse_effects))
+                error("Pathway definition is invalid! Another RF pulse was encountered before the number of readouts expected from `nreadout` where detected.")
+            end
+            if pulse_effects[1] == :ignore
+                popfirst!(pulse_effects)
+                continue
+            end
+        elseif (interruption.object isa InstantReadout || interruption.object isa ADC)
+            if length(pulse_effects) > 0
+                continue
+            elseif nreadout[] > 0
+                nreadout[] -= 1
+                continue
+            end
+        end 
+        for part in get_parts(ao, current_index, index_inter)
+            update_walker_gradient!(part, walker, current_time)
+            current_time = current_time + duration(part)
+        end 
+        if interruption.object isa RFPulseBlock
+            update_walker_pulse!(walker, pulse_effects, current_time)
+        end
+        current_index = index_inter
+        if length(pulse_effects) == 0 && nreadout[] == 0
+            return true
+        end
+    end
+    for part in get_parts(ao, current_index, nothing)
+        update_walker_gradient!(part, walker, current_time)
+        current_time = current_time + duration(part)
+    end
+    return false
+end
+
+function walk_pathway!(::Union{InstantReadout, ADC}, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
     if length(pulse_effects) > 0
         return false
     end
@@ -405,7 +451,7 @@ The following steps will be taken:
 - update the appropriate `walker.qvec` and `walker.bmat` based on the gradient waveform. This will require appropriate `qvec`/`bmat` functions to be defined for the gradient building block.
 - update `walker.last_gradient_time` to the time at the end of the gradient.
 
-This requires [`bmat`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientBlock`](@ref).
+This requires [`bmat_gradient`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientBlock`](@ref).
 """
 function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType)
     if !walker.is_transverse
