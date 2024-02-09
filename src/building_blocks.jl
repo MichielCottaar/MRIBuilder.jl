@@ -312,7 +312,16 @@ Adds the gradient strength and slew rate constraints from a specific [`Scanner`]
 
 This is applied iteratively to each part of a `Sequence`.
 """
-scanner_constraints!(building_block::BuildingBlock) = scanner_constraints!(building_block, global_scanner())
+function scanner_constraints!(building_block::BuildingBlock) 
+    try
+        scanner_constraints!(building_block, global_scanner())
+    catch e
+        if occursin("No valid scanner", e.msg)
+            return
+        end
+        rethrow()
+    end
+end
 
 function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner)
     for func in [gradient_strength, slew_rate]
