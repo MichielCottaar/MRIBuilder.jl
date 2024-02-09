@@ -11,7 +11,7 @@ import ....Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, 
 import ....BuildingBlocks: duration, set_simple_constraints!, RFPulseBlock, scanner_constraints!
 import ....BuildSequences: global_model
 import ....Gradients: ChangingGradientBlock, ConstantGradientBlock
-import ...Abstract: interruptions, waveform, AbstractOverlapping
+import ...Abstract: interruptions, waveform_sequence, AbstractOverlapping
 
 
 """
@@ -99,7 +99,7 @@ function TrapezoidGradient(; orientation=nothing, rise_time=nothing, flat_time=n
     return res
 end
 
-waveform(pg::TrapezoidGradient) = [ 
+waveform_sequence(pg::TrapezoidGradient) = [ 
     ChangingGradientBlock(zeros(3), slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),
     ConstantGradientBlock(gradient_strength(pg), flat_time(pg), pg.rotate, pg.scale),
     ChangingGradientBlock(gradient_strength(pg), -slew_rate(pg), rise_time(pg), pg.rotate, pg.scale),

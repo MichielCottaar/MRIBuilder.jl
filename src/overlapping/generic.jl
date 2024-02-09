@@ -1,5 +1,5 @@
 module Generic
-import ..Abstract: AbstractOverlapping, interruptions, waveform, duration
+import ..Abstract: AbstractOverlapping, interruptions, duration, waveform_sequence
 import ...Variables: VariableType
 import ...Wait: WaitBlock
 import ...Readouts: InstantReadout, ADC
@@ -21,7 +21,7 @@ struct GenericOverlapping <: AbstractOverlapping
     duration :: VariableType
     waveform :: Vector{Union{WaitBlock, GradientBlock}}
     interruptions :: Vector{NamedTuple{(:index, :time, :object), Tuple{Int64, <:VariableType, <:Union{RFPulseBlock, InstantReadout, ADC}}}}
-    function GenericOverlapping(duration::VariableType, waveform::AbstractVector, interruptions::AbstractVector=[])
+    function GenericOverlapping(duration::VariableType, waveform::AbstractVector{<:Union{WaitBlock, GradientBlock}}, interruptions::AbstractVector=[])
         res = new(duration, waveform, interruptions)
         scanner_constraints!.(waveform)
         return res
@@ -29,7 +29,7 @@ struct GenericOverlapping <: AbstractOverlapping
 end
 
 
-GenericOverlapping(other_waveform::AbstractOverlapping) = GenericOverlapping(duration(other_waveform), waveform(other_waveform), interruptions(other_waveform))
+GenericOverlapping(other_waveform::AbstractOverlapping) = GenericOverlapping(duration(other_waveform), waveform_sequence(other_waveform), interruptions(other_waveform))
 
 make_generic(ao::AbstractOverlapping) = GenericOverlapping(
     duration(ao), 
@@ -37,7 +37,7 @@ make_generic(ao::AbstractOverlapping) = GenericOverlapping(
     [(index=i.index, time=i.time, object=make_generic(i.object)) for i in interruptions(ao)]
 )
 
-waveform(go::GenericOverlapping) = go.waveform
+waveform_sequence(go::GenericOverlapping) = go.waveform
 interruptions(go::GenericOverlapping) = go.interruptions
 
 

@@ -3,8 +3,8 @@ module Abstract
 import ...BuildingBlocks: BuildingBlock, ContainerBlock, RFPulseBlock, get_children_indices, VariableNotAvailable
 import ...Wait: WaitBlock
 import ...Readouts: InstantReadout
-import ...Gradients: GradientBlock, split_gradient
-import ...Variables: duration, start_time, qvec, bmat_gradient, gradient_strength, slew_rate, VariableType, effective_time
+import ...Gradients: GradientBlock, split_gradient, ConstantGradientBlock, ChangingGradientBlock
+import ...Variables: duration, start_time, qvec, bmat_gradient, gradient_strength, slew_rate, VariableType, effective_time, gradient_strength, slew_rate
 import ...Variables: flip_angle, amplitude, phase, frequency, bandwidth, inverse_bandwidth, N_left, N_right, slice_thickness, all_variables_symbols
 
 """
@@ -12,7 +12,7 @@ Parent type for any gradient waveform that might overlap with RF pulses and/or r
 
 New waveforms should sub-type from this one.
 At the very least they should implement:
-- [`waveform`](@ref): return a vector of [`GradientBlock`](@ref) and [`WaitBlock`](@ref) that describe the gradient waveform during the whole block.
+- [`waveform_sequence`](@ref): return the subsequent [`GradientBlock`](@ref) and [`WaitBlock`](@ref) objects describing the gradient waveform. To get the wavform in a more useful format use [`waveform`](@ref).
 - [`interruptions`](@ref): return a vector of all [`RFPulseBlock`](@ref) and [`InstantReadout`](@ref) with information on which part of the waveform they interrupt.
 """
 abstract type AbstractOverlapping <: ContainerBlock end
@@ -28,13 +28,43 @@ struct SingleInterrupted{T<:Union{WaitBlock, GradientBlock}}
 end
 
 """
-    waveform(overlapping)
+    waveform_sequence(overlapping)
 
 Returns the gradient waveform as a sequence of [`WaitBlock`](@ref), [`ChangingGradientBlock`](@ref), and [`ConstantGradientBlock`](@ref) objects.
 
 This should be implemented for any sub-type of [`AbstractOverlapping`](@ref).
 """
-function waveform end
+function waveform_sequence end
+
+
+"""
+    waveform(overlapping)
+
+Returns the gradient waveform of a [`AbstractOverlapping`](@ref) as a sequence of control points.
+Each control point is stored as a tuple with the time in ms and the gradient as a length-3 vector.
+The gradient is linearly interpolated between these points (see [`waveform_sequence`](@ref)).
+"""
+function waveform(ao::AbstractOverlapping)
+    result = Tuple{VariableType, SVector{3, VariableType}}[(0, zero(SVector{3, Float64}))]
+    for block in waveform_sequence(ao)
+        new_time = result[end][1] + max(duration(block), 0)
+        prev_grad = result[end][2]
+        if block isa WaitBlock
+            @assert all(abs.(gradient_strength(block)) <= 1e-12) "$(typeof(ao)) inserts WaitBlock before the gradient is zero. This is probably caused by an improper implementation of this gradient waveform."
+            push!(result, (new_time, prev_grad))
+        elseif block isa ConstantGradientBlock
+            @assert all(gradient_strength(block) .≈ prev_grad) "$(typeof(ao)) inserts ConstantGradientBlock that does not match previous gradient strength. This is probably caused by an improper implementation of this gradient waveform."
+            push!(result, (new_time, prev_grad))
+        elseif block isa ChangingGradientBlock
+            @assert all(block.gradient_strength_start .≈ prev_grad) "$(typeof(ao)) inserts ChangingGradientBlock that does not match previous gradient strength. This is probably caused by an improper implementation of this gradient waveform."
+            push!(result, (new_time, prev_grad .+ slew_rate(block)))
+        else
+            error("Unrecognised block type in gradient waveform: $(typeof(ao)).")
+        end
+    end
+    return result
+end
+
 
 """
     interruptions(overlapping)
@@ -48,7 +78,7 @@ This should be implemented for any sub-type of [`AbstractOverlapping`](@ref).
 """
 function interruptions end
 
-duration(ao::AbstractOverlapping) = sum(duration.(waveform(ao)))
+duration(ao::AbstractOverlapping) = sum(duration.(waveform_sequence(ao)))
 duration(single::SingleInterrupted) = duration(single.block)
 
 pulses(ao::AbstractOverlapping) = [pulse for (_, _, pulse) in interruptions(ao) if pulse isa RFPulseBlock]
@@ -71,9 +101,9 @@ for (func_symbol, _) in [Dict(all_variables_symbols)[:pulse]..., :effective_time
 end
 
 # Acting as a valid container
-get_children_indices(ao::AbstractOverlapping) = 1:length(waveform(ao))
+get_children_indices(ao::AbstractOverlapping) = 1:length(waveform_sequence(ao))
 function Base.getindex(ao::AbstractOverlapping, index::Integer)
-    grad_like_block = waveform(ao)[index]
+    grad_like_block = waveform_sequence(ao)[index]
     inter = interruptions(ao)
     first_interrupt = findfirst(int -> int[2] == index, inter)
     if isnothing(first_interrupt)
@@ -84,7 +114,7 @@ function Base.getindex(ao::AbstractOverlapping, index::Integer)
     end
 end
 
-start_time(ao::AbstractOverlapping, index::Integer) = sum(duration.(waveform(ao)[1:index]))
+start_time(ao::AbstractOverlapping, index::Integer) = sum(duration.(waveform_sequence(ao)[1:index]))
 
 function get_part(si::SingleInterrupted, first::Union{Nothing, Number}, last::Union{Nothing, Number})
     if isnothing(first)
@@ -106,7 +136,7 @@ end
 
 function get_parts(ao::AbstractOverlapping, first::Union{Nothing, Integer}, last::Union{Nothing, Integer})
     inter = interruptions(ao)
-    form = waveform(ao)
+    form = waveform_sequence(ao)
     whole_start_index = isnothing(first) ? 0 : inter[first].index
     whole_final_index = isnothing(last) ? length(form) + 1 : inter[last].index
     if whole_start_index == whole_final_index

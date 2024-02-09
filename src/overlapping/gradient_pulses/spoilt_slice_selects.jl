@@ -7,7 +7,7 @@ import ....BuildingBlocks: RFPulseBlock, set_simple_constraints!
 import ....BuildSequences: global_model, global_scanner
 import ....Variables: VariableType, variables, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate, inverse_slice_thickness
 import ....Gradients: ChangingGradientBlock, ConstantGradientBlock
-import ...Abstract: interruptions, waveform, AbstractOverlapping
+import ...Abstract: interruptions, waveform_sequence, AbstractOverlapping
 
 
 """
@@ -77,7 +77,7 @@ end
 duration_trap1(spoilt::SpoiltSliceSelect) = 2 * spoilt.rise_time1 + spoilt.flat_time1 - spoilt.diff_time
 duration_trap2(spoilt::SpoiltSliceSelect) = 2 * spoilt.fall_time2 + spoilt.flat_time2 - spoilt.diff_time
 
-function waveform(spoilt::SpoiltSliceSelect)
+function waveform_sequence(spoilt::SpoiltSliceSelect)
     slew = slew_rate(spoilt)
     (grad1, grad2, grad3) = [g .* spoilt.orientation for g in all_gradient_strengths(spoilt)]
     return [

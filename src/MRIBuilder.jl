@@ -32,8 +32,8 @@ export BuildingBlocks, fixed, get_children_blocks, get_children_indices, make_ge
 import .Wait: WaitBlock
 export WaitBlock
 
-import .Pulses: InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
-export InstantRFPulseBlock, ConstantPulse, SincPulse, FixedPulse
+import .Pulses: InstantRFPulseBlock, ConstantPulse, SincPulse, GenericPulse
+export InstantRFPulseBlock, ConstantPulse, SincPulse, GenericPulse
 
 import .Gradients: InstantGradientBlock
 export InstantGradientBlock
@@ -41,8 +41,8 @@ export InstantGradientBlock
 import .Readouts: InstantReadout, ADC
 export InstantReadout, ADC
 
-import .Overlapping: TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine, opposite_kspace_lines
-export TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine, opposite_kspace_lines
+import .Overlapping: TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine, opposite_kspace_lines, waveform_sequence
+export TrapezoidGradient, SpoiltSliceSelect, interruptions, waveform, SingleLine, opposite_kspace_lines, waveform_sequence
 
 import .Sequences: Sequence
 export Sequence

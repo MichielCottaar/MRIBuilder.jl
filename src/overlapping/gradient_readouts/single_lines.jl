@@ -4,7 +4,7 @@ import ....BuildingBlocks: set_simple_constraints!
 import ....BuildSequences: global_model
 import ....Readouts: ADC
 import ....Variables: dwell_time, inverse_fov, resolution, nsamples, effective_time, gradient_strength, slew_rate, inverse_voxel_size, rise_time, duration, variables, fov, voxel_size, flat_time, ramp_overlap, VariableType, get_free_variable
-import ...Abstract: AbstractOverlapping, waveform, interruptions
+import ...Abstract: AbstractOverlapping, waveform_sequence, interruptions
 import ...GradientPulses: TrapezoidGradient
 
 struct SingleLine <: AbstractOverlapping
@@ -48,7 +48,7 @@ function SingleLine(; rotate=:FOV, orientation=[1, 0, 0], ramp_overlap=1., resol
     return res
 end
 
-waveform(sl::SingleLine) = waveform(sl.grad)
+waveform_sequence(sl::SingleLine) = waveform_sequence(sl.grad)
 interruptions(sl::SingleLine) = [(index=2, time=effective_time(sl.adc) - rise_time(sl.grad), object=sl.adc)]
 
 ramp_overlap(sl::SingleLine) = sl.ramp_overlap
