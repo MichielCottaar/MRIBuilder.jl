@@ -6,7 +6,7 @@ import Printf: @sprintf
 import JuMP: @constraint
 import ...BuildSequences: global_model
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR, end_time
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_indices, fixed, BuildingBlockPrinter, _robust_value, get_children_blocks, fixed
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_indices, fixed, BuildingBlockPrinter, _robust_value, fixed
 
 """
     Sequence(building_blocks...; TR=nothing)
@@ -75,7 +75,8 @@ function Base.show(io::IO, printer::BuildingBlockPrinter{<:Sequence})
     end
     print(io, "):")
 
-    for (child_index, child_block) in get_children_blocks(seq)
+    for child_index in get_children_indices(seq)
+        child_block = seq[child_index]
         child_printer = BuildingBlockPrinter(
             child_block,
             isnothing(printer.start_time) ? nothing : _robust_value(start_time(seq, child_index) + printer.start_time),

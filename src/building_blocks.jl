@@ -33,7 +33,7 @@ abstract type GradientBlock <: BuildingBlock end
 Parent type for all types combining one or more pulses/gradients.
 
 Required methods:
-- [`get_children_blocks`](@ref)(container): return all the [`BuildingBlock`](@ref) objects includes in this container with their indices.
+- [`get_children_blocks`](@ref)(container): return all the [`BuildingBlock`](@ref) objects includes in this container.
 - [`start_time`](@ref)(container, index): returns the starting time of the child corresponding to `index` relative to the start of the `container` in ms.
 - `Base.getindex`(container, index): get child [`BuildingBlock`](@ref) corresponding to `index`.
 """
@@ -43,9 +43,9 @@ abstract type ContainerBlock <: BuildingBlock end
 """
     get_children_blocks(container)
 
-Return all the [`BuildingBlock`](@ref) objects includes in this container with their indices.
+Return all the [`BuildingBlock`](@ref) objects includes in this container.
 """
-get_children_blocks(bb::BuildingBlock) = [(i, bb[i]) for i in get_children_indices(bb)]
+get_children_blocks(bb::BuildingBlock) = [bb[i] for i in get_children_indices(bb)]
 
 """
     get_children_indices(container)
@@ -53,7 +53,6 @@ get_children_blocks(bb::BuildingBlock) = [(i, bb[i]) for i in get_children_indic
 Return the indices of all the children in a [`ContainerBlock`](@ref).
 
 This needs to be defined for every [`ContainerBlock`](@ref).
-It is not part of the external API, but is used by [`get_children_blocks`](@ref)
 """
 function get_children_indices end
 
@@ -350,7 +349,7 @@ function scanner_constraints!(building_block::BuildingBlock, scanner::Scanner, f
             rethrow()
         end
         if building_block isa ContainerBlock
-            for (_, child_block) in get_children_blocks(building_block)
+            for child_block in get_children_blocks(building_block)
                 scanner_constraints!(child_block, scanner, func)
             end
         end

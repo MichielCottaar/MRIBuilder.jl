@@ -1,7 +1,7 @@
 module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
-import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_blocks
+import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_indices
 import ..Sequences: Sequence
 import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration, qval_square
 import ..Wait: WaitBlock
@@ -288,7 +288,8 @@ function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects
 end
 
 function walk_pathway!(container::ContainerBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
-    for (index, child) in get_children_blocks(container)
+    for index in get_children_indices(container)
+        child = contrainer[index]
         if walk_pathway!(child, walker, pulse_effects, nreadout, block_start_time + start_time(container, index))
             return true
         end
