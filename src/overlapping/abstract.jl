@@ -1,5 +1,6 @@
 module Abstract
 
+import StaticArrays: SVector
 import ...BuildingBlocks: BuildingBlock, ContainerBlock, RFPulseBlock, get_children_indices, VariableNotAvailable
 import ...Wait: WaitBlock
 import ...Readouts: InstantReadout
@@ -57,7 +58,7 @@ function waveform(ao::AbstractOverlapping)
             push!(result, (new_time, prev_grad))
         elseif block isa ChangingGradientBlock
             @assert all(block.gradient_strength_start .≈ prev_grad) "$(typeof(ao)) inserts ChangingGradientBlock that does not match previous gradient strength. This is probably caused by an improper implementation of this gradient waveform."
-            push!(result, (new_time, prev_grad .+ slew_rate(block)))
+            push!(result, (new_time, prev_grad .+ slew_rate(block) .* duration(block)))
         else
             error("Unrecognised block type in gradient waveform: $(typeof(ao)).")
         end
