@@ -28,7 +28,11 @@ struct Sequence <: ContainerBlock
             to_block.(blocks),
             get_free_variable(TR),
         )
-        if !(TR isa Number && isinf(TR))
+        if TR isa Number
+            if !isinf(TR)
+                @assert seq.TR >= duration(seq)
+            end
+        else
             @constraint global_model() seq.TR >= duration(seq)
         end
         return seq
