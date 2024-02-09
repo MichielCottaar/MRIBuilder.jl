@@ -7,6 +7,7 @@ import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effecti
 import ..Wait: WaitBlock
 import ..Readouts: InstantReadout, ADC
 import ..Overlapping: AbstractOverlapping, interruptions, waveform, get_parts
+import ..Alternatives: AlternativeBlocks
 
 
 """
@@ -267,6 +268,10 @@ The function should return `true` if the `Pathway` has reached its end (i.e., th
 function walk_pathway!(grad::GradientBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
     update_walker_gradient!(grad, walker, block_start_time)
     return false
+end
+
+function walk_pathway!(alt::AlternativeBlocks, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
+    walk_pathway!(alt[1], walker, pulse_effects, nreadout, block_start_time)
 end
 
 function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
