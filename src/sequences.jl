@@ -6,7 +6,7 @@ import Printf: @sprintf
 import JuMP: @constraint
 import ...BuildSequences: global_model
 import ...Variables: variables, start_time, duration, VariableType, get_free_variable, TR, end_time
-import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_indices, fixed, BuildingBlockPrinter, _robust_value, fixed
+import ...BuildingBlocks: BuildingBlock, ContainerBlock, to_block, get_children_indices, fixed, BuildingBlockPrinter, _robust_value, fixed, make_generic
 
 """
     Sequence(building_blocks...; TR=nothing)
@@ -37,6 +37,7 @@ end
 
 Sequence(blocks...; TR=nothing) = Sequence([blocks...]; TR=TR)
 fixed(seq::Sequence) = Sequence(fixed.(seq._blocks), TR=fixed(seq.TR))
+make_generic(seq::Sequence) = Sequence(make_generic.(seq._blocks), TR=seq.TR)
 
 Base.length(seq::Sequence) = length(seq._blocks)
 Base.getindex(seq::Sequence, index) = seq._blocks[index]

@@ -1,9 +1,8 @@
 module InstantPulses
 import JuMP: @constraint, @variable, VariableRef, value
-import ...BuildingBlocks: RFPulseBlock
+import ...BuildingBlocks: RFPulseBlock, make_generic
 import ...Variables: flip_angle, phase, start_time, variables, duration, get_free_variable, VariableType, effective_time, inverse_bandwidth
 import ...BuildSequences: global_model
-import ..FixedPulses: FixedInstantPulse
 
 struct InstantRFPulseBlock <: RFPulseBlock
     flip_angle :: VariableType
@@ -28,8 +27,6 @@ effective_time(::InstantRFPulseBlock) = 0.
 inverse_bandwidth(::InstantRFPulseBlock) = 0.
 
 
-function fixed(block::InstantRFPulseBlock)
-    return FixedInstantPulse(value(flip_angle(block)), value(phase(block)))
-end
+make_generic(block::InstantRFPulseBlock) = block
 
 end

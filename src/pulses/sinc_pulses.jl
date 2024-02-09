@@ -1,12 +1,12 @@
 module SincPulses
 
-import JuMP: VariableRef, @constraint, @variable, value
+import JuMP: VariableRef, @constraint, @variable
 import QuadGK: quadgk
 import Polynomials: fit, Polynomial
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!
 import ...Variables: flip_angle, phase, amplitude, frequency, VariableType, variables, get_free_variable, duration, effective_time, inverse_bandwidth
 import ...BuildSequences: global_model
-import ..FixedPulses: FixedPulse
+import ..GenericPulses: GenericPulse, make_generic
 
 """
     SincPulse(; symmetric=true, max_Nlobes=nothing, apodise=true, variables...)
@@ -101,12 +101,12 @@ lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
 effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
 
-function fixed(block::SincPulse)
-    normed_times = -value(N_left(block)):0.1:value(N_right(block)) + 1e-5
-    times = ((normed_times .+ value(N_left(block))) .* value(lobe_duration(block)))
-    amplitudes = value(amplitude(block)) .* (normalised_function.(normed_times; apodise=block.apodise))
-    phases = (value(frequency(block)) .* value(lobe_duration(block))) .* normed_times * 360
-    return FixedPulse(times, amplitudes, phases)
+function make_generic(block::SincPulse)
+    normed_times = -N_left(block):0.1:N_right(block) + 1e-5
+    times = (normed_times .+ N_left(block)) .* lobe_duration(block)
+    amplitudes = amplitude(block) .* (normalised_function.(normed_times; apodise=block.apodise))
+    phases = [frequency(block) .* lobe_duration(block)] .* normed_times .* 360
+    return GenericPulse(times, amplitudes, phases, effective_time(block))
 end
 
 end

@@ -1,12 +1,12 @@
 module Pulses
-include("fixed_pulses.jl")
+include("generic_pulses.jl")
 include("instant_pulses.jl")
 include("constant_pulses.jl")
 include("sinc_pulses.jl")
 
 import ..Variables: effective_time
 import ..BuildingBlocks: RFPulseBlock
-import .FixedPulses: FixedPulse
+import .GenericPulses: GenericPulse
 import .InstantPulses: InstantRFPulseBlock
 import .ConstantPulses: ConstantPulse
 import .SincPulses: SincPulse

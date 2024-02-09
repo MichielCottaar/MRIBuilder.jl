@@ -26,8 +26,8 @@ export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 import .Variables: variables, duration, start_time, end_time, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inverse_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution
 export variables, duration, start_time, end_time, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inversne_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution
 
-import .BuildingBlocks: BuildingBlock, fixed, get_children_blocks, get_children_indices
-export BuildingBlocks, fixed, get_children_blocks, get_children_indices
+import .BuildingBlocks: BuildingBlock, fixed, get_children_blocks, get_children_indices, make_generic
+export BuildingBlocks, fixed, get_children_blocks, get_children_indices, make_generic
 
 import .Wait: WaitBlock
 export WaitBlock

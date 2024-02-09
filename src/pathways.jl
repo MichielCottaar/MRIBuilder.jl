@@ -289,7 +289,7 @@ end
 
 function walk_pathway!(container::ContainerBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
     for index in get_children_indices(container)
-        child = contrainer[index]
+        child = container[index]
         if walk_pathway!(child, walker, pulse_effects, nreadout, block_start_time + start_time(container, index))
             return true
         end

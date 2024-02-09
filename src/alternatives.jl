@@ -1,6 +1,6 @@
 module Alternatives
 import JuMP: @constraint
-import ..BuildingBlocks: BuildingBlock, match_blocks!, BuildingBlockPrinter
+import ..BuildingBlocks: BuildingBlock, match_blocks!, BuildingBlockPrinter, make_generic, fixed
 import ..BuildSequences: global_model
 import ..Variables: duration
 
@@ -48,6 +48,9 @@ function Base.show(io::IO, alt_printer::BuildingBlockPrinter{<:AlternativeBlocks
     block = alt_printer.bb
     print(io, "AlternativeBlocks(", block.name, ", ", length(block), " options)")
 end
+
+fixed(alt::AlternativeBlocks) = AlternativeBlocks(alt.name, Dict(key=>fixed(value) for (key, value) in alt.options))
+make_generic(alt::AlternativeBlocks) = AlternativeBlocks(alt.name, Dict(key=>make_generic(value) for (key, value) in alt.options))
 
 
 end

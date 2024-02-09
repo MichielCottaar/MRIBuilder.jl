@@ -1,7 +1,7 @@
 module Wait
 import JuMP: @constraint, @variable, VariableRef, value
 import ..Variables: VariableType, variables, duration, get_free_variable
-import ..BuildingBlocks: BuildingBlock, to_block
+import ..BuildingBlocks: BuildingBlock, to_block, make_generic
 import ..BuildSequences: global_model
 import ...Scanners: Scanner
 
@@ -42,5 +42,7 @@ Converts object into a [`WaitBlock`](@ref).
 to_block(time::Union{VariableType, Symbol, Nothing, Val{:min}, Val{:max}}) = WaitBlock(time)
 
 duration(wb::WaitBlock) = wb.duration
+
+make_generic(wb::WaitBlock) = wb
 
 end

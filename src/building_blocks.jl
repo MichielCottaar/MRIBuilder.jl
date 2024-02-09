@@ -365,4 +365,14 @@ function fixed(bb::BuildingBlock)
     return typeof(bb)(arguments...)
 end
 
+
+"""
+    make_generic(bb::BuildingBlock)
+
+Replaces a [`BuildingBlock`](@ref) or whole sequence with a generic version.
+
+This replaces all functional RF pulses and gradient waveforms with their generic equivalents.
+"""
+make_generic(grad::GradientBlock) = grad
+
 end

@@ -3,6 +3,7 @@ import JuMP: VariableRef, @constraint, @variable, value
 import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!
 import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, start_time, end_time, VariableType, duration, effective_time, inverse_bandwidth
 import ...BuildSequences: global_model
+import ..GenericPulses: GenericPulse, make_generic
 
 """
     ConstantPulse(; variables...)
@@ -43,13 +44,14 @@ flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
 inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
 effective_time(pulse::ConstantPulse) = duration(pulse) / 2
 
-function fixed(block::ConstantPulse)
-    d = value(duration(block))
+function make_generic(block::ConstantPulse)
+    d = duration(block)
     final_phase = phase(block) + d * frequency(block) * 360
-    return FixedPulse(
+    return GenericPulse(
         [0., d], 
-        value.([amplitude(block), amplitude(block)]),
-        value.([phase(block), final_phase]),
+        [amplitude(block), amplitude(block)],
+        [phase(block), final_phase],
+        effective_time(block)
     )
 end
 

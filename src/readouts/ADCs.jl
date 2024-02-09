@@ -1,7 +1,7 @@
 module ADCs
 import JuMP: @constraint, value
 import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType, nsamples, resolution, oversample
-import ...BuildingBlocks: BuildingBlock, apply_simple_constraint!, set_simple_constraints!, fixed
+import ...BuildingBlocks: BuildingBlock, apply_simple_constraint!, set_simple_constraints!, fixed, make_generic
 import ...BuildSequences: global_model
 
 """
@@ -66,5 +66,7 @@ function fixed(adc::ADC)
     oversample = n // r
     return ADC(r, value(adc.dwell_time), value(adc.time_to_center), oversample)
 end
+
+make_generic(adc::ADC) = adc
 
 end
