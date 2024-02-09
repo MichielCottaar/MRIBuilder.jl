@@ -1,7 +1,6 @@
 module GenericPulses
 
-import Printf: @sprintf
-import ...BuildingBlocks: RFPulseBlock, fixed, BuildingBlockPrinter, make_generic
+import ...BuildingBlocks: RFPulseBlock, fixed, make_generic
 import ...Variables: variables, duration, amplitude, effective_time, flip_angle
 
 
@@ -53,20 +52,6 @@ function get_weights(pulse::GenericPulse)
     return [weights_double[1] / 2, ((weights_double[1:end-1] + weights_double[2:end]) / 2)..., weights_double[end]/2]
 end
 
-
-
-function Base.show(io::IO, printer::BuildingBlockPrinter{<:GenericPulse})
-    fp = printer.bb
-    pp(value::Number) = @sprintf("%.3g", value)
-
-    print(io, "GenericPulse(")
-    if isnothing(printer.start_time)
-        print(io, "duration=", pp(duration(fp)))
-    else
-        print(io, "t=", pp(printer.start_time), "-", pp(printer.start_time + duration(fp)))
-    end
-    print(io, ", flip_angle=", pp(flip_angle(fp)), ", effective_time=", pp(effective_time(fp)), ")")
-end
 
 
 make_generic(gp::GenericPulse) = gp

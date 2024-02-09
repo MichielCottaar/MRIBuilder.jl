@@ -1,6 +1,5 @@
 module BuildingBlocks
 import JuMP: value, Model, @constraint, @objective, objective_function, AbstractJuMPScalar
-import Printf: @sprintf
 import ..Variables: Variables, variables, start_time, duration, end_time, gradient_strength, slew_rate, effective_time, VariableType, alternative_variables, qval_square
 import ..BuildSequences: global_model, global_scanner, fixed
 import ..Scanners: Scanner
@@ -152,92 +151,6 @@ function Variables.qval_square(bb::BuildingBlock, args...; kwargs...)
 end
 
 Variables.qval(bb::BuildingBlock, args...; kwargs...) = sqrt(Variables.qval_square(bb, args...; kwargs...))
-
-
-struct BuildingBlockPrinter{T<:BuildingBlock}
-    bb::T
-    start_time::Union{Nothing, Number}
-    spaces::Int
-end
-
-
-
-Base.show(io::IO, block::BuildingBlock) = print(io, BuildingBlockPrinter(block, nothing, 0))
-
-function _robust_value(possible_number::VariableType)
-    try
-        return value(possible_number)
-    catch
-        return nothing
-    end
-end
-
-function _robust_value(possible_vector::AbstractVector) 
-    result = _robust_value.(possible_vector)
-    if any(isnothing.(result))
-        return nothing
-    end
-    return result
-end
-
-_robust_value(possible_tuple::Tuple) = _robust_value([possible_tuple...])
-
-
-function Base.show(io::IO, printer::BuildingBlockPrinter)
-    block = printer.bb
-    print(io, string(typeof(block)), "(")
-    printed_duration = false
-    if !isnothing(printer.start_time)
-        print(io, "t=", @sprintf("%.3g", printer.start_time))
-
-        dur = _robust_value(duration(block))
-        @assert !(dur isa AbstractVector)
-        if !isnothing(dur) && !iszero(dur)
-            print(io, "-", @sprintf("%.3g", printer.start_time + dur))
-            printed_duration = true
-        end
-        print(io, ", ")
-    end
-    for name in propertynames(block)
-        ft = fieldtype(typeof(block), name)
-        if (
-            ft == VariableType ||
-            (ft <: AbstractVector && eltype(ft) == VariableType) ||
-            string(name)[1] == '_'
-        )
-            continue
-        end
-
-        print(io, name, "=", repr(getproperty(block, name)), ", ")
-    end
-
-    for fn in values(variables)
-        if printed_duration && fn == duration
-            continue
-        end
-        if fn in [fn_alt for (fn_alt, _, _, _) in values(alternative_variables)]
-            continue
-        end
-        try
-            numeric_value = _robust_value(fn(block))
-            if isnothing(numeric_value)
-                continue
-            end
-            if numeric_value isa AbstractVector
-                printed_value = "[" * join(map(v -> @sprintf("%.3g", v), numeric_value), ", ") * "]"
-            else
-                printed_value = @sprintf("%.3g", numeric_value)
-            end
-            print(io, "$(nameof(fn))=$(printed_value), ")
-        catch e
-            if e isa VariableNotAvailable
-                continue
-            end
-            rethrow()
-        end
-    end
-    print(io, ")")
-end
 
 
 """
