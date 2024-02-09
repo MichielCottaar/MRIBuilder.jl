@@ -265,21 +265,29 @@ This effective time can be passed on to [`update_walker_gradient!`](@ref) to all
 
 The function should return `true` if the `Pathway` has reached its end (i.e., the final readout) and `false` otherwise.
 """
-function walk_pathway!(grad::GradientBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
+function walk_pathway!(seq::Sequence, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}) 
+    current_TR = 0
+    while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * seq.TR))
+        current_TR += 1
+    end
+    return true
+end
+
+function walk_pathway!(grad::GradientBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType) 
     update_walker_gradient!(grad, walker, block_start_time)
     return false
 end
 
-function walk_pathway!(alt::AlternativeBlocks, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
+function walk_pathway!(alt::AlternativeBlocks, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType) 
     walk_pathway!(alt[1], walker, pulse_effects, nreadout, block_start_time)
 end
 
-function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) 
+function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType) 
     update_walker_pulse!(walker, pulse_effects, block_start_time + effective_time(pulse))
     return iszero(length(pulse_effects)) && iszero(nreadout[])
 end
 
-function walk_pathway!(container::ContainerBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
+function walk_pathway!(container::ContainerBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
     for (index, child) in get_children_blocks(container)
         if walk_pathway!(child, walker, pulse_effects, nreadout, block_start_time + start_time(container, index))
             return true
@@ -288,9 +296,9 @@ function walk_pathway!(container::ContainerBlock, walker::PathwayWalker, pulse_e
     return false
 end
 
-walk_pathway!(wait::WaitBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType) = false
+walk_pathway!(wait::WaitBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType) = false
 
-function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
+function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
     current_index = nothing
     current_time = block_start_time
     for (index_inter, interruption) in enumerate(interruptions(ao))
