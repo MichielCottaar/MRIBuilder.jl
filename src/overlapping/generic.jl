@@ -33,7 +33,7 @@ GenericOverlapping(other_waveform::AbstractOverlapping) = GenericOverlapping(dur
 
 make_generic(ao::AbstractOverlapping) = GenericOverlapping(
     duration(ao), 
-    make_generic.(waveform(ao)), 
+    make_generic.(waveform_sequence(ao)), 
     [(index=i.index, time=i.time, object=make_generic(i.object)) for i in interruptions(ao)]
 )
 
