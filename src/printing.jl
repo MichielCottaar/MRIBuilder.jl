@@ -5,7 +5,7 @@ import ..BuildingBlocks: BuildingBlock, get_children_indices, VariableNotAvailab
 import ..Alternatives: AlternativeBlocks
 import ..Overlapping: AbstractOverlapping, waveform, interruptions
 import ..Sequences: Sequence
-import ..Variables: VariableType, duration, start_time, variables, alternative_variables, effective_time
+import ..Variables: VariableType, duration, start_time, variables, alternative_variables, effective_time, flip_angle
 import ..Pulses: GenericPulse
 
 struct BuildingBlockPrinter{T<:BuildingBlock}
