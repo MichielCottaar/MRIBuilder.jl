@@ -3,27 +3,22 @@ import StaticArrays: SVector
 import ....Variables: VariableType, duration, qvec, bmat_gradient, gradient_strength, slew_rate, get_free_variable
 import ...AbstractTypes: GradientWaveform
 
-abstract type ConstantGradient{N} <: GradientWaveform{N} end
-
 """
-    ConstantGradient1D(gradient_strength, duration)
+    ConstantGradient(gradient_strength, duration)
 
-Underlying type for any flat part in a 1D gradient waveform.
+Underlying type for any flat part in a 1D or 3D gradient waveform (depending on whether `gradient_strength` is a scalar or a vector).
 
 Usually, you do not want to create this object directly, use a `BuildingBlock` instead.
 """
+abstract type ConstantGradient{N} <: GradientWaveform{N} end
+(::Type{ConstantGradient})(grad1::VariableType, duration::VariableType) = ConstantGradient1D(grad1, duration)
+(::Type{ConstantGradient})(grad1::AbstractVector, duration::VariableType) = ConstantGradient3D(grad1, duration)
+
 struct ConstantGradient1D <: ConstantGradient{1}
     gradient_strength :: VariableType
     duration :: VariableType
 end
 
-"""
-    ConstantGradient1D(gradient_strength, duration)
-
-Underlying type for any flat part in a 3D gradient waveform.
-
-Usually, you do not want to create this object directly, use a `BuildingBlock` instead.
-"""
 struct ConstantGradient3D <: ConstanGradient{3}
     gradient_strength :: SVector{3, <:VariableType}
     duration :: VariableType

@@ -4,28 +4,23 @@ import ....Variables: VariableType, duration, qvec, bmat_gradient, gradient_stre
 import ...AbstractTypes: GradientWaveform
 
 
-abstract type ChangingGradient{N} <: GradientWaveform{N} end
-
 """
-    ChangingGradient1D(grad1, slew_rate, duration)
+    ChangingGradient(grad1, slew_rate, duration)
 
-Underlying type for any linearly changing part in a 1D gradient waveform.
+Underlying type for any linearly changing part in a 1D or 3D gradient waveform (depending on whether `grad1` and `slew_rate` are a scalar or a vector)
 
 Usually, you do not want to create this object directly, use a `BuildingBlock` instead.
 """
+abstract type ChangingGradient{N} <: GradientWaveform{N} end
+(::Type{ChangingGradient})(grad1::VariableType, slew_rate::VariableType, duration::VariableType) = ChangingGradient1D(grad1, slew_rate, duration)
+(::Type{ChangingGradient})(grad1::AbstractVector, slew_rate::AbstractVector, duration::VariableType) = ChangingGradient3D(grad1, slew_rate, duration)
+
 struct ChangingGradient1D <: ChangingGradient{1}
     gradient_strength_start :: VariableType
     slew_rate :: VariableType
     duration :: VariableType
 end
 
-"""
-    ChangingGradient3D(grad1, slew_rate, duration)
-
-Underlying type for any linearly changing part in a 3D gradient waveform.
-
-Usually, you do not want to create this object directly, use a `BuildingBlock` instead.
-"""
 struct ChangingGradient3D <: ChangingGradient{3}
     gradient_strength_start :: SVector{3, <:VariableType}
     slew_rate :: SVector{3, <:VariableType}
@@ -44,7 +39,7 @@ qvec(cgb::ChangingGradient) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cg
 _mult(g1::VariableType, g2::VariableType) = g1 * g2
 _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
 
-function bmat_gradient(cgb::ChangingGradientBlock, qstart)
+function bmat_gradient(cgb::ChangingGradient, qstart)
     # grad = (g1 * (duration - t) + g2 * t) / duration
     #      = g1 + (g2 - g1) * t / duration
     # q = qstart + g1 * t + (g2 - g1) * t^2 / (2 * duration)
@@ -62,7 +57,7 @@ function bmat_gradient(cgb::ChangingGradientBlock, qstart)
     )
 end
 
-function bmat_gradient(cgb::ChangingGradientBlock)
+function bmat_gradient(cgb::ChangingGradient)
     diff = slew_rate(cgb) .* duration(cgb)
     return (2π)^2 .* (
         _mult(grad_start(cgb), grad_start(cgb)) ./ 3 .+

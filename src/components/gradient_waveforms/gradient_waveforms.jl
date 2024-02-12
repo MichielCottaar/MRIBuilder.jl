@@ -22,8 +22,8 @@ include("no_gradient_blocks.jl")
 
 
 import ..AbstractTypes: GradientWaveform
-import .NoGradientBlocks: NoGradientBlock
-import .ChangingGradientBlocks: ChangingGradientBlock, split_gradient
-import .ConstantGradientBlocks: ConstantGradientBlock
+import .NoGradientBlocks: NoGradient
+import .ChangingGradientBlocks: ChangingGradient, split_gradient
+import .ConstantGradientBlocks: ConstantGradient
 
 end
