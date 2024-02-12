@@ -2,12 +2,11 @@ module SpoiltSliceSelects
 
 import LinearAlgebra: norm
 import StaticArrays: SVector
-import JuMP: @variable, @constraint, @objective, objective_function
-import ....BuildingBlocks: RFPulseBlock, set_simple_constraints!
-import ....BuildSequences: global_model, global_scanner
-import ....Variables: VariableType, variables, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate, inverse_slice_thickness
-import ....Gradients: ChangingGradientBlock, ConstantGradientBlock
-import ...Abstract: interruptions, waveform_sequence, AbstractOverlapping
+import JuMP: @constraint, @objective, objective_function
+import ...BuildSequences: global_model, global_scanner
+import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable
+import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
+import ..BaseBuildingBlocks: BaseBuildingBlock
 
 
 """
@@ -17,7 +16,7 @@ Adds slice selection to the `pulse` and surrounds it with spoiler gradients.
 
 ## Parameters
 - `orientation`: vector with orientation of the slice selection and the spoilers (default: [0, 0, 1])
-- `rotate`: with which user-set parameter will this gradient be rotated (e.g., :FOV). Default: no rotation.
+- `group`: name of the group of the gradient. This will be used to scale and rotate the gradients after optimisation. Scaling is not recommended as this might ruin the spoiling.
 
 ## Variables
 - `duration`: total duration of the block in ms.
@@ -29,24 +28,24 @@ struct SpoiltSliceSelect <: AbstractOverlapping
     rise_time1 :: VariableType
     flat_time1 :: VariableType
     diff_time :: VariableType
-    pulse :: RFPulseBlock
+    pulse :: RFPulseComponent
     flat_time2 :: VariableType
     fall_time2 :: VariableType
-    rotate :: Union{Nothing, Symbol}
+    group :: Union{Nothing, Symbol}
     slew_rate :: Number
 end
 
-function SpoiltSliceSelect(pulse; orientation=[0, 0, 1], rotate=nothing, spoiler_scale=nothing, kwargs...)
+function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group=nothing, spoiler_scale=nothing, kwargs...)
     model = global_model()
     res = SpoiltSliceSelect(
         orientation ./ norm(orientation),
-        @variable(model, start=0.1),
-        @variable(model, start=0.1),
-        @variable(model, start=0.05),
+        get_free_variable(nothing; start=0.1)
+        get_free_variable(nothing; start=0.1)
+        get_free_variable(nothing; start=0.05)
         pulse,
-        @variable(model, start=0.1),
-        @variable(model, start=0.1),
-        rotate,
+        get_free_variable(nothing; start=0.1)
+        get_free_variable(nothing; start=0.1)
+        group,
         slew_rate(global_scanner())
     )
     for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
@@ -55,15 +54,14 @@ function SpoiltSliceSelect(pulse; orientation=[0, 0, 1], rotate=nothing, spoiler
     @constraint model res.diff_time <= res.rise_time1
     @constraint model res.diff_time <= res.fall_time2
 
-    dim = findfirst(v -> !iszero(v), res.orientation)
-    @constraint model qvec(res, nothing, 1)[dim] == qvec(res, 1, nothing)[dim]
+    @constraint model qvec(res, nothing, 1) == qvec(res, 1, nothing)
     if !isnothing(spoiler_scale)
         if spoiler_scale == :min # note that spoiler_scale is inverse of qvec
-            @objective model Min objective_function(model) - qvec(res, nothing, 1)[dim]
+            @objective model Min objective_function(model) - qvec(res, nothing, 1)
         elseif spoiler_scale == :max
-            @objective model Min objective_function(model) + qvec(res, nothing, 1)[dim]
+            @objective model Min objective_function(model) + qvec(res, nothing, 1)
         else
-            @constraint model (qvec(res, nothing, 1)[dim] ./ res.orientation[dim]) >= 2π * 1e-3 / spoiler_scale
+            @constraint model qvec(res, nothing, 1) >= 2π * 1e-3 / spoiler_scale
         end
     end
     set_simple_constraints!(res, kwargs)
@@ -79,15 +77,15 @@ duration_trap2(spoilt::SpoiltSliceSelect) = 2 * spoilt.fall_time2 + spoilt.flat_
 
 function waveform_sequence(spoilt::SpoiltSliceSelect)
     slew = slew_rate(spoilt)
-    (grad1, grad2, grad3) = [g .* spoilt.orientation for g in all_gradient_strengths(spoilt)]
+    (grad1, grad2, grad3) = [g for g in all_gradient_strengths(spoilt)]
     return [
-        ChangingGradientBlock(zeros(3), slew, rise_time(spoilt)[1], spoilt.rotate, nothing),
-        ConstantGradientBlock(grad1, flat_time(spoilt)[1], spoilt.rotate, nothing),
-        ChangingGradientBlock(grad1, -slew, fall_time(spoilt)[1], spoilt.rotate, nothing),
-        ConstantGradientBlock(grad2, duration(spoilt.pulse), spoilt.rotate, nothing),
-        ChangingGradientBlock(grad2, slew, rise_time(spoilt)[2], spoilt.rotate, nothing),
-        ConstantGradientBlock(grad3, flat_time(spoilt)[2], spoilt.rotate, nothing),
-        ChangingGradientBlock(grad3, -slew, fall_time(spoilt)[2], spoilt.rotate, nothing),
+        ChangingGradient(0., slew, rise_time(spoilt)[1], spoilt.rotate, nothing),
+        ConstantGradient(grad1, flat_time(spoilt)[1], spoilt.rotate, nothing),
+        ChangingGradient(grad1, -slew, fall_time(spoilt)[1], spoilt.rotate, nothing),
+        ConstantGradient(grad2, duration(spoilt.pulse), spoilt.rotate, nothing),
+        ChangingGradient(grad2, slew, rise_time(spoilt)[2], spoilt.rotate, nothing),
+        ConstantGradient(grad3, flat_time(spoilt)[2], spoilt.rotate, nothing),
+        ChangingGradient(grad3, -slew, fall_time(spoilt)[2], spoilt.rotate, nothing),
     ]
 end
 interruptions(spoilt::SpoiltSliceSelect) = [(index=4, time=effective_time(spoilt.pulse), object=spoilt.pulse)]
@@ -96,12 +94,12 @@ rise_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1, spoilt.fall_time2 - s
 flat_time(spoilt::SpoiltSliceSelect) = (spoilt.flat_time1, spoilt.flat_time2)
 fall_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1 - spoilt.diff_time, spoilt.fall_time2)
 duration(spoilt::SpoiltSliceSelect) = sum(rise_time(spoilt)) + sum(flat_time(spoilt)) + sum(flat_time(spoilt)) + duration(spoilt.pulse)
-slew_rate(spoilt::SpoiltSliceSelect) = spoilt.orientation .* spoilt.slew_rate
+slew_rate(spoilt::SpoiltSliceSelect) = spoilt.slew_rate
 inverse_slice_thickness(spoilt::SpoiltSliceSelect) = spoilt.slew_rate * spoilt.diff_time * duration(spoilt.pulse) * 1e3
 function all_gradient_strengths(spoilt::SpoiltSliceSelect)
-    grad1 = spoilt.slew_rate .* rise_time(spoilt)[1]
-    grad2 = grad1 .- spoilt.slew_rate .* flat_time(spoilt)[1]
-    grad3 = spoilt.slew_rate .* fall_time(spoilt)[2]
+    grad1 = spoilt.slew_rate * rise_time(spoilt)[1]
+    grad2 = grad1 - spoilt.slew_rate * flat_time(spoilt)[1]
+    grad3 = spoilt.slew_rate * fall_time(spoilt)[2]
     return [grad1, grad2, grad3]
 end
 

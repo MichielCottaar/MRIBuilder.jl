@@ -9,7 +9,7 @@ import LinearAlgebra: norm
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, qval_square, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
 import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size
 import ...BuildSequences: global_model
-import ...Components: ChangingGradient, ConstantGradient, NoGradient, RFPulseComponent, ADC
+import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ..BaseBuildingBlocks: BaseBuildingBlock
 
 
