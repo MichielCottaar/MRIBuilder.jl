@@ -9,7 +9,7 @@ import ...Gradients: GradientBlock
 import ...BuildingBlocks: scanner_constraints!, make_generic
 
 """
-    BuildingBlock(waveform, events; min_duration=nothing, orientation=nothing)
+    BuildingBlock(waveform, events; duration=nothing, orientation=nothing)
 
 Generic [`BaseBuildingBlock`](@ref) that can capture any overlapping gradients, RF pulses, and/or readouts.
 The gradients cannot contain any free variables.
@@ -41,12 +41,12 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; duratio
         events = [(i+1, e) for (i, e) in events]
     end
 
-    if isnothing(min_duration)
-        min_duration = waveform[end][1]
+    if isnothing(duration)
+        duration = waveform[end][1]
     end
-    if !(min_duration ≈ waveform[end][1])
-        @assert min_duration > waveform[end][1]
-        push!(waveform, (min_duration, zero_grad))
+    if !(duration ≈ waveform[end][1])
+        @assert duration > waveform[end][1]
+        push!(waveform, (duration, zero_grad))
     end
     components = BaseComponent[]
     for (index_grad, ((prev_time, prev_grad), (time, grad))) in enumerate(zip(waveform[1:end-1], waveform[2:end]))
