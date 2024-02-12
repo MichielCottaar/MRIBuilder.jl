@@ -5,6 +5,9 @@ In addition this defines:
 - [`variables`](@ref): dictionary containing all variables.
 - [`VariableType`](@ref): parent type for any variables (whether number or JuMP variable).
 - [`get_free_variable`](@ref): helper function to create new JuMP variables.
+- [`VariableNotAvailable`](@ref): error raised if variable is not defined for specific [`AbstractBlock`](@ref).
+- [`set_simple_constraints`](@ref): call [`apply_simple_constraint`](@ref) for each keyword argument.
+- [`apply_simple_constraint`](@ref): set a simple equality constraint.
 """
 module Variables
 import JuMP: @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
@@ -137,5 +140,114 @@ This should be defined for every `GradientBlock`, but not be called directly.
 Instead, the `bmat` and `bval` should be constrained for specific `Pathways`
 """
 function bmat_gradient end
+
+
+"""
+    VariableNotAvailable(building_block, variable, alt_variable)
+
+Exception raised when a variable function does not support a specific `BuildingBlock`.
+"""
+mutable struct VariableNotAvailable <: Exception
+    bb :: Type{<:BuildingBlock}
+    variable :: Function
+    alt_variable :: Union{Nothing, Function}
+end
+VariableNotAvailable(bb::Type{<:BuildingBlock}, variable::Function) = VariableNotAvailable(bb, variable, nothing)
+
+function Base.showerror(io::IO, e::VariableNotAvailable)
+    if isnothing(e.alt_variable)
+        print(io, e.variable, " is not available for block of type ", e.bb, ".")
+    else
+        print(io, e.variable, " is not available for block of type ", e.bb, ". Please use ", e.alt_variable, " instead to set any contsraints or objective functions.")
+    end
+end
+
+
+for variable_func in keys(variables)
+    if variable_func in [:qval_square, :qval]
+        continue
+    end
+    @eval function Variables.$variable_func(bb::BuildingBlock)
+        if Variables.$variable_func in keys(alternative_variables)
+            alt_var, forward, backward, _ = alternative_variables[Variables.$variable_func]
+            try
+                value = alt_var(bb)
+                if value isa Number
+                    return backward(value)
+                elseif value isa AbstractArray{<:Number}
+                    return backward.(value)
+                end
+            catch e
+                if e isa VariableNotAvailable
+                    throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
+                end
+                rethrow()
+            end
+            throw(VariableNotAvailable(typeof(bb), Variables.$variable_func, alt_var))
+        end
+        throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
+    end
+end
+
+function Variables.qval_square(bb::BuildingBlock, args...; kwargs...)
+    vec = Variables.qvec(bb, args...; kwargs...)
+    return vec[1]^2 + vec[2]^2 + vec[3]^2
+end
+
+Variables.qval(bb::BuildingBlock, args...; kwargs...) = sqrt(Variables.qval_square(bb, args...; kwargs...))
+
+
+"""
+    set_simple_constraints!(block, kwargs)
+
+Add any constraints or objective functions to the variables of a [`BuildingBlock`](@ref).
+
+Each keyword argument has to match one of the functions in [`variables`](@ref)(block).
+If set to a numeric value, a constraint will be added to fix the function value to that numeric value.
+If set to `:min` or `:max`, minimising or maximising this function will be added to the cost function.
+"""
+function set_simple_constraints!(block::BuildingBlock, kwargs)
+    for (key, value) in kwargs
+        if variables[key] in keys(alternative_variables)
+            alt_var, forward, backward, to_invert = alternative_variables[variables[key]]
+            invert_value(value::VariableType) = forward(value)
+            invert_value(value::Symbol) = invert_value(Val(value))
+            invert_value(::Val{:min}) = to_invert ? Val(:max) : Val(:min)
+            invert_value(::Val{:max}) = to_invert ? Val(:min) : Val(:max)
+            invert_value(value::AbstractVector) = invert_value.(value)
+            invert_value(value) = value
+            try
+                apply_simple_constraint!(alt_var(block), invert_value(value))
+                return
+            catch e
+                if !(e isa VariableNotAvailable)
+                    rethrow()
+                end
+            end
+        end
+        apply_simple_constraint!(variables[key](block), value)
+    end
+    nothing
+end
+
+"""
+    apply_simple_constraint!(variable, value)
+
+Add a single constraint or objective to the `variable`.
+
+`value` can be one of:
+- `nothing`: do nothing
+- `:min`: minimise the variable
+- `:max`: maximise the variable
+- `number`: fix variable to this value
+- `equation`: fix variable to the result of this equation
+"""
+apply_simple_constraint!(variable, ::Nothing) = nothing
+apply_simple_constraint!(variable, value::Symbol) = apply_simple_constraint!(variable, Val(value))
+apply_simple_constraint!(variable, ::Val{:min}) = @objective global_model() Min objective_function(global_model()) + variable
+apply_simple_constraint!(variable, ::Val{:max}) = @objective global_model() Min objective_function(global_model()) - variable
+apply_simple_constraint!(variable, value::VariableType) = @constraint global_model() variable == value
+apply_simple_constraint!(variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(v1, v2) for (v1, v2) in zip(variable, value)]
+apply_simple_constraint!(variable::Number, value::Number) = @assert variable ≈ value "Variable set to multiple incompatible values."
 
 end
