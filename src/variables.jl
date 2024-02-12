@@ -45,8 +45,9 @@ all_variables_symbols = [
         :δ => "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms.",
         :rise_time => "Time for gradient pulse to reach its maximum value in ms.",
         :flat_time => "Time of gradient pulse at maximum value in ms.",
-        :gradient_strength => "vector with maximum strength of a gradient along each dimension (kHz/um)",
-        :slew_rate => "vector with maximum slew rate of a gradient along each dimension (kHz/um)",
+        :gradient_strength => "Vector with maximum strength of a gradient along each dimension (kHz/um)",
+        :slew_rate => "Vector with maximum slew rate of a gradient along each dimension (kHz/um/ms)",
+        :spoiler_scale => "Length-scale on which spins will be dephased by exactly 2π in mm.",
     ],
     :readout => [
         :dwell_time => "Time between two samples in an `ADC` in ms.",
@@ -88,6 +89,7 @@ Setting constraints on these alternative functions can be helpful as it avoids s
 alternative_variables = Dict(
     qval => (qval_square, n->n^2, sqrt, false),
     slice_thickness => (inverse_slice_thickness, inv, inv, true),
+    spoiler_scale => (qvec, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true),
     bandwidth => (inverse_bandwidth, inv, inv, true),
     fov => (inverse_fov, inv, inv, true),
     voxel_size => (inverse_voxel_size, inv, inv, true),
