@@ -74,6 +74,9 @@ function SincPulse(;
 end
 
 function normalised_function(x; apodise=false)
+    if iszero(x)
+        return 1.
+    end
     if apodise
         return (0.54 + 0.46 * cos(π * x)) * sin(π * x) / (π * x)
     else
