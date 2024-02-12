@@ -4,10 +4,9 @@ include("instant_pulses.jl")
 include("constant_pulses.jl")
 include("sinc_pulses.jl")
 
-import ..Variables: effective_time
-import ..BuildingBlocks: RFPulseBlock
+import ..AbstractTypes: RFPulseComponent
 import .GenericPulses: GenericPulse
-import .InstantPulses: InstantRFPulseBlock
+import .InstantPulses: InstantPulse
 import .ConstantPulses: ConstantPulse
 import .SincPulses: SincPulse
 

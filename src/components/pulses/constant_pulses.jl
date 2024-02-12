@@ -1,35 +1,37 @@
 module ConstantPulses
-import JuMP: VariableRef, @constraint, @variable, value
-import ...BuildingBlocks: RFPulseBlock, set_simple_constraints!
-import ...Variables: variables, get_free_variable, flip_angle, phase, amplitude, frequency, start_time, end_time, VariableType, duration, effective_time, inverse_bandwidth
-import ...BuildSequences: global_model
-import ..GenericPulses: GenericPulse, make_generic
+import JuMP: @constraint
+import ...AbstractTypes: RFPulseComponent
+import ....BuildSequences: global_model
+import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency
+import ..GenericPulses: GenericPulse
 
 """
     ConstantPulse(; variables...)
 
 Represents an radio-frequency pulse with a constant amplitude and frequency (i.e., a rectangular function).
 
-## Properties
+## Parameters
+- `group`: name of the group to which this pulse belongs. This is used for scaling or adding phases/off-resonance frequencies.
+
+## Variables
 - [`flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
 - [`duration`](@ref): duration of the RF pulse in ms.
 - [`amplitude`](@ref): amplitude of the RF pulse in kHz.
 - [`phase`](@ref): phase at the start of the RF pulse in degrees.
 - [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
 """
-struct ConstantPulse <: RFPulseBlock
+struct ConstantPulse <: RFPulseComponent
     amplitude :: VariableType
     duration :: VariableType
     phase :: VariableType
     frequency :: VariableType
-    scale :: Union{Nothing, Symbol}
+    group :: Union{Nothing, Symbol}
 end
 
-function ConstantPulse(amplitude=nothing, duration=nothing, phase=nothing, frequency=nothing, scale=nothing, kwargs...) 
+function ConstantPulse(; amplitude=nothing, duration=nothing, phase=nothing, frequency=nothing, group=nothing, kwargs...) 
     res = ConstantPulse(
         [get_free_variable(value) for value in (amplitude, duration, phase, frequency)]...,
-        scale
-
+        group
     )
     @constraint global_model() res.amplitude >= 0
     set_simple_constraints!(res, kwargs)

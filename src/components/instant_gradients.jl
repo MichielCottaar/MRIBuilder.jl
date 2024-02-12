@@ -1,6 +1,6 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
-import ...Variables: VariableType, duration, qvec, bmat_gradient, get_free_variable, set_simple_constraints, qval, effective_time
+import ...Variables: VariableType, duration, qvec, bmat_gradient, get_free_variable, set_simple_constraints!, qval, effective_time
 import ..AbstractTypes: EventComponent, GradientWaveform
 
 """
@@ -34,7 +34,7 @@ end
 
 function InstantGradient1D(; orientation=[1, 0, 0], group=nothing, qval=nothing, variables...)
     res = InstantGradient1D(qval, orientation, group)
-    set_simple_constraints(res, variables)
+    set_simple_constraints!(res, variables)
     return res
 end
 
@@ -67,7 +67,7 @@ function InstantGradient3D(; qvec=[nothing, nothing, nothing], group=nothing, va
         qvec = [nothing, nothing, nothing]
     end
     res = InstantGradient3D(get_free_variable.(qvec), group)
-    set_simple_constraints(res, variables)
+    set_simple_constraints!(res, variables)
     return res
 end
 

@@ -14,7 +14,7 @@ Each part of this gradient waveform can compute:
 - [`qvec`]: area under curve in each dimension
 - [`bmat_gradient`]: diffusion weighting (scalar in 1D or matrix in 3D).
 """
-module Gradients
+module GradientWaveforms
 
 include("changing_gradient_blocks.jl")
 include("constant_gradient_blocks.jl")
