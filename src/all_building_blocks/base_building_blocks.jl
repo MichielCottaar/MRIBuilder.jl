@@ -15,8 +15,9 @@ Main interface:
 - [`qvec`](@ref) returns area under curve for (part of) the gradient waveform.
 
 Sub-types need to implement:
-- `Base.keys`: returns sequence of keys to all the components
-- `Base.getindex`: returns the actual component for each key
+- `Base.keys`: returns sequence of keys to all the components.
+- `Base.getindex`: returns the actual component for each key.
+- [`duration`](@ref): total duration of the building block.
 """
 abstract type BaseBuildingBlock <: ContainerBlock end
 
@@ -106,7 +107,7 @@ Gets the sequence of [`GradientWaveform`](@ref) from the event with key `first` 
 Setting `first` to nothing indicates to start from the beginning of the `building_block`.
 Similarly, setting `last` to nothing indicates to continue till the end of the `building_block`.
 """
-function waveform_seqeuence(bb::BaseBuildingBlock, first, last)
+function waveform_sequence(bb::BaseBuildingBlock, first, last)
     started = isnothing(first)
     current_grad = current_start = nothing
     parts = GradientWaveform[]
