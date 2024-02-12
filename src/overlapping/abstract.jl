@@ -63,6 +63,9 @@ function waveform(ao::AbstractOverlapping)
             error("Unrecognised block type in gradient waveform: $(typeof(ao)).")
         end
     end
+    if duration(ao) > result[end][1]
+        push!(result, (duration(ao), zero(SVector{3, Float64})))
+    end
     return result
 end
 
