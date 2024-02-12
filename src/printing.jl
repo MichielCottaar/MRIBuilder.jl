@@ -69,7 +69,8 @@ function Base.show(io::IO, printer::BuildingBlockPrinter)
         if (
             block isa AbstractOverlapping && (
             ft <: Union{Nothing, BuildingBlock} ||
-            (ft <: AbstractVector && eltype(ft) <: BuildingBlock)
+            (ft <: AbstractVector && eltype(ft) <: BuildingBlock) ||
+            name == :interruptions
         ))
             continue
         end
