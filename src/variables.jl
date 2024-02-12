@@ -1,7 +1,20 @@
+"""
+Defines the functions that can be called on parts of an MRI sequence to query or constrain any variables.
+
+In addition this defines:
+- [`variables`](@ref): dictionary containing all variables.
+- [`VariableType`](@ref): parent type for any variables (whether number or JuMP variable).
+- [`get_free_variable`](@ref): helper function to create new JuMP variables.
+"""
 module Variables
 import JuMP: @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
 import ..Scanners: gradient_strength, slew_rate
 import ..BuildSequences: global_model
+
+"""
+Parent type of all components, building block, and sequences that form an MRI sequence.
+"""
+abstract type AbstractBlock end
 
 all_variables_symbols = [
     :block => [
@@ -10,7 +23,6 @@ all_variables_symbols = [
     :sequence => [
         :TR => "Time on which an MRI sequence repeats itself in ms.",
     ],
-
     :pulse => [
         :flip_angle => "The flip angle of the RF pulse in degrees",
         :amplitude => "The maximum amplitude of an RF pulse in kHz",
@@ -23,8 +35,6 @@ all_variables_symbols = [
         :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient in mm. To set constraints it is often better to use [`inverse_slice_thickness`](@ref).",
         :inverse_slice_thickness => "Inverse of slice thickness of an RF pulse that is active during a gradient in 1/mm. Also, see [`slice_thickness`](@ref).",
     ],
-
-    # gradients
     :gradient => [
         :qvec => "The spatial range and orientation on which the displacements can be detected due to this gradient in rad/um.",
         :qval => "The spatial range on which the displacements can be detected due to this gradient in rad/um (i.e., norm of [`qvec`](@ref)). To set constraints it is often better to use [`qvec`](@ref) or [`qval_square`](@ref).",
@@ -48,8 +58,10 @@ all_variables_symbols = [
     ]
 ]
 
+"""
+Collection of all functions that return variables that can be used to query or constrain their values.
+"""
 variables = Dict{Symbol, Function}()
-
 
 
 for (block_symbol, all_functions) in all_variables_symbols
@@ -65,6 +77,11 @@ for (block_symbol, all_functions) in all_variables_symbols
 end
 
 
+"""
+Dictionary with alternative versions of specific function.
+    
+Setting constraints on these alternative functions can be helpful as it avoids some operations, which the optimiser might struggle with.
+"""
 alternative_variables = Dict(
     qval => (qval_square, n->n^2, sqrt, false),
     slice_thickness => (inverse_slice_thickness, inv, inv, true),
@@ -74,12 +91,16 @@ alternative_variables = Dict(
 )
 
 
-# These functions are more fully defined in building_blocks.jl
-function start_time end
-function end_time end
-function effective_time end
+"""
+Parent type for any variable in the MRI sequence.
 
+Each variable can be one of:
+- a new JuMP variable
+- an expression linking this variable to other JuMP variable
+- a number
 
+Create these using [`get_free_variable`](@ref).
+"""
 const VariableType = Union{Number, AbstractJuMPScalar}
 
 
@@ -87,6 +108,8 @@ const VariableType = Union{Number, AbstractJuMPScalar}
     get_free_variable(value; integer=false)
 
 Get a representation of a given `variable` given a user-defined constraint.
+
+The result is guaranteed to be a [`VariableType`](@ref).
 """
 get_free_variable(value::Number; integer=false) = integer ? Int(value) : Float64(value)
 get_free_variable(value::VariableType; integer=false) = value
