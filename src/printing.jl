@@ -44,7 +44,7 @@ _robust_value(possible_tuple::Tuple) = _robust_value([possible_tuple...])
 
 function Base.show(io::IO, printer::BuildingBlockPrinter)
     block = printer.bb
-    print(io, string(typeof(block)), "(")
+    print(io, nameof(typeof(block)), "(")
     printed_duration = false
     if !isnothing(printer.start_time)
         print(io, "t=", @sprintf("%.3g", printer.start_time))
