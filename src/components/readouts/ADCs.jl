@@ -54,7 +54,7 @@ end
 oversample(adc::ADC) = adc.oversample
 nsamples(adc::ADC) = resolution(adc) * oversample(adc)
 dwell_time(adc::ADC) = adc.dwell_time
-duration(adc::ADC) = nsamples(adc) * dwell_time(adc)
+duration(adc::ADC) = (nsamples(adc)-1) * dwell_time(adc)
 time_to_center(adc::ADC) = adc.time_to_center
 effective_time(adc::ADC) = time_to_center(adc)
 resolution(adc::ADC) = adc.resolution
