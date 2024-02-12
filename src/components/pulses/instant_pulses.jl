@@ -2,7 +2,7 @@ module InstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType
+import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, make_generic
 
 """
     InstantPulse(; flip_angle=nothing, phase=nothing, group=nothing)

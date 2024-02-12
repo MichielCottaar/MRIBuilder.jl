@@ -1,6 +1,6 @@
 module InstantReadouts
 import ...AbstractTypes: ReadoutComponent
-import ...Variables: variables, duration, effective_time
+import ...Variables: variables, duration, effective_time, make_generic
 import ..ADCs: ADC
 
 """

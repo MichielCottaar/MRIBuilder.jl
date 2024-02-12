@@ -1,6 +1,6 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
-import ...Variables: VariableType, duration, qvec, bmat_gradient, get_free_variable, set_simple_constraints!, qval, effective_time
+import ...Variables: VariableType, duration, qvec, bmat_gradient, get_free_variable, set_simple_constraints!, qval, effective_time, make_generic
 import ..AbstractTypes: EventComponent, GradientWaveform
 
 """
@@ -78,5 +78,6 @@ duration(::InstantGradient) = 0.
 effective_time(::InstantGradient) = 0.
 bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
 
+make_generic(ig::InstantGradient) = ig
 
 end

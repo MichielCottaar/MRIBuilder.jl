@@ -252,4 +252,17 @@ apply_simple_constraint!(variable, value::VariableType) = @constraint global_mod
 apply_simple_constraint!(variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(v1, v2) for (v1, v2) in zip(variable, value)]
 apply_simple_constraint!(variable::Number, value::Number) = @assert variable ≈ value "Variable set to multiple incompatible values."
 
+
+"""
+    make_generic(sequence/building_block/component)
+
+Returns a generic version of the `BaseSequence`, `BaseBuildingBlock`, or `BaseComponent`
+
+- Sequences are all flattened and returned as a single `Sequence` containing only `BuildingBlock` objects.
+- Any `BaseBuildingBlock` is converted into a `BuildingBlock`.
+- Pulses are replaced with `GenericPulse` (except for instant pulses).
+- Instant readouts are replaced with `ADC`.
+"""
+function make_generic end
+
 end

@@ -1,7 +1,7 @@
 module GenericPulses
 
 import ...AbstractTypes: RFPulseComponent
-import ....Variables: duration, amplitude, effective_time, flip_angle
+import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic
 
 
 """

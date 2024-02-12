@@ -1,6 +1,6 @@
 module ADCs
 import JuMP: @constraint, value
-import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType, nsamples, resolution, oversample
+import ...Variables: variables, dwell_time, duration, effective_time, get_free_variable, VariableType, nsamples, resolution, oversample, make_generic
 import ...BuildingBlocks: BuildingBlock, apply_simple_constraint!, set_simple_constraints!, fixed, make_generic
 import ...BuildSequences: global_model
 
