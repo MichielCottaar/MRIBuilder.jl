@@ -295,6 +295,6 @@ Replaces a [`BuildingBlock`](@ref) or whole sequence with a generic version.
 
 This replaces all functional RF pulses and gradient waveforms with their generic equivalents.
 """
-make_generic(grad::GradientBlock) = grad
+function make_generic end
 
 end
