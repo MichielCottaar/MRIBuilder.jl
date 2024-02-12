@@ -168,7 +168,7 @@ function qvec(ao::AbstractOverlapping, index1::Union{Nothing, Integer}, index2::
     if (index1 isa Number) && (index1 == index2)
         return zeros(3)
     end
-    sum(qvec.(get_parts(ao, index1, index2)))
+    sum(qvec.(get_parts(ao, index1, index2)); init=zero(SVector{3, Float64}))
 end
 qvec(ao::AbstractOverlapping) = qvec(ao, nothing, nothing)
 
