@@ -180,7 +180,7 @@ ramp_overlap(lr::LineReadout) = lr.ramp_overlap
 inverse_fov(lr::LineReadout) = @. 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid)
 inverse_voxel_size(lr::LineReadout) = @. 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
 
-get_readout(lr::LineReadout) = rl.adc
-get_gradient(lr::LineReadout) = rl.trapezoid
+get_readout(lr::LineReadout) = lr.adc
+get_gradient(lr::LineReadout) = lr.trapezoid
 
 end
