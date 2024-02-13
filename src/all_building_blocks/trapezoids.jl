@@ -7,7 +7,7 @@ import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
 import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, qval_square, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
-import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size
+import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ..BaseBuildingBlocks: BaseBuildingBlock
@@ -108,10 +108,6 @@ slew_rate(g::Trapezoid) = g.slew_rate
 δ(g::Trapezoid) = rise_time(g) + flat_time(g)
 duration(g::Trapezoid) = 2 * rise_time(g) + flat_time(g)
 
-for func in (:rise_time, :flat_time, :gradient_strength, :slew_rate, :δ, :duration, :qvec)
-    @eval $func(bt::BaseTrapezoid) = $func(bt.trapezoid)
-end
-
 qvec(g::BaseTrapezoid, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
 
 """
@@ -146,12 +142,8 @@ Base.getindex(pg::SliceSelect, ::Val{:pulse}) = pg.pulse
 
 inverse_slice_thickness(ss::SliceSelect) = 1e3 * gradient_strength(ss.trapezoid) .* inverse_bandwidth(ss.pulse)
 
-for func in all_variables_symbols[:pulse]
-    if func in (:inverse_slice_thickness, :slice_thickness)
-        continue
-    end
-    Variables.$func(ss::SliceSelect) = Variables.$func(ss.pulse)
-end
+get_pulse(ss::SliceSelect) = ss.pulse
+get_gradient(ss::SliceSelect) = ss.trapezoid
 
 """
     LineReadout(adc; ramp_overlap=1., orientation=nothing, group=nothing, variables...)
@@ -188,11 +180,7 @@ ramp_overlap(lr::LineReadout) = lr.ramp_overlap
 inverse_fov(lr::LineReadout) = @. 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid)
 inverse_voxel_size(lr::LineReadout) = @. 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
 
-for func in all_variables_symbols[:readout]
-    if func in (:inverse_fov, :slice_fov, :inverse_voxel_size, :slice_voxel_size, :ramp_overlap)
-        continue
-    end
-    Variables.$func(lr::LineReadout) = Variables.$func(lr.adc)
-end
+get_readout(lr::LineReadout) = rl.adc
+get_gradient(lr::LineReadout) = rl.trapezoid
 
 end

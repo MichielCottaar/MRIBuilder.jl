@@ -8,6 +8,7 @@ In addition this defines:
 - [`VariableNotAvailable`](@ref): error raised if variable is not defined for specific [`AbstractBlock`](@ref).
 - [`set_simple_constraints`](@ref): call [`apply_simple_constraint`](@ref) for each keyword argument.
 - [`apply_simple_constraint`](@ref): set a simple equality constraint.
+- [`get_pulse`](@ref)/[`get_gradient`](@ref)/[`get_readout`](@ref): Used to get the pulse/gradient/readout part of a building block
 """
 module Variables
 import JuMP: @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
@@ -134,6 +135,33 @@ function get_free_variable(::Val{:max})
 end
 
 """
+    get_pulse(building_block)]
+
+Get the pulse played out during the building block.
+
+Any `pulse` variables not explicitly defined for this building block will be passed on to the pulse.
+"""
+function get_pulse end
+
+"""
+    get_gradient(building_block)]
+
+Get the gradient played out during the building block.
+
+Any `gradient` variables not explicitly defined for this building block will be passed on to the gradient.
+"""
+function get_gradient end
+
+"""
+    get_readout(building_block)]
+
+Get the readout played out during the building block.
+
+Any `readout` variables not explicitly defined for this building block will be passed on to the readout.
+"""
+function get_gradient end
+
+"""
     bmat_gradient(gradient::GradientBlock, qstart=(0, 0, 0))
 
 Computes the diffusion-weighting matrix due to a single gradient block in rad^2 ms/um^2.
@@ -165,29 +193,38 @@ function Base.showerror(io::IO, e::VariableNotAvailable)
 end
 
 
-for variable_func in keys(variables)
-    if variable_func in [:qval_square, :qval]
-        continue
-    end
-    @eval function Variables.$variable_func(bb::BuildingBlock)
-        if Variables.$variable_func in keys(alternative_variables)
-            alt_var, forward, backward, _ = alternative_variables[Variables.$variable_func]
+for (target_name, all_vars) in pairs(all_variables_symbols)
+    for variable_func in keys(all_vars)
+        if variable_func in [:qval_square, :qval]
+            continue
+        end
+        @eval function Variables.$variable_func(bb::BuildingBlock)
             try
-                value = alt_var(bb)
-                if value isa Number
-                    return backward(value)
-                elseif value isa AbstractArray{<:Number}
-                    return backward.(value)
+                if Variables.$variable_func in keys(alternative_variables)
+                    alt_var, forward, backward, _ = alternative_variables[Variables.$variable_func]
+                    try
+                        value = alt_var(bb)
+                        if value isa Number
+                            return backward(value)
+                        elseif value isa AbstractArray{<:Number}
+                            return backward.(value)
+                        end
+                    catch e
+                        if e isa VariableNotAvailable
+                            throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
+                        end
+                        rethrow()
+                    end
+                    throw(VariableNotAvailable(typeof(bb), Variables.$variable_func, alt_var))
                 end
+                throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
             catch e
-                if e isa VariableNotAvailable
-                    throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
+                if e isa VariableNotAvailable && hasmethod(get_$(target_name), Tuple(typeof(bb))) && $(target_name) in (:pulse, :readout)
+                    return Variables.$variable_func(get_$(target_name)(bb))
                 end
                 rethrow()
             end
-            throw(VariableNotAvailable(typeof(bb), Variables.$variable_func, alt_var))
         end
-        throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
     end
 end
 

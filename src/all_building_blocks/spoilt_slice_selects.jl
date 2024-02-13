@@ -4,7 +4,7 @@ import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @constraint, @objective, objective_function
 import ...BuildSequences: global_model, global_scanner
-import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable
+import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
 import ..BaseBuildingBlocks: BaseBuildingBlock
 
@@ -92,6 +92,7 @@ duration(spoilt::SpoiltSliceSelect) = sum(rise_time(spoilt)) + sum(flat_time(spo
 slew_rate(spoilt::SpoiltSliceSelect) = spoilt.slew_rate
 inverse_slice_thickness(spoilt::SpoiltSliceSelect) = spoilt.slew_rate * spoilt.diff_time * duration(spoilt.pulse) * 1e3
 gradient_strength(spoilt::SpoiltSliceSelect) = slew_rate(spoilt) * max(spoilt.rise_time1, spoilt.fall_time2)
+get_pulse(spoilt::SpoiltSliceSelect) = spoilt.pulse
 function all_gradient_strengths(spoilt::SpoiltSliceSelect)
     grad1 = spoilt.slew_rate * rise_time(spoilt)[1]
     grad2 = grad1 - spoilt.slew_rate * flat_time(spoilt)[1]
