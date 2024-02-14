@@ -83,7 +83,7 @@ Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat_pulse}) = ConstantGradient(
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:pulse}) = spoilt.pulse
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:rise2}) = ChangingGradient(slew_rate(spoilt) * spoilt.diff_time, slew_rate(spoilt), rise_time(spoilt)[2])
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat2}) = ConstantGradient(slew_rate(spoilt) * fall_time(spoilt)[2], flat_time(spoilt)[2])
-Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall2}) = ConstantGradient(slew_rate(spoilt) * fall_time(spoilt)[2], -slew_rate(spoilt) fall_time(spoilt)[2])
+Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall2}) = ConstantGradient(slew_rate(spoilt) * fall_time(spoilt)[2], -slew_rate(spoilt), fall_time(spoilt)[2])
 
 rise_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1, spoilt.fall_time2 - spoilt.diff_time)
 flat_time(spoilt::SpoiltSliceSelect) = (spoilt.flat_time1, spoilt.flat_time2)
