@@ -1,8 +1,10 @@
 module Sequences
 import StaticArrays: SVector
-import ..BaseSequences: ContainerBlock, BaseSequence, nrepeat
+import JuMP: @constraint
 import ...Variables: get_free_variable, TR, VariableType
 import ...BuildingBlocks: WaitBlock
+import ...BuildSequences: get_global_model
+import ..BaseSequences: ContainerBlock, BaseSequence, nrepeat
 
 """
     Sequence(blocks; TR=:min, nrepeat=0)
@@ -16,7 +18,7 @@ Defines an MRI sequence from a vector of building blocks.
 """
 struct Sequence{N} <: BaseSequence{N}
     blocks :: SVector{N, <:ContainerBlock}
-    TR :: Float64
+    TR :: VariableType
     nrepeat :: Int
 end
 
@@ -24,7 +26,10 @@ function Sequence(blocks::AbstractVector; TR=:min, nrepeat=0)
     if TR == :min
         TR = sum(duration, blocks; init=0.)
     end
-    return sequence(SVector{length(blocks)}(to_block.(blocks)), get_free_variable(TR), nrepeat)
+    res = sequence(SVector{length(blocks)}(to_block.(blocks)), get_free_variable(TR), nrepeat)
+    if !(res.TR isa Number) || !(duration(res) isa Number)
+        @constraint get_global_model() res.TR >= duration(res)
+    end
 end
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
