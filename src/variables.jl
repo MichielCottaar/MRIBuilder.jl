@@ -11,7 +11,7 @@ In addition this defines:
 - [`get_pulse`](@ref)/[`get_gradient`](@ref)/[`get_readout`](@ref): Used to get the pulse/gradient/readout part of a building block
 """
 module Variables
-import JuMP: @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
+import JuMP: @constraint, @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
 import ..Scanners: gradient_strength, slew_rate
 import ..BuildSequences: global_model
 
@@ -71,7 +71,7 @@ variables = Dict{Symbol, Function}()
 
 for (block_symbol, all_functions) in all_variables_symbols
     for (func_symbol, description) in all_functions
-        as_string = "    $func_symbol($block_symbol)\n\n$description\n\nThis represents a variable within the sequence. Variables can be set during the construction of a [`BuildingBlock`](@ref) or used to create constraints after the fact."
+        as_string = "    $func_symbol($block_symbol)\n\n$description\n\nThis represents a variable within the sequence. Variables can be set during the construction of a [`AbstractBlock`](@ref) or used to create constraints after the fact."
         new_func = @eval begin
             function $func_symbol end
             @doc $as_string $func_symbol
@@ -159,7 +159,7 @@ Get the readout played out during the building block.
 
 Any `readout` variables not explicitly defined for this building block will be passed on to the readout.
 """
-function get_gradient end
+function get_readout end
 
 """
     bmat_gradient(gradient::GradientBlock, qstart=(0, 0, 0))
@@ -175,14 +175,14 @@ function bmat_gradient end
 """
     VariableNotAvailable(building_block, variable, alt_variable)
 
-Exception raised when a variable function does not support a specific `BuildingBlock`.
+Exception raised when a variable function does not support a specific `AbstractBlock`.
 """
 mutable struct VariableNotAvailable <: Exception
-    bb :: Type{<:BuildingBlock}
+    bb :: Type{<:AbstractBlock}
     variable :: Function
     alt_variable :: Union{Nothing, Function}
 end
-VariableNotAvailable(bb::Type{<:BuildingBlock}, variable::Function) = VariableNotAvailable(bb, variable, nothing)
+VariableNotAvailable(bb::Type{<:AbstractBlock}, variable::Function) = VariableNotAvailable(bb, variable, nothing)
 
 function Base.showerror(io::IO, e::VariableNotAvailable)
     if isnothing(e.alt_variable)
@@ -193,12 +193,12 @@ function Base.showerror(io::IO, e::VariableNotAvailable)
 end
 
 
-for (target_name, all_vars) in pairs(all_variables_symbols)
-    for variable_func in keys(all_vars)
+for (target_name, all_vars) in all_variables_symbols
+    for (variable_func, _) in all_vars
         if variable_func in [:qval_square, :qval]
             continue
         end
-        @eval function Variables.$variable_func(bb::BuildingBlock)
+        @eval function Variables.$variable_func(bb::AbstractBlock)
             try
                 if Variables.$variable_func in keys(alternative_variables)
                     alt_var, forward, backward, _ = alternative_variables[Variables.$variable_func]
@@ -228,24 +228,24 @@ for (target_name, all_vars) in pairs(all_variables_symbols)
     end
 end
 
-function Variables.qval_square(bb::BuildingBlock, args...; kwargs...)
+function Variables.qval_square(bb::AbstractBlock, args...; kwargs...)
     vec = Variables.qvec(bb, args...; kwargs...)
     return vec[1]^2 + vec[2]^2 + vec[3]^2
 end
 
-Variables.qval(bb::BuildingBlock, args...; kwargs...) = sqrt(Variables.qval_square(bb, args...; kwargs...))
+Variables.qval(bb::AbstractBlock, args...; kwargs...) = sqrt(Variables.qval_square(bb, args...; kwargs...))
 
 
 """
     set_simple_constraints!(block, kwargs)
 
-Add any constraints or objective functions to the variables of a [`BuildingBlock`](@ref).
+Add any constraints or objective functions to the variables of a [`AbstractBlock`](@ref).
 
 Each keyword argument has to match one of the functions in [`variables`](@ref)(block).
 If set to a numeric value, a constraint will be added to fix the function value to that numeric value.
 If set to `:min` or `:max`, minimising or maximising this function will be added to the cost function.
 """
-function set_simple_constraints!(block::BuildingBlock, kwargs)
+function set_simple_constraints!(block::AbstractBlock, kwargs)
     for (key, value) in kwargs
         if variables[key] in keys(alternative_variables)
             alt_var, forward, backward, to_invert = alternative_variables[variables[key]]
