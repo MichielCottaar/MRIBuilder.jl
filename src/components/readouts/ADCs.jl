@@ -2,7 +2,7 @@ module ADCs
 import JuMP: @constraint
 import ...AbstractTypes: ReadoutComponent
 import ....BuildSequences: global_model, fixed
-import ....Variables: oversample, nsamples, dwell_time, duration, time_to_center, effective_time, resolution, VariableType, apply_simple_constraint!, set_simple_constraints!, get_free_variable, make_generic
+import ....Variables: oversample, nsamples, dwell_time, duration, effective_time, resolution, VariableType, apply_simple_constraint!, set_simple_constraints!, get_free_variable, make_generic
 
 
 """
