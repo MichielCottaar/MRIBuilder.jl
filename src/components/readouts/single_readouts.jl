@@ -1,6 +1,7 @@
-module InstantReadouts
+module SingleReadouts
+import JuMP: @constraint
 import ...AbstractTypes: ReadoutComponent
-import ...Variables: variables, duration, effective_time, make_generic
+import ....Variables: duration, effective_time, make_generic
 import ..ADCs: ADC
 
 """
@@ -8,7 +9,7 @@ import ..ADCs: ADC
 
 Represents an instantaneous `Readout` of the signal.
 
-It has no parameters or properties to set.
+It has no parameters or variables to set.
 """
 struct SingleReadout <: ReadoutComponent
 end
