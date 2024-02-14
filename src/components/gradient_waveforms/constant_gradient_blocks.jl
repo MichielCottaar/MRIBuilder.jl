@@ -19,7 +19,7 @@ struct ConstantGradient1D <: ConstantGradient{1}
     duration :: VariableType
 end
 
-struct ConstantGradient3D <: ConstanGradient{3}
+struct ConstantGradient3D <: ConstantGradient{3}
     gradient_strength :: SVector{3, <:VariableType}
     duration :: VariableType
 end
