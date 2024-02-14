@@ -3,7 +3,6 @@ import LinearAlgebra: norm
 import ..BaseBuildingBlocks: BaseBuildingBlock, events, waveform_sequence
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout
 import ...Components: BaseComponent, DelayedEvent, RFPulseComponent, ReadoutComponent
-import ...Readouts: InstantReadout, ADC
 import ...Pulses: RFPulseBlock
 import ...Gradients: GradientBlock
 import ...BuildingBlocks: scanner_constraints!, make_generic
