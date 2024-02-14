@@ -29,6 +29,7 @@ end
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 
+Base.getindex(s::Sequence, i::Integer) = s.blocks[i]
 
 """
     to_block(block_like)
