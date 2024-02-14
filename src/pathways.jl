@@ -1,12 +1,10 @@
 module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
-import ..BuildingBlocks: BuildingBlock, GradientBlock, RFPulseBlock, ContainerBlock, get_children_indices
-import ..Sequences: Sequence
+import ..Components: NoGradient, ConstantGradient, ChangingGradient, RFPulseComponent, ReadoutComponent, InstantGradient
+import ..AllSequences: BaseSequence
+import ..AllBuildingBlocks: BaseBuildingBlock, waveform, events, get_parts
 import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration, qval_square
-import ..Wait: WaitBlock
-import ..Readouts: InstantReadout, ADC
-import ..Overlapping: AbstractOverlapping, interruptions, waveform, get_parts
 import ..Alternatives: AlternativeBlocks
 
 
