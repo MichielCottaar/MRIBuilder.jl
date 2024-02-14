@@ -172,6 +172,9 @@ Instead, the `bmat` and `bval` should be constrained for specific `Pathways`
 function bmat_gradient end
 
 
+function effective_time end
+
+
 """
     VariableNotAvailable(building_block, variable, alt_variable)
 
