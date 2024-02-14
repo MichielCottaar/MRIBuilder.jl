@@ -15,7 +15,7 @@ Usually, you do not want to create this object directly, use a `BuildingBlock` i
 """
 struct NoGradient{N} <: GradientWaveform{N}
     duration :: VariableType
-    function NoGradient{N}(duration)
+    function NoGradient{N}(duration) where {N}
         if !(N in (1, 3))
             error("Dimensionality of the gradient should be 1 or 3, not $N")
         end
