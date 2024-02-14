@@ -5,7 +5,7 @@ import ...Variables: get_free_variable, VariableType, duration
 import ...Components: NoGradient
 import ..BaseBuildingBlocks: BaseBuildingBlock
 
-struct Wait <: BuildingBlock
+struct Wait <: BaseBuildingBlock
     duration :: VariableType
     function Wait(var)
         res = new(get_free_variable(var))
