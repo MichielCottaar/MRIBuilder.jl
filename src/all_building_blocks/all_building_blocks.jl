@@ -9,6 +9,6 @@ import .BaseBuildingBlocks: waveform, waveform_sequence, events, BaseBuildingBlo
 import .BuildingBlocks: BuildingBlock
 import .Trapezoids: Trapezoid, SliceSelect, LineReadout
 import .SpoiltSliceSelects: SpoiltSliceSelect
-import ..WaitBlocks: Wait
+import .WaitBlocks: Wait
 
 end
