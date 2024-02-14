@@ -79,7 +79,7 @@ function get_pulse(bb::BuildingBlock)
     end
     if length(pulses) == 1
         return pulses[1]
-    else
+    end
     error("BuildingBlock contains more than one pulse. Not sure which one to return.")
 end
 
@@ -90,7 +90,7 @@ function get_readout(bb::BuildingBlock)
     end
     if length(readouts) == 1
         return readouts[1]
-    else
+    end
     error("BuildingBlock contains more than one readout. Not sure which one to return.")
 end
 
