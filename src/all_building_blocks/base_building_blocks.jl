@@ -171,5 +171,3 @@ end
 bmat_gradient(bb::BaseBuildingBlock, qstart) = bmat_gradient(bb, qstart, nothing, nothing)
 
 end
-
-end
