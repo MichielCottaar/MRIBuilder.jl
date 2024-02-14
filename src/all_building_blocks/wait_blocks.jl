@@ -1,6 +1,6 @@
 module WaitBlocks
 import JuMP: @constraint
-import ...BuildSequences: get_global_model
+import ...BuildSequences: global_model
 import ...Variables: get_free_variable, VariableType, duration
 import ...Components: NoGradient
 import ..BaseBuildingBlocks: BaseBuildingBlock
@@ -10,7 +10,7 @@ struct Wait <: BaseBuildingBlock
     function Wait(var)
         res = new(get_free_variable(var))
         if !(res.duration isa Number)
-            @constraint get_global_model() res.duration >= 0
+            @constraint global_model() res.duration >= 0
         end
     end
 end
