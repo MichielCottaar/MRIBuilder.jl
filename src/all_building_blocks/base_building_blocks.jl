@@ -1,6 +1,6 @@
 module BaseBuildingBlocks
-import ...ContainerBlocks: ContainerBlock, GradientWaveform, EventComponent, NoGradientBlock, ChangingGradientBlock, ConstantGradientBlock, split_gradient
-import ...Components: BaseComponent
+import ...ContainerBlocks: ContainerBlock
+import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradientBlock, ChangingGradientBlock, ConstantGradientBlock, split_gradient
 import ...Variables: qvec, bmat_gradient
 
 """
