@@ -8,7 +8,7 @@ include("readouts/readouts.jl")
 import .AbstractTypes: BaseComponent, GradientWaveform, EventComponent, RFPulseComponent, ReadoutComponent
 import .GradientWaveforms: ConstantGradient, ChangingGradient, NoGradient
 import .InstantGradients: InstantGradient1D, InstantGradient3D
-import .Pulses: GenericPulse, InstantRFPulse, SincPulse, ConstantPulse
+import .Pulses: GenericPulse, InstantPulse, SincPulse, ConstantPulse
 import .Readouts: ADC, SingleReadout
 
 end
