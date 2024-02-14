@@ -1,6 +1,6 @@
 module BaseBuildingBlocks
 import ...ContainerBlocks: ContainerBlock
-import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradientBlock, ChangingGradientBlock, ConstantGradientBlock, split_gradient
+import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient
 import ...Variables: qvec, bmat_gradient
 
 """
@@ -33,7 +33,7 @@ Base.iterate(c::BaseBuildingBlock, index::Integer) = length(c) < index ? nothing
 
 Returns just the non-gradient (i.e., RF pulses/readouts) events as a sequence of [`EventComponent`](@ref) objects (with their keys).
 """
-function waveform_sequence(bb::BaseBuildingBlock)
+function events(bb::BaseBuildingBlock)
     return [(key, bb[key]) for key in keys(bb) if bb[key] isa EventComponent]
 end
 
@@ -80,14 +80,14 @@ function waveform(bb::BaseBuildingBlock)
     for (_, block) in waveform_sequence(bb)
         new_time = result[end][1] + max(duration(block), 0)
         prev_grad = result[end][2]
-        if block isa NoGradientBlock
-            @assert all(abs.(prev_grad) <= 1e-12) "$(typeof(bb)) inserts NoGradientBlock before the gradient is zero. This is probably caused by an improper implementation of this BuildingBlock."
+        if block isa NoGradient
+            @assert all(abs.(prev_grad) <= 1e-12) "$(typeof(bb)) inserts NoGradient before the gradient is zero. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad))
-        elseif block isa ConstantGradientBlock
-            @assert all(gradient_strength(block) .≈ prev_grad) "$(typeof(bb)) inserts ConstantGradientBlock that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
+        elseif block isa ConstantGradient
+            @assert all(gradient_strength(block) .≈ prev_grad) "$(typeof(bb)) inserts ConstantGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad))
-        elseif block isa ChangingGradientBlock
-            @assert all(block.gradient_strength_start .≈ prev_grad) "$(typeof(bb)) inserts ChangingGradientBlock that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
+        elseif block isa ChangingGradient
+            @assert all(block.gradient_strength_start .≈ prev_grad) "$(typeof(bb)) inserts ChangingGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad .+ slew_rate(block) .* duration(block)))
         else
             error("Unrecognised block type in BuildingBlock: $(typeof(bb)).")
