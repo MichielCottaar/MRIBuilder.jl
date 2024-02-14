@@ -6,7 +6,6 @@ module MRIBuilder
 include("scanners.jl")
 include("build_sequences.jl")
 include("variables.jl")
-include("building_blocks.jl")
 include("components/components.jl")
 include("all_building_blocks/all_building_blocks.jl")
 include("all_sequences/all_sequences.jl")
