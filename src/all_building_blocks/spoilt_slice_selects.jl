@@ -23,7 +23,7 @@ Adds slice selection to the `pulse` and surrounds it with spoiler gradients.
 - `slice_thickness`: slice thickness in mm.
 - `spoiler_scale`: length scale on which the spoilers achieve 2π dephasing in mm. This sets the minimum spoiling. If this spoiling level is not achieved by the slice-select gradient alone, then there will be additional gradients added.
 """
-struct SpoiltSliceSelect <: AbstractOverlapping
+struct SpoiltSliceSelect <: BaseBuildingBlock
     orientation :: SVector{3, Float64}
     rise_time1 :: VariableType
     flat_time1 :: VariableType
