@@ -26,7 +26,7 @@ To have a variable `orientation`, see [`InstantGradient3D`](@ref).
 - [`qval`](@ref): Spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
 - [`spoiler_scale`](@ref): Length-scale on which spins will be dephased by exactly 2π in mm.
 """
-struct InstantGradient1D <: GradientBlock
+struct InstantGradient1D <: InstantGradient
     qval :: VariableType
     orientation :: SVector{3, Number}
     group :: Union{Nothing, Symbol}
@@ -57,7 +57,7 @@ To have a fixed `orientation`, see [`InstantGradient1D`](@ref).
 - [`qval`](@ref): Norm of spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
 - [`spoiler_scale`](@ref): Vector with length-scale on which spins will be dephased by exactly 2π in mm.
 """
-struct InstantGradient3D <: GradientBlock
+struct InstantGradient3D <: InstantGradient
     qvec :: SVector{3, VariableType}
     group :: Union{Nothing, Symbol}
 end
