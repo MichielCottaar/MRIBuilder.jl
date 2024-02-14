@@ -24,8 +24,8 @@ abstract type BaseBuildingBlock <: ContainerBlock end
 # Iterator interface
 Base.length(c::BaseBuildingBlock) = length(keys(c))
 Base.eltype(::Type{<:BaseBuildingBlock}) = BaseComponent
-Base.iter(c::BaseBuildingBlock) = iter(c, 1)
-Base.iter(c::BaseBuildingBlock, index::Integer) = length(c) < index ? nothing : (c[keys(c)[index]], index + 1)
+Base.iterate(c::BaseBuildingBlock) = Base.iterate(c, 1)
+Base.iterate(c::BaseBuildingBlock, index::Integer) = length(c) < index ? nothing : (c[keys(c)[index]], index + 1)
 
 
 """
