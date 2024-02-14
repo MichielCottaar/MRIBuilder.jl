@@ -33,8 +33,8 @@ export waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Tr
 import .AllSequences: BaseSequence, nrepeat, Sequence
 export BaseSequence, nrepeat, Sequence
 
-import .Alternatives: AlternativeBlocks
-export AlternativeBlocks
+import .Alternatives: AlternativeBlocks, match_blocks!
+export AlternativeBlocks, match_blocks!
 
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
 export Pathway, duration_transverse, duration_dephase, bval, bmat

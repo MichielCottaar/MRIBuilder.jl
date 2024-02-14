@@ -1,8 +1,8 @@
 module Alternatives
 import JuMP: @constraint
-import ..BuildingBlocks: BuildingBlock, match_blocks!, make_generic, fixed
-import ..BuildSequences: global_model
-import ..Variables: duration
+import ..ContainerBlocks: ContainerBlock
+import ..BuildSequences: global_model, fixed
+import ..Variables: duration, make_generic
 
 """
     AlternativeBlocks(name, blocks)
@@ -13,9 +13,9 @@ Variables can be matched across these alternatives using [`match_blocks!`](@ref)
 
 The `name` is a symbol that is used to identify this `AlternativeBlocks` in the broader sequence.
 """
-struct AlternativeBlocks <: BuildingBlock
+struct AlternativeBlocks <: ContainerBlock
     name :: Symbol
-    options :: Dict{Any, BuildingBlock}
+    options :: Dict{Any, <:ContainerBlock}
 end
 
 AlternativeBlocks(name::Symbol, options_vector::AbstractVector) = AlternativeBlocks(name, Dict(index => value for (index, value) in enumerate(options_vector)))
