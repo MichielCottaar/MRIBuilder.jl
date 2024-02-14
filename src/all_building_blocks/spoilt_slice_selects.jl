@@ -39,14 +39,14 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
     model = global_model()
     res = SpoiltSliceSelect(
         orientation ./ norm(orientation),
-        get_free_variable(nothing; start=0.1)
-        get_free_variable(nothing; start=0.1)
-        get_free_variable(nothing; start=0.05)
+        get_free_variable(nothing; start=0.1),
+        get_free_variable(nothing; start=0.1),
+        get_free_variable(nothing; start=0.05),
         pulse,
-        get_free_variable(nothing; start=0.1)
-        get_free_variable(nothing; start=0.1)
+        get_free_variable(nothing; start=0.1),
+        get_free_variable(nothing; start=0.1),
         group,
-        slew_rate(global_scanner())
+        slew_rate(global_scanner()),
     )
     for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
         @constraint model time_var >= 0
@@ -93,6 +93,7 @@ slew_rate(spoilt::SpoiltSliceSelect) = spoilt.slew_rate
 inverse_slice_thickness(spoilt::SpoiltSliceSelect) = spoilt.slew_rate * spoilt.diff_time * duration(spoilt.pulse) * 1e3
 gradient_strength(spoilt::SpoiltSliceSelect) = slew_rate(spoilt) * max(spoilt.rise_time1, spoilt.fall_time2)
 get_pulse(spoilt::SpoiltSliceSelect) = spoilt.pulse
+
 function all_gradient_strengths(spoilt::SpoiltSliceSelect)
     grad1 = spoilt.slew_rate * rise_time(spoilt)[1]
     grad2 = grad1 - spoilt.slew_rate * flat_time(spoilt)[1]
