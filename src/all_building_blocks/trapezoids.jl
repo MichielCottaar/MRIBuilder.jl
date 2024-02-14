@@ -84,7 +84,7 @@ function (::Type{Trapezoid})(; orientation=nothing, rise_time=nothing, flat_time
             orientation,
             group
         )
-        @contraint global_model() res.slew_rate >= 0
+        @constraint global_model() res.slew_rate >= 0
     end
 
     set_simple_constraints!(res, kwargs)
