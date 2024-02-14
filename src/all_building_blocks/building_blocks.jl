@@ -1,8 +1,8 @@
 module BuildingBlocks
 import LinearAlgebra: norm
 import ..BaseBuildingBlocks: BaseBuildingBlock, events, waveform_sequence
-import ...Variables: VariableType, duration, make_generic
-import ...Components: BaseComponent, DelayedEvent
+import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout
+import ...Components: BaseComponent, DelayedEvent, RFPulseComponent, ReadoutComponent
 import ...Readouts: InstantReadout, ADC
 import ...Pulses: RFPulseBlock
 import ...Gradients: GradientBlock
@@ -70,6 +70,28 @@ make_generic(other_block::BaseBuildingBlock) = BuildingBlock(duration(other_bloc
 Base.keys(bb::BuildingBlock) = 1:length(bb.parts)
 Base.getindex(bb::BuildingBlock, i::Integer) = bb.parts[i]
 
-duration(go::BuildingBlock) = go.duration
+duration(bb::BuildingBlock) = sum(duration, waveform_sequence(bb); init=0.)
+
+function get_pulse(bb::BuildingBlock)
+    pulses = [p for p in events(bb) if p isa RFPulseComponent]
+    if length(pulses) == 0
+        error("BuildingBlock does not contain any pulses.")
+    end
+    if length(pulses) == 1
+        return pulses[1]
+    else
+    error("BuildingBlock contains more than one pulse. Not sure which one to return.")
+end
+
+function get_readout(bb::BuildingBlock)
+    readouts = [r for r in events(bb) if r isa ReadoutComponent]
+    if length(readouts) == 0
+        error("BuildingBlock does not contain any readouts.")
+    end
+    if length(readouts) == 1
+        return readouts[1]
+    else
+    error("BuildingBlock contains more than one readout. Not sure which one to return.")
+end
 
 end

@@ -2,8 +2,9 @@ module Sequences
 import StaticArrays: SVector
 import JuMP: @constraint
 import ...Variables: get_free_variable, TR, VariableType
-import ...BuildingBlocks: WaitBlock
+import ...BuildingBlocks: WaitBlock, BuildingBlock
 import ...BuildSequences: get_global_model
+import ...Components: EventComponent
 import ..BaseSequences: ContainerBlock, BaseSequence, nrepeat
 
 """
@@ -42,11 +43,12 @@ Base.getindex(s::Sequence, i::Integer) = s.blocks[i]
 Converst object into something that can be included in the sequence:
 - :min/:max/number/variable/nothing => [`WaitBlock`](@ref).
 - `building_block` or `sequence` => no change.
+- RF pulse/readout => will be embedded within a [`BuildingBlock`](@ref).
 """
 to_block(cb::ContainerBlock) = cb
 to_block(s::Symbol) = to_block(Val(s))
 to_block(s::Union{VariableType, Nothing, Val{:min}, Val{:max}}) = WaitBlock(s)
-
+to_block(ec::EventComponent) = BuildingBlock([], [(0, ec)]; duration=duration(ec))
 
 
 end
