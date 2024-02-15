@@ -4,7 +4,7 @@ import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @constraint, @objective, objective_function
 import ...BuildSequences: global_model, global_scanner
-import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qval, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse, set_simple_constraints!
+import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qval, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse, set_simple_constraints!, gradient_orientation
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
 import ..BaseBuildingBlocks: BaseBuildingBlock
 
@@ -92,18 +92,19 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
     return res
 end
 
+gradient_orientation(spoilt::SpoiltSliceSelect) = spoilt.orientation
 duration_trap1(spoilt::SpoiltSliceSelect) = 2 * spoilt.rise_time1 + spoilt.flat_time1 - spoilt.diff_time
 duration_trap2(spoilt::SpoiltSliceSelect) = 2 * spoilt.fall_time2 + spoilt.flat_time2 - spoilt.diff_time
 
 Base.keys(::SpoiltSliceSelect) = Val.((:rise1, :flat1, :fall1, :flat_pulse, :pulse, :rise2, :flat2, :fall2))
-Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:rise1}) = ChangingGradient(0., slew_rate(spoilt), rise_time(spoilt)[1])
-Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat1}) = ConstantGradient(slew_rate(spoilt) * rise_time(spoilt)[1], flat_time(spoilt)[1])
-Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall1}) = ChangingGradient(slew_rate(spoilt) * rise_time(spoilt)[1], -slew_rate(spoilt), fall_time(spoilt)[1])
-Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat_pulse}) = ConstantGradient(slew_rate(spoilt) * spoilt.diff_time, duration(spoilt.pulse))
+Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:rise1}) = ChangingGradient(0., slew_rate(spoilt), gradient_orientation(spoilt), rise_time(spoilt)[1], spoilt.group)
+Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat1}) = ConstantGradient(slew_rate(spoilt) * rise_time(spoilt)[1], gradient_orientation(spoilt), flat_time(spoilt)[1], spoilt.group)
+Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall1}) = ChangingGradient(slew_rate(spoilt) * rise_time(spoilt)[1], -slew_rate(spoilt), gradient_orientation(spoilt), fall_time(spoilt)[1], spoilt.group)
+Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat_pulse}) = ConstantGradient(slew_rate(spoilt) * spoilt.diff_time, gradient_orientation(spoilt), duration(spoilt.pulse), spoilt.group)
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:pulse}) = spoilt.pulse
-Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:rise2}) = ChangingGradient(slew_rate(spoilt) * spoilt.diff_time, slew_rate(spoilt), rise_time(spoilt)[2])
-Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat2}) = ConstantGradient(slew_rate(spoilt) * fall_time(spoilt)[2], flat_time(spoilt)[2])
-Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall2}) = ChangingGradient(slew_rate(spoilt) * fall_time(spoilt)[2], -slew_rate(spoilt), fall_time(spoilt)[2])
+Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:rise2}) = ChangingGradient(slew_rate(spoilt) * spoilt.diff_time, slew_rate(spoilt), gradient_orientation(spoilt), rise_time(spoilt)[2], spoilt.group)
+Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat2}) = ConstantGradient(slew_rate(spoilt) * fall_time(spoilt)[2], gradient_orientation(spoilt), flat_time(spoilt)[2], spoilt.group)
+Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall2}) = ChangingGradient(slew_rate(spoilt) * fall_time(spoilt)[2], -slew_rate(spoilt), gradient_orientation(spoilt), fall_time(spoilt)[2], spoilt.group)
 
 rise_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1, spoilt.fall_time2 - spoilt.diff_time)
 flat_time(spoilt::SpoiltSliceSelect) = (spoilt.flat_time1, spoilt.flat_time2)

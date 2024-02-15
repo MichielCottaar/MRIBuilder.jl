@@ -5,7 +5,7 @@ import ...Variables: VariableType, duration, make_generic, get_pulse, get_readou
 import ...Components: BaseComponent, DelayedEvent, RFPulseComponent, ReadoutComponent
 
 """
-    BuildingBlock(waveform, events; duration=nothing, orientation=nothing)
+    BuildingBlock(waveform, events; duration=nothing, orientation=nothing, group)
 
 Generic [`BaseBuildingBlock`](@ref) that can capture any overlapping gradients, RF pulses, and/or readouts.
 The gradients cannot contain any free variables.
@@ -15,6 +15,7 @@ The gradients cannot contain any free variables.
 - `events`: Sequence of 2-element tuples with (index, pulse/readout). The start time of the pulse/readout at the start of the gradient waveform element with index `index` (use [`DelayedEvent`](@ref) to make this earlier or later).
 - `duration`: duration of this `BuildingBlock`. If not set then it will be assumed to be the time of the last element in `waveform`.
 - `orientation`: orientation of the gradients in the waveform. If not set, then the full gradient vector should be given explicitly.
+- `group`: group of the gradient waveform
 """
 struct BuildingBlock <: BaseBuildingBlock
     parts :: Vector{<:BaseComponent}
@@ -27,10 +28,10 @@ struct BuildingBlock <: BaseBuildingBlock
     end
 end
 
-function BuildingBlock(waveform::AbstractVector, events::AbstractVector; duration=nothing, orientation=nothing)
+function BuildingBlock(waveform::AbstractVector, events::AbstractVector; duration=nothing, orientation=nothing, group=nothing)
     events = Any[events...]
     waveform = Any[waveform...]
-    ndim = isnothing(orientat) ? 1 : 3
+    ndim = isnothing(orientation) ? 1 : 3
     zero_grad = isnothing(orientation) ? zeros(3) : 0.
     if length(waveform) == 0 || waveform[1][1] > 0.
         pushfirst!(waveform, (0., zero_grad))
@@ -48,11 +49,11 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; duratio
     for (index_grad, ((prev_time, prev_grad), (time, grad))) in enumerate(zip(waveform[1:end-1], waveform[2:end]))
         duration = time - prev_time
         if norm(prev_grad) <= 1e-12 && norm(grad) <= 1e-12
-            push!(components, NoGradientBlock{ndim}(duration))
+            push!(components, NoGradient{ndim}(duration))
         elseif norm(prev_grad) ≈ norm(grad)
-            push!(components, ConstantGradientBlock(prev_grad, duration))
+            push!(components, ConstantGradient(prev_grad, orientation, duration, group))
         else
-            push!(components, ChangingGradientBlock(prev_grad, (grad .- prev_grad) ./ duration, duration))
+            push!(components, ChangingGradient(prev_grad, (grad .- prev_grad) ./ duration, orientation, duration, group))
         end
         while length(events) > 0 && index_grad == events[1][1]
             (_, event) = popfirst!(events)

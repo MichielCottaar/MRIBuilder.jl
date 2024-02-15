@@ -9,7 +9,7 @@ import ..AbstractTypes: EventComponent, GradientWaveform
 If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwise an [`InstantGradient3D`](@ref).
 
 ## Parameters
-- `orientation` sets the gradient orienation as a length-3 vector. If not set, the gradient can be in any direction.
+- `orientation` sets the gradient orientation as a length-3 vector. If not set, the gradient can be in any direction.
 - `group`: name of the group to which this gradient belongs (used for scaling and rotating).
 
 ## Variables
@@ -19,7 +19,7 @@ If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwis
 abstract type InstantGradient <: EventComponent end
 
 function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=nothing, variables...)
-    if isnothing(orientaiton)
+    if isnothing(orientation)
         res = InstantGradient3D(get_free_variable.(qval), group)
     else
         res = InstantGradient1D(get_free_variable(qval), orientation, group)

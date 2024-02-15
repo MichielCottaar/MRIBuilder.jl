@@ -7,7 +7,7 @@ import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
 import ...Variables: qval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, qval_square, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
-import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout
+import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout, gradient_orientation
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ..BaseBuildingBlocks: BaseBuildingBlock
@@ -31,7 +31,7 @@ abstract type BaseTrapezoid{N} <: BaseBuildingBlock end
 Defines a trapezoidal pulsed gradient
 
 ## Parameters
-- `orientation` sets the gradient orienation (completely free by default). Can be set to a vector for a fixed orientation.
+- `orientation` sets the gradient orientation (completely free by default). Can be set to a vector for a fixed orientation.
 - `group`: assign the trapezoidal gradient to a specific group. This group will be used to scale or rotate the gradients after optimisation.
 
 ## Variables
@@ -97,9 +97,12 @@ end
 
 Base.keys(::Trapezoid) = (Val(:rise), Val(:flat), Val(:fall))
 
-Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(N == 3 ? zeros(3) : 0., slew_rate(pg), rise_time(pg))
-Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(gradient_strength(pg), flat_time(pg))
-Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(gradient_strength(pg), -slew_rate(pg), rise_time(pg))
+Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(N == 3 ? zeros(3) : 0., slew_rate(pg), gradient_orientation(pg), rise_time(pg), pg.group)
+Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(gradient_strength(pg), gradient_orientation(pg), flat_time(pg), pg.group)
+Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(gradient_strength(pg), -slew_rate(pg), gradient_orientation(pg), rise_time(pg), pg.group)
+gradient_orientation(::BaseTrapezoid{3}) = nothing
+gradient_orientation(pg::BaseTrapezoid{1}) = gradient_orientation(get_gradient(pg))
+gradient_orientation(pg::Trapezoid{1}) = pg.orientation
 
 rise_time(pg::Trapezoid) = pg.rise_time
 flat_time(pg::Trapezoid) = pg.flat_time
