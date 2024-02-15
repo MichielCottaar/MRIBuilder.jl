@@ -1,6 +1,6 @@
 module DelayedEvents
 import ..AbstractTypes: EventComponent, ReadoutComponent, RFPulseComponent
-import ...Variables: VariableType, get_free_variable, get_pulse, get_readout
+import ...Variables: VariableType, get_free_variable, get_pulse, get_readout, duration
 
 struct DelayedEvent{T<:EventComponent} <: EventComponent
     event :: T
@@ -15,6 +15,7 @@ effective_time(del::DelayedEvent) = effective_time(del.event) + del.delay
 
 get_pulse(del::DelayedEvent{T}) where {T<:RFPulseComponent} = del.event
 get_readout(del::DelayedEvent{T}) where {T<:ReadoutComponent} = del.event
+duration(del::DelayedEvent) = duration(del.event)
 
 
 end
