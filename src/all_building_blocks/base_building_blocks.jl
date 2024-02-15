@@ -113,7 +113,7 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
     parts = Tuple{Any, GradientWaveform}[]
     for key in keys(bb)
         if bb[key] isa GradientWaveform
-            if started
+            if started && !isnothing(current_grad_key)
                 push!(parts, (current_grad_key, isnothing(current_start) ? bb[current_grad_key] : split_gradient(bb[current_grad_key], current_start)[2]))
             end
             current_grad_key = key
