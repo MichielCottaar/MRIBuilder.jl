@@ -13,7 +13,7 @@ Underlying type for any flat part in a 3D (first constructor) or 3D (second cons
 Usually, you do not want to create this object directly, use a `BuildingBlock` instead.
 """
 abstract type ConstantGradient{N} <: GradientWaveform{N} end
-(::Type{ConstantGradient})(grad1::VariableType, orientation::AbstractVector, duration::VariableType, group=nothing) = ConstantGradient1D(grad1, duration, orientation, group)
+(::Type{ConstantGradient})(grad1::VariableType, orientation::AbstractVector, duration::VariableType, group=nothing) = ConstantGradient1D(grad1, orientation, duration, group)
 (::Type{ConstantGradient})(grad1::AbstractVector, ::Nothing, duration::VariableType, group=nothing) = ConstantGradient3D(grad1, duration, group)
 (::Type{ConstantGradient})(grad1::AbstractVector, duration::VariableType, group=nothing) = ConstantGradient3D(grad1, duration, group)
 
