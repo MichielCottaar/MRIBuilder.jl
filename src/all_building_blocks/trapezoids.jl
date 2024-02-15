@@ -97,9 +97,9 @@ end
 
 Base.keys(::Trapezoid) = (Val(:rise), Val(:flat), Val(:fall))
 
-Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradientBlock(N == 3 ? zeros(3) : 0., slew_rate(pg), rise_time(pg))
-Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradientBlock(gradient_strength(pg), flat_time(pg))
-Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradientBlock(gradient_strength(pg), -slew_rate(pg), rise_time(pg))
+Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(N == 3 ? zeros(3) : 0., slew_rate(pg), rise_time(pg))
+Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(gradient_strength(pg), flat_time(pg))
+Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(gradient_strength(pg), -slew_rate(pg), rise_time(pg))
 
 rise_time(pg::Trapezoid) = pg.rise_time
 flat_time(pg::Trapezoid) = pg.flat_time
@@ -137,7 +137,7 @@ function SliceSelect(pulse::RFPulseComponent; orientation=nothing, rise_time=not
     return res
 end
 
-Base.keys(::SliceSelect) = (Val(:rise), Val(:flat), Vale(:pulse), Val(:fall))
+Base.keys(::SliceSelect) = (Val(:rise), Val(:flat), Val(:pulse), Val(:fall))
 Base.getindex(pg::SliceSelect, ::Val{:pulse}) = pg.pulse
 
 inverse_slice_thickness(ss::SliceSelect) = 1e3 * gradient_strength(ss.trapezoid) .* inverse_bandwidth(ss.pulse)
