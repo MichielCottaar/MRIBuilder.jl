@@ -13,7 +13,7 @@ include("all_sequences/all_sequences.jl")
 include("alternatives.jl")
 include("pathways.jl")
 include("helper_functions.jl")
-include("printing.jl")
+#include("printing.jl")
 
 import .BuildSequences: build_sequence, global_model, global_scanner
 export build_sequence, global_model, global_scanner
