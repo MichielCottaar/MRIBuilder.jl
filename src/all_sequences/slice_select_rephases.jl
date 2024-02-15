@@ -28,6 +28,7 @@ function SliceSelectRephase(pulse::RFPulseComponent; orientation=nothing, group=
     else
         apply_simple_constraint!(qval(res.slice_select, :pulse, nothing), -qval(res.rephase))
     end
+    return res
 end
 
 get_index_single_TR(ss::SliceSelectRephase, ::Val{1}) = ss.slice_select
