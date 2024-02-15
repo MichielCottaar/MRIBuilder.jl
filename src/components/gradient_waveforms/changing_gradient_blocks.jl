@@ -5,26 +5,30 @@ import ...AbstractTypes: GradientWaveform
 
 
 """
-    ChangingGradient(grad1, slew_rate, duration)
+    ChangingGradient(grad1_scalar, slew_rate_scalar, orientation, duration, group=nothing)
+    ChangingGradient(grad1_vec, slew_rate_vec, duration, group=nothing)
 
-Underlying type for any linearly changing part in a 1D or 3D gradient waveform (depending on whether `grad1` and `slew_rate` are a scalar or a vector)
+Underlying type for any linearly changing part in a 1D (first constructor) or 3D (second constructor) gradient waveform.
 
 Usually, you do not want to create this object directly, use a `BuildingBlock` instead.
 """
 abstract type ChangingGradient{N} <: GradientWaveform{N} end
-(::Type{ChangingGradient})(grad1::VariableType, slew_rate::VariableType, duration::VariableType) = ChangingGradient1D(grad1, slew_rate, duration)
-(::Type{ChangingGradient})(grad1::AbstractVector, slew_rate::AbstractVector, duration::VariableType) = ChangingGradient3D(grad1, slew_rate, duration)
+(::Type{ChangingGradient})(grad1::VariableType, slew_rate::VariableType, orientation::AbstractVector, duration::VariableType, group=nothing) = ChangingGradient1D(grad1, slew_rate, orientation, duration, group)
+(::Type{ChangingGradient})(grad1::AbstractVector, slew_rate::AbstractVector, duration::VariableType, group=nothing) = ChangingGradient3D(grad1, slew_rate, duration, group)
 
 struct ChangingGradient1D <: ChangingGradient{1}
     gradient_strength_start :: VariableType
     slew_rate :: VariableType
+    orientation :: SVector{3, Float64}
     duration :: VariableType
+    group :: Union{Nothing, Symbol}
 end
 
 struct ChangingGradient3D <: ChangingGradient{3}
     gradient_strength_start :: SVector{3, <:VariableType}
     slew_rate :: SVector{3, <:VariableType}
     duration :: VariableType
+    group :: Union{Nothing, Symbol}
 end
 
 
@@ -80,7 +84,11 @@ For N times this returns a vector with the N+1 replacement [`ConstantGradientBlo
 function split_gradient(cgb::ChangingGradient, times::VariableType...)
     all_times = [0., times...]
     durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(cgb) - times[end]]
-    return [cls(cgb)(cgb.gradient_strength .+ cgb.slew_rate .* t, cgb.slew_rate, d) for (t, d) in zip(all_times, durations)]
+    if cgb isa ChangingGradient1D
+        return [ChangingGradient1D(cgb.gradient_strength .+ cgb.slew_rate .* t, cgb.slew_rate, cgb.orientation, d, cgb.group) for (t, d) in zip(all_times, durations)]
+    else
+        return [ChangingGradient3D(cgb.gradient_strength .+ cgb.slew_rate .* t, cgb.slew_rate, d, cgb.group) for (t, d) in zip(all_times, durations)]
+    end
 end
 
 

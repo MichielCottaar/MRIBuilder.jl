@@ -1,6 +1,6 @@
 module NoGradientBlocks
 import StaticArrays: SVector, SMatrix
-import ....Variables: VariableType, duration, qvec, bmat_gradient, gradient_strength, slew_rate, get_free_variable
+import ....Variables: VariableType, duration, qval, qvec, bmat_gradient, gradient_strength, slew_rate, get_free_variable
 import ...AbstractTypes: GradientWaveform
 import ..ChangingGradientBlocks: split_gradient
 
@@ -24,15 +24,16 @@ struct NoGradient{N} <: GradientWaveform{N}
 end
 
 duration(ngb::NoGradient) = duration(ngb)
-for func in (:qvec, :gradient_strength, :slew_rate)
+for func in (:qval, :gradient_strength, :slew_rate)
     @eval $func(::NoGradient{1}) = 0.
     @eval $func(::NoGradient{3}) = zero(SVector{3, Float64})
 end
 
+qvec(::NoGradient, index1, index2) = zero(SVector{3, Float64})
+qvec(::NoGradient) = zero(SVector{3, Float64})
+
 bmat_gradient(::NoGradient{1}) = 0.
 bmat_gradient(::NoGradient{3}) = zero(SMatrix{3, 3, Float64, 9})
-
-bmat_gradient(::NoGradient, ) = 0.
 bmat_gradient(ngb::NoGradient{1}, qstart::VariableType) = qstart^2 * duration(ngb)
 bmat_gradient(ngb::NoGradient{3}, qstart::AbstractVector{<:VariableType}) = @. qstart * permutedims(qstart) * duration(ngb)
 
