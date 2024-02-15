@@ -216,6 +216,8 @@ for (target_name, all_vars) in all_variables_symbols
         if variable_func in [:qval_square, :qval]
             continue
         end
+        get_func = Symbol("get_" * string(target_name))
+        use_get_func = target_name in (:pulse, :readout, :gradient)
         @eval function Variables.$variable_func(bb::AbstractBlock)
             try
                 if Variables.$variable_func in keys(alternative_variables)
@@ -237,8 +239,8 @@ for (target_name, all_vars) in all_variables_symbols
                 end
                 throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
             catch e
-                if e isa VariableNotAvailable && hasmethod(get_$(target_name), Tuple(typeof(bb))) && $(target_name) in (:pulse, :readout)
-                    return Variables.$variable_func(get_$(target_name)(bb))
+                if $use_get_func && e isa VariableNotAvailable && hasmethod($get_func, Tuple(typeof(bb)))
+                    return Variables.$variable_func($get_func(bb))
                 end
                 rethrow()
             end
