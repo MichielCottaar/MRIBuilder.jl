@@ -4,7 +4,8 @@ import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
 import ..AllSequences: BaseSequence, Sequence
 import ..AllBuildingBlocks: BaseBuildingBlock, waveform, events, get_parts
-import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration, qval_square, TR
+import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, qval_square, TR
+import ..ContainerBlocks: start_time
 import ..Alternatives: AlternativeBlocks
 
 
@@ -249,9 +250,9 @@ PathwayWalker() = PathwayWalker(
 )
 
 """
-    walk_pathway!(bb::BuildingBlock, walker::PathwayWalker, pulse_effects::Vector, nreadout::Ref{Int}, start_time)
+    walk_pathway!(bb::Sequence/BuildingBlock, walker::PathwayWalker, pulse_effects::Vector, nreadout::Ref{Int}, start_time)
 
-Computes the effect of a specific [`BuildingBlock`](@ref) (starting at `start_time`) on the [`PathwayWalker`](@ref).
+Computes the effect of a specific [`ContainerBlock`](@ref) (starting at `start_time`) on the [`PathwayWalker`](@ref).
 
 For individual pulses and gradients, the following behaviour is implemented:
 - If a pulse is encountered, call [`update_walker_pulse!`](@ref)`(walker, pulse_effects, pulse_effective_time)`
@@ -287,7 +288,7 @@ function walk_pathway!(seq::BaseSequence, walker::PathwayWalker, pulse_effects::
     return false
 end
 
-function walk_pathway!(block::BuildingBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
+function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
     current_index = nothing
     current_time = block_start_time
     for (index_inter, interruption) in events(block)
