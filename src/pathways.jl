@@ -41,8 +41,7 @@ Over the pathway the following values are computed. Each can be accessed by call
 - [`duration_dephase`](@ref): The total amount of time the spins spent in the +transverse relative to -transverse state in ms. The absolute value of this can be used to quantify the expected effect of T2'-decay.
 
 ### Effect of gradients
-Some gradients will be scaled/rotated with user-provided values (e.g., bvals/bvecs).
-The area under curve, q-values, and b-values are computed separately for such gradients.
+The area under curve, q-values, and b-values are computed separately for each group of gradients (depending on the `group` keyword set during construction).
 You can select which gradients to consider when accessing these values.
 - [`qvec`](@ref): Net displacement vector in k-space/q-space.
 - [`qval`](@ref)/[`area_under_curve`](@ref): size of the displacement in k-space/q-space. For a spoiled pathway, this should be large compared with 1/voxel size; for unspoiled pathways it should be (close to) zero.
@@ -116,54 +115,54 @@ end
 
 
 """
-    qvec(pathway::Pathway; scale=nothing, rotate=nothing)
+    qvec(pathway::Pathway; group=nothing)
 
 Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
 
-By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
-You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
+By default gradients that have been added to a specific `group` are ignored.
+You can set `group=<name>` to consider a specific `group.
 """
-qvec(pathway::Pathway; scale=nothing, rotate=nothing) = get(pathway.qvec, (scale, rotate), zero(SVector{3, Float64}))
+qvec(pathway::Pathway; group=nothing) = get(pathway.qvec, group, zero(SVector{3, Float64}))
 
 
 """
-    area_under_curve(pathway::Pathway; scale=nothing, rotate=nothing)
+    area_under_curve(pathway::Pathway; group=nothing)
 
 Return net displacement in k-space (i.e., spoiling) experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
 
-By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
-You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
+By default gradients that have been added to a specific `group` are ignored.
+You can set `group=<name>` to consider a specific `group.
 """
-area_under_curve(pathway::Pathway; scale=nothing, rotate=nothing) = qval(pathway; scale, rotate)
+area_under_curve(pathway::Pathway; group=nothing) = qval(pathway; group=group)
 
 
 """
-    bmat(pathway::Pathway; scale=nothing, rotate=nothing)
+    bmat(pathway::Pathway; group=nothing)
 
 Return 3x3 diffusion-weighted matrix experienced by the spins following a specific [`Pathway`](@ref) in rad^2 ms/um^2.
 
 Only gradients active while the spins are in the transverse plane are considered.
 
-By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
-You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
+By default gradients that have been added to a specific `group` are ignored.
+You can set `group=<name>` to consider a specific `group.
 """
-bmat(pathway::Pathway; scale=nothing, rotate=nothing)  = get(pathway.bmat, (scale, rotate), zero(SMatrix{3, 3, Float64, 9}))
+bmat(pathway::Pathway; group=nothing)  = get(pathway.bmat, group, zero(SMatrix{3, 3, Float64, 9}))
 
 """
-    bval(pathway::Pathway; scale=nothing, rotate=nothing)
+    bval(pathway::Pathway; group=nothing)
 
 Return size of diffusion-weighting experienced by the spins following a specific [`Pathway`](@ref) in rad^2 ms/um^2.
 
 Only gradients active while the spins are in the transverse plane will contribute to the diffusion weighting.
 
-By default gradients that are affected by user-provided `scale` or `rotate` parameters (e.g., bvals/bvecs) are ignored.
-You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by specific `scale`/`rotate` parameters
+By default gradients that have been added to a specific `group` are ignored.
+You can set `group=<name>` to consider a specific `group.
 """
-bval(pathway::Pathway; scale=nothing, rotate=nothing) = tr(bmat(pathway; scale, rotate))
+bval(pathway::Pathway; group=nothing) = tr(bmat(pathway; group=group))
 
 
 """
@@ -311,13 +310,13 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
         end 
 
         # apply gradients up till interrupt
-        for part in waveform_sequence(block, current_index, index_inter)
+        for (_, part) in waveform_sequence(block, current_index, index_inter)
             update_walker_gradient!(part, walker, current_time)
             current_time = current_time + duration(part)
         end 
 
         # apply interrupt
-        if interruption.object isa RFPulseBlock
+        if interruption isa RFPulseComponent
             update_walker_pulse!(walker, pulse_effects, current_time)
         end
         current_index = index_inter
@@ -328,7 +327,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
     end
 
     # apply remaining gradients
-    for part in waveform_sequence(block, current_index, nothing)
+    for (_, part) in waveform_sequence(block, current_index, nothing)
         update_walker_gradient!(part, walker, current_time)
         current_time = current_time + duration(part)
     end
@@ -337,12 +336,12 @@ end
 
 
 """
-    update_walker_till_time!(walker::PathwayWalker, new_time[, (rotate, scale)])
+    update_walker_till_time!(walker::PathwayWalker, new_time[, gradient_group])
 
 Updates all parts of a [`PathwayWalker`](@ref) up to the given time.
 
 This updates the `walker.duration_states` and the `bmat` for each gradient tracker.
-If `rotate` and `scale` are provided, then only the gradient tracker matching those properties will be updated.
+If `gradient_group` are provided, then only the gradient tracker matching that group will be updated.
 If that gradient tracker does not exist, it will be created.
 
 This function is used to get the `walker` up to date till the start of a gradient, pulse, or final readout.
@@ -372,7 +371,7 @@ The `bmat` is updated with the outer produce of `qvec` with itself multiplied by
 
 When called with the first signature the tracker will be created from scratch if a tracker with that `key` does not exist.
 """
-function update_gradient_tracker_till_time!(walker::PathwayWalker, key::Tuple, new_time::VariableType)
+function update_gradient_tracker_till_time!(walker::PathwayWalker, key::Union{Nothing, Symbol}, new_time::VariableType)
     if !(key in keys(walker.gradient_trackers))
         walker.gradient_trackers[key] = GradientTracker()
     end
@@ -438,7 +437,7 @@ function update_walker_pulse!(walker::PathwayWalker, pulse_effects::AbstractVect
 end
 
 """
-    update_walker_gradient!(gradient_block::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType; overlapping_pulses=[], overlapping_readouts=[])
+    update_walker_gradient!(gradient_block::GradientWaveform, walker::PathwayWalker, gradient_start_time::VariableType; overlapping_pulses=[], overlapping_readouts=[])
 
 Update the walker's `qvec` and `bmat` based on the given `gradient_block`.
 
@@ -448,7 +447,7 @@ The following steps will be taken:
 - update the appropriate `walker.qvec` and `walker.bmat` based on the gradient waveform. This will require appropriate `qvec`/`bmat` functions to be defined for the gradient building block.
 - update `walker.last_gradient_time` to the time at the end of the gradient.
 
-This requires [`bmat_gradient`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientBlock`](@ref).
+This requires [`bmat_gradient`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientWaveform`](@ref).
 """
 update_walker_gradient!(gradient::NoGradient, walker::PathwayWalker, gradient_start_time::VariableType) = nothing
 
@@ -458,7 +457,7 @@ function update_walker_gradient!(gradient::GradientWaveform, walker::PathwayWalk
     end
 
     # update gradient tracker till start of gradient
-    key = (gradient.scale, gradient.rotate)
+    key = gradient.group
     update_gradient_tracker_till_time!(walker, key, gradient_start_time)
 
     # update qvec/bmat during gradient
