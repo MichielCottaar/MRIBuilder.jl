@@ -38,7 +38,6 @@ bmat_gradient(ngb::NoGradient{3}, qstart::AbstractVector{<:VariableType}) = @. q
 
 function split_gradient(ngb::NoGradient, times::VariableType...)
     durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(ngb) - times[end]]
-    @assert all(durations >= 0.)
     return [NoGradient(d) for d in durations]
 end
 

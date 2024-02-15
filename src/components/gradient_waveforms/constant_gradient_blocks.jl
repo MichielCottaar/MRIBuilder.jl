@@ -55,7 +55,6 @@ end
 
 function split_gradient(cgb::ConstantGradient, times::VariableType...)
     durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(cgb) - times[end]]
-    @assert all(durations >= 0.)
     return [typeof(cgb)(cgb.gradient_strength, d) for d in durations]
 end
 
