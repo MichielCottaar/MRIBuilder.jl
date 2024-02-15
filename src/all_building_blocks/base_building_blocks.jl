@@ -109,14 +109,14 @@ Similarly, setting `last` to nothing indicates to continue till the end of the `
 """
 function waveform_sequence(bb::BaseBuildingBlock, first, last)
     started = isnothing(first)
-    current_grad = current_start = nothing
-    parts = GradientWaveform[]
-    for key in bb
+    current_grad_key = current_start = nothing
+    parts = Tuple{Any, GradientWaveform}[]
+    for key in keys(bb)
         if bb[key] isa GradientWaveform
             if started
-                push!(parts, isnothing(current_start) ? current_grad : split_gradient(current_grad, current_start)[2])
+                push!(parts, (current_grad_key, isnothing(current_start) ? bb[current_grad_key] : split_gradient(bb[current_grad_key], current_start)[2]))
             end
-            current_grad = bb[key]
+            current_grad_key = key
             current_start = nothing
         end
         if key == first
@@ -127,9 +127,9 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
         if key == last
             @assert started
             if isnothing(current_started)
-                push!(parts, split_gradient(current_grad, effective_time(bb[key]))[1])
+                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], effective_time(bb[key]))[1]))
             else
-                push!(parts, split_gradient(current_grad, current_started, effective_time(bb[key]))[2])
+                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], current_started, effective_time(bb[key]))[2]))
             end
         end
     end
@@ -149,7 +149,7 @@ function qval(bb::BaseBuildingBlock, index1, index2)
     if (!isnothing(index1)) && (index1 == index2)
         return zeros(3)
     end
-    sum(qval.(waveform_sequence(bb, index1, index2)); init=0.)
+    sum((i, wv) -> qval(wv), waveform_sequence(bb, index1, index2); init=0.)
 end
 qval(bb::BaseBuildingBlock) = qval(bb, nothing, nothing)
 
@@ -160,7 +160,7 @@ function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
     result = Matrix{VariableType}(zeros(3, 3))
     qcurrent = Vector{VariableType}(qstart)
 
-    for part in waveform_sequence(bb, index1, index2)
+    for (_, part) in waveform_sequence(bb, index1, index2)
         result = result .+ bmat_gradient(part, qcurrent)
         qcurrent = qcurrent .+ qvec(part, qcurrent)
     end
