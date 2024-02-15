@@ -25,7 +25,6 @@ Represents a radio-frequency pulse with a sinc-like amplitude and constant frequ
 - [`bandwidth`](@ref): width of the rectangular function in frequency space (in kHz). If the `duration` is short (compared with 1/`bandwidth`), this bandwidth will only be approximate.
 """
 struct SincPulse <: RFPulseComponent
-    symmetric :: Bool
     apodise :: Bool
     Nzeros :: Tuple{Integer, Integer}
     norm_flip_angle :: Tuple{Float64, Float64}
@@ -44,7 +43,6 @@ function SincPulse(;
         Nzeros = (Nzeros, Nzeros)
     end
     res = SincPulse(
-        symmetric,
         apodise,
         Nzeros,
         integral_nzero.(Nzeros, apodise),
