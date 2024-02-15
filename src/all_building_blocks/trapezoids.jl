@@ -6,7 +6,7 @@ module Trapezoids
 import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ...Variables: qvec, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, qval_square, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
+import ...Variables: qval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, qval_square, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
 import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
@@ -44,7 +44,7 @@ If not set, they will be determined during the sequence optimisation.
 - [`duration`](@ref): total pulse duration (2 * `rise_time` + `flat_time`) in ms.
 ### Gradient variables
 - [`gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
-- [`qval`](@ref)/[`qvec`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
+- [`qval`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
 
 The `bvalue` can be constrained for multiple gradient pulses by creating a `Pathway`.
 """
@@ -108,7 +108,7 @@ slew_rate(g::Trapezoid) = g.slew_rate
 δ(g::Trapezoid) = rise_time(g) + flat_time(g)
 duration(g::Trapezoid) = 2 * rise_time(g) + flat_time(g)
 
-qvec(g::BaseTrapezoid, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
+qval(g::BaseTrapezoid, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
 
 """
     SliceSelect(pulse; orientation=nothing, group=nothing, variables...)

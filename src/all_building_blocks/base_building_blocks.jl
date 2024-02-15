@@ -138,21 +138,21 @@ end
 
 
 """
-    qvec(overlapping[, first_event, last_event])
+    qval(overlapping[, first_event, last_event])
 
 Computes the area under the curve for the gradient waveform in [`BaseBuildingBlock`](@ref).
 
 If `first_event` is set to something else than `nothing`, only the gradient waveform after this RF pulse/Readout will be considered.
 Similarly, if `last_event` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
 """
-function qvec(bb::BaseBuildingBlock, index1::Union{Nothing, Integer}, index2::Union{Nothing, Integer})
+function qval(bb::BaseBuildingBlock, index1::Union{Nothing, Integer}, index2::Union{Nothing, Integer})
     @assert isnothing(index1) || isnothing(index2) || index2 >= index1
     if (index1 isa Number) && (index1 == index2)
         return zeros(3)
     end
-    sum(qvec.(waveform_sequence(bb, index1, index2)); init=zero(SVector{3, Float64}))
+    sum(qval.(waveform_sequence(bb, index1, index2)); init=zero(SVector{3, Float64}))
 end
-qvec(bb::BaseBuildingBlock) = qvec(bb, nothing, nothing)
+qval(bb::BaseBuildingBlock) = qval(bb, nothing, nothing)
 
 function bmat_gradient(bb::BaseBuildingBlock, qstart, index1::Union{Nothing, Integer}, index2::Union{Nothing, Integer})
     @assert isnothing(index1) || isnothing(index2) || index2 >= index1

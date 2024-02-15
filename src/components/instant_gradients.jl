@@ -1,13 +1,22 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
-import ...Variables: VariableType, duration, qvec, bmat_gradient, get_free_variable, set_simple_constraints!, qval, effective_time, make_generic
+import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, qval, effective_time, make_generic
 import ..AbstractTypes: EventComponent, GradientWaveform
 
 """
-Parent type for [`InstantGradient1D`](@ref) and [`InstantGradient3D`].
+    InstantGradient1D(; orientation=[1, 0, 0], group=nothing, variables...)
 
-This is an [`EventComponent`](@ref) rather than part of the [`GradientWaveform`](@ref),
-because it is more easily thought of as interrupting a finite gradient waveform rather than being part of it.
+Defines an instantaneous gradient with given fixed `orientation` (default: x-direction).
+
+To have a variable `orientation`, see [`InstantGradient3D`](@ref).
+
+## Parameters
+- `orientation` sets the gradient orienation as a length-3 vector. If not set, the gradient can be in any direction.
+- `group`: name of the group to which this gradient belongs (used for scaling and rotating).
+
+## Variables
+- [`qval`](@ref): Spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um (scalar if `orientation` is set and vector otherwise).
+- [`spoiler_scale`](@ref): Length-scale on which spins will be dephased by exactly 2π in mm.
 """
 abstract type InstantGradient <: EventComponent end
 
@@ -39,7 +48,6 @@ function InstantGradient1D(; orientation=[1, 0, 0], group=nothing, qval=nothing,
 end
 
 qval(ig::InstantGradient1D) = ig.qval
-qvec(ig::InstantGradient1D) = qval(ig) .* ig.orientation
 
 
 """
@@ -53,8 +61,7 @@ To have a fixed `orientation`, see [`InstantGradient1D`](@ref).
 - `group`: name of the group to which this gradient belongs (used for scaling and rotating).
 
 ## Variables
-- [`qvec`](@ref): Vector with spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
-- [`qval`](@ref): Norm of spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
+- [`qval`](@ref): Vector of spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
 - [`spoiler_scale`](@ref): Vector with length-scale on which spins will be dephased by exactly 2π in mm.
 """
 struct InstantGradient3D <: InstantGradient
@@ -62,16 +69,16 @@ struct InstantGradient3D <: InstantGradient
     group :: Union{Nothing, Symbol}
 end
 
-function InstantGradient3D(; qvec=[nothing, nothing, nothing], group=nothing, variables...)
-    if isnothing(qvec)
-        qvec = [nothing, nothing, nothing]
+function InstantGradient3D(; qval=[nothing, nothing, nothing], group=nothing, variables...)
+    if isnothing(qval)
+        qval = [nothing, nothing, nothing]
     end
-    res = InstantGradient3D(get_free_variable.(qvec), group)
+    res = InstantGradient3D(get_free_variable.(qval), group)
     set_simple_constraints!(res, variables)
     return res
 end
 
-qvec(ig::InstantGradient3D) = ig.qvec
+qval(ig::InstantGradient3D) = ig.qvec
 
 
 duration(::InstantGradient) = 0.

@@ -9,6 +9,7 @@ In addition this defines:
 - [`set_simple_constraints`](@ref): call [`apply_simple_constraint`](@ref) for each keyword argument.
 - [`apply_simple_constraint`](@ref): set a simple equality constraint.
 - [`get_pulse`](@ref)/[`get_gradient`](@ref)/[`get_readout`](@ref): Used to get the pulse/gradient/readout part of a building block
+- [`gradient_orientation`](@ref): returns the gradient orientation of a waveform if fixed.
 """
 module Variables
 import JuMP: @constraint, @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
@@ -40,8 +41,8 @@ all_variables_symbols = [
         :inverse_slice_thickness => "Inverse of slice thickness of an RF pulse that is active during a gradient in 1/mm. Also, see [`slice_thickness`](@ref).",
     ],
     :gradient => [
-        :qvec => "The spatial range and orientation on which the displacements can be detected due to this gradient in rad/um.",
-        :qval => "The spatial range on which the displacements can be detected due to this gradient in rad/um (i.e., norm of [`qvec`](@ref)). To set constraints it is often better to use [`qvec`](@ref) or [`qval_square`](@ref).",
+        :qvec => "The spatial range with orientation on which the displacements can be detected due to this gradient in rad/um (also see [`qval`](@ref)).",
+        :qval => "The spatial range on which the displacements can be detected due to this gradient in rad/um. This will be a scalar if the orientation is fixed and a scalar otherwise. If you always want a vector, use [`qvec`](@ref).",
         :qval_square => "Square of [`qval`](@ref) in rad^2/um^2.",
         :δ => "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms.",
         :rise_time => "Time for gradient pulse to reach its maximum value in ms.",
@@ -172,6 +173,20 @@ Instead, the `bmat` and `bval` should be constrained for specific `Pathways`
 function bmat_gradient end
 
 
+"""
+    gradient_orientation(building_block)
+
+Returns the gradient orientation.
+"""
+function gradient_orientation(bb::AbstractBlock)
+    if hasproperty(bb, :orientation)
+        return bb.orientation
+    else
+        return gradient_orientation(get_gradient(bb))
+    end
+end
+
+
 function effective_time end
 
 
@@ -231,12 +246,15 @@ for (target_name, all_vars) in all_variables_symbols
     end
 end
 
-function Variables.qval_square(bb::AbstractBlock, args...; kwargs...)
-    vec = Variables.qvec(bb, args...; kwargs...)
-    return vec[1]^2 + vec[2]^2 + vec[3]^2
-end
 
-Variables.qval(bb::AbstractBlock, args...; kwargs...) = sqrt(Variables.qval_square(bb, args...; kwargs...))
+function qvec(bb::AbstractBlock, args...; kwargs...)
+    value = qval(bb, args...; kwargs...)
+    if value isa AbstractVector
+        return value
+    else
+        return gradient_orientation(bb) .* value
+    end
+end
 
 
 """

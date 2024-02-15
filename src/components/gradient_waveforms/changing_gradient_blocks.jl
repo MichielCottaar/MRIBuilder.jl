@@ -1,6 +1,6 @@
 module ChangingGradientBlocks
 import StaticArrays: SVector
-import ....Variables: VariableType, duration, qvec, bmat_gradient, gradient_strength, slew_rate, get_free_variable
+import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable
 import ...AbstractTypes: GradientWaveform
 
 
@@ -34,7 +34,7 @@ grad_start(cgb::ChangingGradient) = cgb.gradient_strength_start
 slew_rate(cgb::ChangingGradient) = cgb.slew_rate
 grad_end(cgb::ChangingGradient) = grad_start(cgb) .+ slew_rate(cgb) .* duration(cgb)
 gradient_strength(cgb::ChangingGradient) = max.(grad_start(cgb), grad_end(cgb))
-qvec(cgb::ChangingGradient) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cgb) * π)
+qval(cgb::ChangingGradient) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cgb) * π)
 
 _mult(g1::VariableType, g2::VariableType) = g1 * g2
 _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)

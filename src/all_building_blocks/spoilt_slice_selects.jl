@@ -4,7 +4,7 @@ import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @constraint, @objective, objective_function
 import ...BuildSequences: global_model, global_scanner
-import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qvec, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse
+import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qval, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
 import ..BaseBuildingBlocks: BaseBuildingBlock
 
@@ -54,14 +54,14 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
     @constraint model res.diff_time <= res.rise_time1
     @constraint model res.diff_time <= res.fall_time2
 
-    @constraint model qvec(res, nothing, 1) == qvec(res, 1, nothing)
+    @constraint model qval(res, nothing, 1) == qval(res, 1, nothing)
     if !isnothing(spoiler_scale)
-        if spoiler_scale == :min # note that spoiler_scale is inverse of qvec
-            @objective model Min objective_function(model) - qvec(res, nothing, 1)
+        if spoiler_scale == :min # note that spoiler_scale is inverse of qval
+            @objective model Min objective_function(model) - qval(res, nothing, 1)
         elseif spoiler_scale == :max
-            @objective model Min objective_function(model) + qvec(res, nothing, 1)
+            @objective model Min objective_function(model) + qval(res, nothing, 1)
         else
-            @constraint model qvec(res, nothing, 1) >= 2π * 1e-3 / spoiler_scale
+            @constraint model qval(res, nothing, 1) >= 2π * 1e-3 / spoiler_scale
         end
     end
     set_simple_constraints!(res, kwargs)

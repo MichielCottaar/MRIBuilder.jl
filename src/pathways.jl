@@ -4,7 +4,7 @@ import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
 import ..AllSequences: BaseSequence, Sequence
 import ..AllBuildingBlocks: BaseBuildingBlock, waveform, events, waveform_sequence
-import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, qval_square, TR
+import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, TR
 import ..ContainerBlocks: start_time
 import ..Alternatives: AlternativeBlocks
 
@@ -126,12 +126,6 @@ By default gradients that are affected by user-provided `scale` or `rotate` para
 You can set `scale` and/or `rotate` to specific symbols to only consider gradients that are affected by speficic `scale`/`rotate` parameters
 """
 qvec(pathway::Pathway; scale=nothing, rotate=nothing) = get(pathway.qvec, (scale, rotate), zero(SVector{3, Float64}))
-
-function qval_square(pathway::Pathway; kwargs...)
-    vec = qvec(pathway; kwargs...)
-    return vec[1]^2 + vec[2]^2 + vec[3]^2
-end
-qval(pathway::Pathway; kwargs...) = sqrt(qval_square(pathway; kwargs...))
 
 
 """
