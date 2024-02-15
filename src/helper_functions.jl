@@ -8,13 +8,13 @@ import ..Variables: qvec, flat_time, rise_time
 import ..Alternatives: AlternativeBlocks, match_blocks!
 
 
-function _get_pulse(shape, flip_angle, phase, frequency, Nzero, scale, bandwidth, duration)
+function _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
     if shape == :sinc
-        pulse = SincPulse(flip_angle=flip_angle, phase=phase, frequency=frequency, N_lobes=Nzero, scale=scale, bandwidth=bandwidth, duration=duration)
+        pulse = SincPulse(flip_angle=flip_angle, phase=phase, frequency=frequency, Nzeros=Nzeros, group=group, bandwidth=bandwidth, duration=duration)
     elseif shape in (:constant, :hard)
-        pulse = ConstantPulse(flip_angle=flip_angle, phase=phase, frequency=frequency, scale=scale, bandwidth=bandwidth, duration=duration)
+        pulse = ConstantPulse(flip_angle=flip_angle, phase=phase, frequency=frequency, group=group, bandwidth=bandwidth, duration=duration)
     elseif shape == :instant
-        pulse = InstantRFPulseBlock(flip_angle=flip_angle, phase=phase, scale=scale)
+        pulse = InstantRFPulseBlock(flip_angle=flip_angle, phase=phase, group=group)
     end
     return pulse
 end
@@ -29,7 +29,7 @@ To enable slice selection `min_slice_thickness` has to be set to a number or to 
 If `min_slice_thickness` is not set or is set to `:min`, then either `bandwidth` or `duration` should be set, otherwise the optimisation might be unconstrained (ignore this for `shape=:instant`).
 
 ## Parameters
-For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `scale` will be used. All other parameters are ignored.
+For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `group` will be used. All other parameters are ignored.
 - `optimise`: set to true to optimise this RF pulse separately from the embedding sequence.
 
 ### Pulse parameters
@@ -39,8 +39,8 @@ For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_an
 - `frequency`: frequency of the RF pulse relative to the Larmor frequency in kHz (default: 0).
 - `bandwidth`: width of the RF pulse in Fourier space in kHz (default: free variable).
 - `duration`: duration of the RF pulse in ms (default: free variable).
-- `Nzero`: sets the number of zero crossings for a [`SincPulse`](@ref) (default: 3). Can be set to a tuple of two numbers to set a different number of zero crossings before and after the pulse maximum.
-- `scale`: name of the parameter with which the RF pulse amplitude can be modulated after sequence optimisation (default: `:transmit_B1`).
+- `Nzeros`: sets the number of zero crossings for a [`SincPulse`](@ref) (default: 3). Can be set to a tuple of two numbers to set a different number of zero crossings before and after the pulse maximum.
+- `group`: name of the group of which the RF pulse is part. This is used to add transformations after the sequence is optimised.
 
 ### Slice selection
 - `slice_thickness`: minimum slice thickness that should be possible without adjusting the sequence timings in um (not mm!) (default: no slice selection). Can be set to `:min` to indicate that this should be minimised given the scanner constraints and user values for `bandwidth` or `duration`.
@@ -48,9 +48,9 @@ For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_an
 - `rotate_grad`: name of the parameter with which the slice selection gradient will be rotated after sequence optimisation (default: `:FOV`).
 - `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
 """
-function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, rephase=true, Nzero=3, scale=:transmit_B1, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, scanner=nothing, optimise=false)
+function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, rephase=true, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, scanner=nothing, optimise=false)
     build_sequence(scanner; optimise=optimise) do
-        pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzero, scale, bandwidth, duration)
+        pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
         if pulse isa InstantRFPulseBlock
             if !isinf(slice_thickness)
                 error("An instant RF pulse always affects all spins equally, so using `shape=:instant` is incompatible with setting `slice_thickness`.")
@@ -90,15 +90,15 @@ If `slice_thickness` is not set or is set to `:min`, then either `bandwidth` or 
 - `optimise`: set to true to optimise this RF pulse separately from the embedding sequence.
 
 ### Pulse parameters
-For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `scale` will be used. All other parameters are ignored.
+For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `group` will be used. All other parameters are ignored.
 - `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantRFPulseBlock`](@ref)).
 - `flip_angle`: size of the flip due to the RF pulse in degrees (default: 180).
 - `phase`: angle of the RF pulse in the x-y plane in degrees (default: 0).
 - `frequency`: frequency of the RF pulse relative to the Larmor frequency in kHz (default: 0).
 - `bandwidth`: width of the RF pulse in Fourier space in kHz (default: free variable).
 - `duration`: duration of the RF pulse in ms (default: free variable).
-- `Nzero`: sets the number of zero crossings for a [`SincPulse`](@ref) (default: 3). Can be set to a tuple of two numbers to set a different number of zero crossings before and after the pulse maximum.
-- `scale`: name of the parameter with which the RF pulse amplitude can be modulated after sequence optimisation (default: `:transmit_B1`).
+- `Nzeros`: sets the number of zero crossings for a [`SincPulse`](@ref) (default: 3). Can be set to a tuple of two numbers to set a different number of zero crossings before and after the pulse maximum.
+- `group`: name of the group of which the RF pulse is part. This is used to add transformations after the sequence is optimised.
 
 ### Slice selection and spoilers
 - `slice_thickness`: minimum slice thickness that should be possible without adjusting the sequence timings in um (not mm!) (default: no slice selection). Can be set to `:min` to indicate that this should be minimised given the scanner constraints and user values for `bandwidth` or `duration`.
@@ -106,9 +106,9 @@ For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_an
 - `rotate_grad`: name of the parameter with which the slice selection and spoiler gradient will be rotated after sequence optimisation (default: `:FOV`).
 - `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
 """
-function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzero=3, scale=:transmit_B1, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false)
+function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false)
     build_sequence(scanner; optimise=optimise) do
-        pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzero, scale, bandwidth, duration)
+        pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
         if pulse isa InstantRFPulseBlock && !isinf(slice_thickness)
             error("An instant RF pulse always affects all spins equally, so using `shape=:instant` is incompatible with setting `slice_thickness`.")
         end
