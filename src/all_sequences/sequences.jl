@@ -5,7 +5,7 @@ import ...Variables: get_free_variable, TR, VariableType
 import ...AllBuildingBlocks: Wait, BuildingBlock
 import ...BuildSequences: global_model
 import ...Components: EventComponent
-import ..BaseSequences: ContainerBlock, BaseSequence, nrepeat
+import ..BaseSequences: ContainerBlock, BaseSequence, nrepeat, get_index_single_TR
 
 """
     Sequence(blocks; TR=:min, nrepeat=0)
@@ -35,7 +35,9 @@ end
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 
-Base.getindex(s::Sequence, i::Integer) = s.blocks[i]
+get_index_single_TR(s::Sequence, i::Integer) = s.blocks[i]
+Base.IteratorSize(::Type{<:Sequence}) = Base.IsInfinite()
+nrepeat(::Sequence) = Inf
 
 """
     to_block(block_like)
