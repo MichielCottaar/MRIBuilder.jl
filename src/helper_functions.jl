@@ -67,7 +67,7 @@ function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, 
         end
         seq = Sequence(
             grad,
-            TrapezoidGradient(orientation=[0, 0, -1.], rotate=rotate_grad, duration=:min);
+            Trapezoid(orientation=[0, 0, -1.], group=:FOV, duration=:min);
             TR=Inf
         )
         @constraint global_model() qvec(grad, 1, nothing)[3] == -qvec(seq[2])[3]
@@ -116,12 +116,12 @@ function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, sl
             if isinf(slice_thickness)
                 return pulse
             else
-                return TrapezoidGradient(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
+                return Trapezoid(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
             end
         else
             orientation=isnothing(rotate_grad) ? [1, 1, 1] : [0, 0, 1]
             if isinf(slice_thickness)
-                grad = TrapezoidGradient(orientation=orientation, duration=:min, rotate=rotate_grad)
+                grad = Trapezoid(orientation=orientation, duration=:min, rotate=rotate_grad)
                 @constraint global_model() qvec(grad)[3] == 2π * 1e-3 / spoiler
                 return Sequence(grad, pulse, grad; TR=Inf)
             else
@@ -201,11 +201,11 @@ function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanne
         (pos_line, neg_line) = opposite_kspace_lines(; rotate=:FOV, fov=fov[1], resolution=resolution_x, kwargs...)
         ky = @. start_lines * 1e-3 / fov[2]
         if length(start_lines) == 1
-            prepare_kspace = TrapezoidGradient(rotate=:FOV, duration=:min, qvec=[-qvec(pos_line, nothing, 1)[1], ky[1], 0.])
+            prepare_kspace = Trapezoid(rotate=:FOV, duration=:min, qvec=[-qvec(pos_line, nothing, 1)[1], ky[1], 0.])
         else
             prepare_kspace = AlternativeBlocks(
                 :readout_segment,
-                [TrapezoidGradient(rotate=:FOV, duration=:min, qvec=[-qvec(pos_line, nothing, 1)[1], ky_prep, 0.]) for ky_prep in ky]
+                [Trapezoid(rotate=:FOV, duration=:min, qvec=[-qvec(pos_line, nothing, 1)[1], ky_prep, 0.]) for ky_prep in ky]
             )
             match_blocks!(prepare_kspace, flat_time)
             match_blocks!(prepare_kspace, rise_time)
@@ -213,7 +213,7 @@ function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanne
 
         steps = (readout_lines[2:end] - readout_lines[1:end-1])
         blips = Dict(
-            s => TrapezoidGradient(orientation=[0, 1, 0], rotate=:FOV, duration=:min)
+            s => Trapezoid(orientation=[0, 1, 0], rotate=:FOV, duration=:min)
             for s in steps
         )
         for (s, trap) in blips
