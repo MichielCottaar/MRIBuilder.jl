@@ -20,10 +20,9 @@ Defines an MRI sequence from a vector of building blocks.
 struct Sequence{N} <: BaseSequence{N}
     blocks :: SVector{N, <:ContainerBlock}
     TR :: VariableType
-    nrepeat :: Int
 end
 
-function Sequence(blocks::AbstractVector; TR=:min, nrepeat=0)
+function Sequence(blocks::AbstractVector; TR=:min)
     if TR == :min
         TR = sum(duration, blocks; init=0.)
     end
@@ -36,8 +35,7 @@ end
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 
 get_index_single_TR(s::Sequence, i::Integer) = s.blocks[i]
-Base.IteratorSize(::Type{<:Sequence}) = Base.IsInfinite()
-nrepeat(::Sequence) = Inf
+nrepeat(::Sequence) = 0
 
 """
     to_block(block_like)

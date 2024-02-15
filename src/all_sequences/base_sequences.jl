@@ -21,7 +21,7 @@ Sub-types need to implement:
 abstract type BaseSequence{N} <: ContainerBlock end
 
 function Base.getindex(bs::BaseSequence{N}, index::Integer) where {N}
-    if index < 1 || index > length(bs)
+    if nrepeat(bs) > 0 && (index < 1 || index > length(bs))
         throw(BoundsError(bs, index))
     end
     base_index = ((index - 1) % N) + 1
@@ -29,7 +29,7 @@ function Base.getindex(bs::BaseSequence{N}, index::Integer) where {N}
 end
 Base.iterate(bs::BaseSequence) = Base.iterate(bs, 1)
 Base.iterate(bs::BaseSequence{N}, index::Integer) where {N} = index > length(bs) ? nothing : (bs[index], index + 1)
-Base.length(bs::BaseSequence{N}) where {N} = nrepeat(bs) * N
+Base.length(bs::BaseSequence{N}) where {N} = iszero(nrepeat(bs)) ? N : (nrepeat(bs) * N)
 Base.eltype(::Type{<:BaseSequence}) = ContainerBlock
 
 function start_time(bs::BaseSequence{N}, index::Integer) where {N}
