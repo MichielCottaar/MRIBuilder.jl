@@ -1,7 +1,7 @@
 module BaseBuildingBlocks
 import ...ContainerBlocks: ContainerBlock
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient
-import ...Variables: qval, bmat_gradient
+import ...Variables: qval, bmat_gradient, effective_time
 
 """
 Basic BuildingBlock, which can consist of a gradient waveforms with any number of RF pulses/readouts overlaid
@@ -122,14 +122,14 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
         if key == first
             @assert !started
             started = true
-            current_started = effective_time(bb[key])
+            current_start = effective_time(bb[key])
         end
         if key == last
             @assert started
-            if isnothing(current_started)
+            if isnothing(current_start)
                 push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], effective_time(bb[key]))[1]))
             else
-                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], current_started, effective_time(bb[key]))[2]))
+                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], current_start, effective_time(bb[key]))[2]))
             end
         end
     end
