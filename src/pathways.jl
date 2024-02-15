@@ -1,7 +1,7 @@
 module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
-import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
+import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform, DelayedEvent
 import ..AllSequences: BaseSequence, Sequence
 import ..AllBuildingBlocks: BaseBuildingBlock, waveform, events, waveform_sequence
 import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, TR
@@ -287,8 +287,12 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
     current_time = block_start_time
     for (index_inter, interruption) in events(block)
 
+        if interruption isa DelayedEvent
+            interruption = interruption.event
+        end
+
         # determine if action should be taken
-        if interruption.object isa RFPulseBlock
+        if interruption isa RFPulseComponent
             if iszero(length(pulse_effects))
                 error("Pathway definition is invalid! Another RF pulse was encountered before the number of readouts expected from `nreadout` where detected.")
             end
@@ -296,7 +300,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
                 popfirst!(pulse_effects)
                 continue
             end
-        elseif (interruption.object isa InstantReadout || interruption.object isa ADC)
+        elseif interruption isa ReadoutComponent
             if length(pulse_effects) > 0
                 continue
             end
@@ -307,7 +311,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
         end 
 
         # apply gradients up till interrupt
-        for part in waveform_sequence(ao, current_index, index_inter)
+        for part in waveform_sequence(block, current_index, index_inter)
             update_walker_gradient!(part, walker, current_time)
             current_time = current_time + duration(part)
         end 
@@ -324,7 +328,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
     end
 
     # apply remaining gradients
-    for part in waveform_sequence(ao, current_index, nothing)
+    for part in waveform_sequence(block, current_index, nothing)
         update_walker_gradient!(part, walker, current_time)
         current_time = current_time + duration(part)
     end
