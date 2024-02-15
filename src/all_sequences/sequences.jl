@@ -1,7 +1,7 @@
 module Sequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, TR, VariableType
+import ...Variables: get_free_variable, TR, VariableType, duration
 import ...AllBuildingBlocks: Wait, BuildingBlock
 import ...BuildSequences: global_model
 import ...Components: EventComponent
@@ -26,9 +26,9 @@ function Sequence(blocks::AbstractVector; TR=:min)
     if TR == :min
         TR = sum(duration, blocks; init=0.)
     end
-    res = sequence(SVector{length(blocks)}(to_block.(blocks)), get_free_variable(TR), nrepeat)
+    res = Sequence{length(blocks)}(SVector{length(blocks)}(to_block.(blocks)), get_free_variable(TR))
     if !(res.TR isa Number) || !(duration(res) isa Number)
-        @constraint global_model() res.TR >= duration(res)
+        @constraint global_model() res.TR >= sum(duration, blocks; init=0.)
     end
 end
 

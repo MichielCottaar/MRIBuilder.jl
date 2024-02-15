@@ -2,7 +2,7 @@ module HelperFunctions
 import JuMP: @constraint
 import ..AllBuildingBlocks: BuildingBlock, Trapezoid, SpoiltSliceSelect, opposite_kspace_lines, SliceSelect
 import ..BuildSequences: global_model, build_sequence
-import ..AllSequences: Sequence
+import ..AllSequences: Sequence, SliceSelectRephase
 import ..Components: SincPulse, ConstantPulse, InstantPulse
 import ..Variables: qvec, flat_time, rise_time
 import ..Alternatives: AlternativeBlocks, match_blocks!
@@ -61,17 +61,8 @@ function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, 
             return pulse
         end
 
-        grad = SliceSelect(pulse; duration=:min, slice_thickness=slice_thickness, orientation=[0, 0, 1.], group=:FOV)
-        if !rephase
-            return grad
-        end
-        seq = Sequence(
-            grad,
-            Trapezoid(orientation=[0, 0, -1.], group=:FOV, duration=:min);
-            TR=Inf
-        )
-        @constraint global_model() qvec(grad, 1, nothing)[3] == -qvec(seq[2])[3]
-        return seq
+        cls = rephase ? SliceSelectRephase : SliceSelect
+        return cls(pulse; duration=:min, slice_thickness=slice_thickness, orientation=[0, 0, 1.], group=:FOV)
     end
 end
 

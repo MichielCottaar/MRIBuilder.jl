@@ -54,7 +54,7 @@ Used internally by any [`BaseSequence`](@ref) to get a specific block.
 The `index` should be between 1 and N.
 It should be implemented for any sub-classes of [`BaseSequence`](@ref).
 """
-function get_index_single_TR end
+get_index_single_TR(seq::BaseSequence, index::Integer) = get_index_single_TR(seq, Val(index))
 
 
 """
