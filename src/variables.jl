@@ -213,7 +213,7 @@ end
 
 for (target_name, all_vars) in all_variables_symbols
     for (variable_func, _) in all_vars
-        if variable_func in [:qval_square, :qval]
+        if variable_func in [:qvec]
             continue
         end
         get_func = Symbol("get_" * string(target_name))
