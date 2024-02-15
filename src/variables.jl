@@ -112,24 +112,24 @@ const VariableType = Union{Number, AbstractJuMPScalar}
 
 
 """
-    get_free_variable(value; integer=false)
+    get_free_variable(value; integer=false, start=0.01)
 
 Get a representation of a given `variable` given a user-defined constraint.
 
 The result is guaranteed to be a [`VariableType`](@ref).
 """
-get_free_variable(value::Number; integer=false) = integer ? Int(value) : Float64(value)
-get_free_variable(value::VariableType; integer=false) = value
-get_free_variable(::Nothing; integer=false) = @variable(global_model(), start=0.01, integer=integer)
-get_free_variable(value::Symbol; integer=false) = integer ? error("Cannot maximise or minimise an integer variable") : get_free_variable(Val(value))
-function get_free_variable(::Val{:min})
-    var = get_free_variable(nothing)
+get_free_variable(value::Number; integer=false, kwargs...) = integer ? Int(value) : Float64(value)
+get_free_variable(value::VariableType; kwargs...) = value
+get_free_variable(::Nothing; integer=false, start=0.01) = @variable(global_model(), start=start, integer=integer)
+get_free_variable(value::Symbol; kwargs...) = integer ? error("Cannot maximise or minimise an integer variable") : get_free_variable(Val(value); kwargs...)
+function get_free_variable(::Val{:min}; kwargs...)
+    var = get_free_variable(nothing; kwargs...)
     model = global_model()
     @objective model Min objective_function(model) + var
     return var
 end
-function get_free_variable(::Val{:max})
-    var = get_free_variable(nothing)
+function get_free_variable(::Val{:max}; kwargs...)
+    var = get_free_variable(nothing; kwargs...)
     model = global_model()
     @objective model Min objective_function(model) - var
     return var
