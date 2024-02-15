@@ -3,7 +3,7 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
 import ..AllSequences: BaseSequence, Sequence
-import ..AllBuildingBlocks: BaseBuildingBlock, waveform, events, get_parts
+import ..AllBuildingBlocks: BaseBuildingBlock, waveform, events, waveform_sequence
 import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, qval_square, TR
 import ..ContainerBlocks: start_time
 import ..Alternatives: AlternativeBlocks
@@ -313,7 +313,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
         end 
 
         # apply gradients up till interrupt
-        for part in get_parts(ao, current_index, index_inter)
+        for part in waveform_sequence(ao, current_index, index_inter)
             update_walker_gradient!(part, walker, current_time)
             current_time = current_time + duration(part)
         end 
@@ -330,7 +330,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
     end
 
     # apply remaining gradients
-    for part in get_parts(ao, current_index, nothing)
+    for part in waveform_sequence(ao, current_index, nothing)
         update_walker_gradient!(part, walker, current_time)
         current_time = current_time + duration(part)
     end

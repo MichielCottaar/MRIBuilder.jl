@@ -150,7 +150,7 @@ function qvec(bb::BaseBuildingBlock, index1::Union{Nothing, Integer}, index2::Un
     if (index1 isa Number) && (index1 == index2)
         return zeros(3)
     end
-    sum(qvec.(get_parts(bb, index1, index2)); init=zero(SVector{3, Float64}))
+    sum(qvec.(waveform_sequence(bb, index1, index2)); init=zero(SVector{3, Float64}))
 end
 qvec(bb::BaseBuildingBlock) = qvec(bb, nothing, nothing)
 
@@ -162,7 +162,7 @@ function bmat_gradient(bb::BaseBuildingBlock, qstart, index1::Union{Nothing, Int
     result = Matrix{VariableType}(zeros(3, 3))
     qcurrent = Vector{VariableType}(qstart)
 
-    for part in get_parts(bb, index1, index2)
+    for part in waveform_sequence(bb, index1, index2)
         result = result .+ bmat_gradient(part, qcurrent)
         qcurrent = qcurrent .+ qvec(part, qcurrent)
     end
