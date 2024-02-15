@@ -146,17 +146,15 @@ If `first_event` is set to something else than `nothing`, only the gradient wave
 Similarly, if `last_event` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
 """
 function qval(bb::BaseBuildingBlock, index1, index2)
-    @assert isnothing(index1) || isnothing(index2) || index2 >= index1
-    if (index1 isa Number) && (index1 == index2)
+    if (!isnothing(index1)) && (index1 == index2)
         return zeros(3)
     end
-    sum(qval.(waveform_sequence(bb, index1, index2)); init=zero(SVector{3, Float64}))
+    sum(qval.(waveform_sequence(bb, index1, index2)); init=0.)
 end
 qval(bb::BaseBuildingBlock) = qval(bb, nothing, nothing)
 
 function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
-    @assert isnothing(index1) || isnothing(index2) || index2 >= index1
-    if (index1 isa Number) && (index1 == index2)
+    if (!isnothing(index1)) && (index1 == index2)
         return zeros(3, 3)
     end
     result = Matrix{VariableType}(zeros(3, 3))
