@@ -89,8 +89,8 @@ function (::Type{Trapezoid})(; orientation=nothing, rise_time=nothing, flat_time
 
     set_simple_constraints!(res, kwargs)
 
-    @constraint global_model() flat_time >= 0
-    @constraint global_model() rise_time >= 0
+    @constraint global_model() res.flat_time >= 0
+    @constraint global_model() res.rise_time >= 0
     scanner_constraints!(res)
     return res
 end
