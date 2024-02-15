@@ -4,7 +4,7 @@ import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @constraint, @objective, objective_function
 import ...BuildSequences: global_model, global_scanner
-import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qval, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse
+import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qval, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse, set_simple_constraints!
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
 import ..BaseBuildingBlocks: BaseBuildingBlock
 
@@ -35,26 +35,46 @@ struct SpoiltSliceSelect <: BaseBuildingBlock
     slew_rate :: Number
 end
 
-function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group=nothing, spoiler_scale=nothing, kwargs...)
+function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group=nothing, spoiler_scale=nothing, slice_thickness=nothing, kwargs...)
     model = global_model()
-    res = SpoiltSliceSelect(
-        orientation ./ norm(orientation),
-        get_free_variable(nothing; start=0.1),
-        get_free_variable(nothing; start=0.1),
-        get_free_variable(nothing; start=0.05),
-        pulse,
-        get_free_variable(nothing; start=0.1),
-        get_free_variable(nothing; start=0.1),
-        group,
-        slew_rate(global_scanner()),
-    )
-    for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
-        @constraint model time_var >= 0
+    res = nothing
+    if isinf(slice_thickness)
+        rise_time_var = get_free_variable(nothing)
+        flat_time_var = get_free_variable(nothing)
+        res = SpoiltSliceSelect(
+            orientation ./ norm(orientation),
+            rise_time_var,
+            flat_time_var,
+            0.,
+            pulse,
+            flat_time_var,
+            rise_time_var,
+            group,
+            slew_rate(global_scanner()),
+        )
+        for time_var in (rise_time, flat_time)
+            @constraint model time_var >= 0
+        end
+    else
+        res = SpoiltSliceSelect(
+            orientation ./ norm(orientation),
+            get_free_variable(nothing; start=0.1),
+            get_free_variable(nothing; start=0.1),
+            get_free_variable(nothing; start=0.05),
+            pulse,
+            get_free_variable(nothing; start=0.1),
+            get_free_variable(nothing; start=0.1),
+            group,
+            slew_rate(global_scanner()),
+        )
+        for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
+            @constraint model time_var >= 0
+        end
+        @constraint model res.diff_time <= res.rise_time1
+        @constraint model res.diff_time <= res.fall_time2
+        @constraint model qval(res, nothing, 1) == qval(res, 1, nothing)
     end
-    @constraint model res.diff_time <= res.rise_time1
-    @constraint model res.diff_time <= res.fall_time2
 
-    @constraint model qval(res, nothing, 1) == qval(res, 1, nothing)
     if !isnothing(spoiler_scale)
         if spoiler_scale == :min # note that spoiler_scale is inverse of qval
             @objective model Min objective_function(model) - qval(res, nothing, 1)

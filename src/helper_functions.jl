@@ -96,8 +96,9 @@ For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `
 - `spoiler`: set to the spatial scale on which the spins should be dephased in mm. For rotating spoilers, this does include the contribution from the slice select gradient as well.
 - `rotate_grad`: name of the parameter with which the slice selection and spoiler gradient will be rotated after sequence optimisation (default: `:FOV`).
 - `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
+- `orientation`: vector with orientation of slice select gradient and pulses (defaults: z-direction).
 """
-function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false)
+function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzeros=3, group=nothing, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false, orientation=[0, 0, 1])
     build_sequence(scanner; optimise=optimise) do
         pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
         if pulse isa InstantPulse && !isinf(slice_thickness)
@@ -107,18 +108,11 @@ function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, sl
             if isinf(slice_thickness)
                 return pulse
             else
-                return Trapezoid(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
+                return SliceSelect(pulse=pulse, duration=:min, slice_thickness=slice_thickness, orientation=orientation, group=:FOV)
             end
         else
-            orientation=isnothing(rotate_grad) ? [1, 1, 1] : [0, 0, 1]
-            if isinf(slice_thickness)
-                grad = Trapezoid(orientation=orientation, duration=:min, rotate=rotate_grad)
-                @constraint global_model() qvec(grad)[3] == 2π * 1e-3 / spoiler
-                return Sequence(grad, pulse, grad; TR=Inf)
-            else
-                res = SpoiltSliceSelect(pulse; orientation=orientation, duration=:min, rotate=rotate_grad, slice_thickness=slice_thickness, spoiler_scale=spoiler)
-                return res
-            end
+            res = SpoiltSliceSelect(pulse; orientation=orientation, duration=:min, group=:FOV, slice_thickness=slice_thickness, spoiler_scale=spoiler)
+            return res
         end
     end
 end
