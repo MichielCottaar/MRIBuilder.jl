@@ -14,12 +14,20 @@ In addition this defines:
 module Variables
 import JuMP: @constraint, @variable, Model, @objective, objective_function, AbstractJuMPScalar
 import ..Scanners: gradient_strength, slew_rate, Scanner
-import ..BuildSequences: global_model, global_scanner
+import ..BuildSequences: global_model, global_scanner, fixed
 
 """
 Parent type of all components, building block, and sequences that form an MRI sequence.
 """
 abstract type AbstractBlock end
+
+function fixed(ab::AbstractBlock)
+    params = []
+    for prop_name in propertynames(ab)
+        push!(params, fixed(getproperty(ab, prop_name)))
+    end
+    return typeof(ab)(params...)
+end
 
 all_variables_symbols = [
     :block => [
