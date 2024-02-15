@@ -13,8 +13,8 @@ In addition this defines:
 """
 module Variables
 import JuMP: @constraint, @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
-import ..Scanners: gradient_strength, slew_rate
-import ..BuildSequences: global_model
+import ..Scanners: gradient_strength, slew_rate, Scanner
+import ..BuildSequences: global_model, global_scanner
 
 """
 Parent type of all components, building block, and sequences that form an MRI sequence.
@@ -322,5 +322,37 @@ Returns a generic version of the `BaseSequence`, `BaseBuildingBlock`, or `BaseCo
 - Instant readouts are replaced with `ADC`.
 """
 function make_generic end
+
+
+"""
+    scanner_constraints!(block)
+
+Constraints [`gradient_strength`](@ref) and [`slew_rate`](@ref) to be less than the [`global_scanner`](@ref) maximum.
+"""
+function scanner_constraints!(bb::AbstractBlock)
+    try
+        global_scanner()
+    catch e
+        return
+    end
+    for f in (gradient_strength, slew_rate)
+        try
+            value = gradient_strength(bb)
+        catch e
+            if e isa VariableNotAvailable
+                continue
+            else
+                rethrow()
+            end
+        end
+        if value isa AbstractVector
+            for v in value
+                @constraint global_model() v <= f(global_scanner())
+            end
+        else
+            @constraint global_model() value <= f(global_scanner())
+        end
+    end
+end
 
 end

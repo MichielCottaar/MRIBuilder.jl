@@ -1,7 +1,7 @@
 module BuildingBlocks
 import LinearAlgebra: norm
 import ..BaseBuildingBlocks: BaseBuildingBlock, events, waveform_sequence
-import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout
+import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!
 import ...Components: BaseComponent, DelayedEvent, RFPulseComponent, ReadoutComponent
 
 """
