@@ -1,14 +1,12 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
-import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, qval, effective_time, make_generic
+import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic
 import ..AbstractTypes: EventComponent, GradientWaveform
 
 """
-    InstantGradient1D(; orientation=[1, 0, 0], group=nothing, variables...)
+    InstantGradient1D(; orientation=nothing, group=nothing, variables...)
 
-Defines an instantaneous gradient with given fixed `orientation` (default: x-direction).
-
-To have a variable `orientation`, see [`InstantGradient3D`](@ref).
+If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwise an [`InstantGradient3D`](@ref).
 
 ## Parameters
 - `orientation` sets the gradient orienation as a length-3 vector. If not set, the gradient can be in any direction.
@@ -20,20 +18,18 @@ To have a variable `orientation`, see [`InstantGradient3D`](@ref).
 """
 abstract type InstantGradient <: EventComponent end
 
+function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=nothing, variables...)
+    if isnothing(orientaiton)
+        res = InstantGradient3D(get_free_variable.(qval), group)
+    else
+        res = InstantGradient1D(get_free_variable(qval), orientation, group)
+    end
+    set_simple_constraints!(res, variables)
+    return res
+end
+
 """
-    InstantGradient1D(; orientation=[1, 0, 0], group=nothing, variables...)
-
-Defines an instantaneous gradient with given fixed `orientation` (default: x-direction).
-
-To have a variable `orientation`, see [`InstantGradient3D`](@ref).
-
-## Parameters
-- `orientation` sets the gradient orienation as a length-3 vector (default: x-direction).
-- `group`: name of the group to which this gradient belongs (used for scaling and rotating).
-
-## Variables
-- [`qval`](@ref): Spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
-- [`spoiler_scale`](@ref): Length-scale on which spins will be dephased by exactly 2π in mm.
+An [`InstantGradient`](@ref) with a fixed orientation.
 """
 struct InstantGradient1D <: InstantGradient
     qval :: VariableType
@@ -41,28 +37,10 @@ struct InstantGradient1D <: InstantGradient
     group :: Union{Nothing, Symbol}
 end
 
-function InstantGradient1D(; orientation=[1, 0, 0], group=nothing, qval=nothing, variables...)
-    res = InstantGradient1D(qval, orientation, group)
-    set_simple_constraints!(res, variables)
-    return res
-end
-
 qval(ig::InstantGradient1D) = ig.qval
 
-
 """
-    InstantGradient3D(; group=nothing, variables...)
-
-Defines an instantaneous gradient without a fixed orientation.
-
-To have a fixed `orientation`, see [`InstantGradient1D`](@ref).
-
-## Parameters
-- `group`: name of the group to which this gradient belongs (used for scaling and rotating).
-
-## Variables
-- [`qval`](@ref): Vector of spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
-- [`spoiler_scale`](@ref): Vector with length-scale on which spins will be dephased by exactly 2π in mm.
+An [`InstantGradient`](@ref) with a variable orientation.
 """
 struct InstantGradient3D <: InstantGradient
     qvec :: SVector{3, VariableType}

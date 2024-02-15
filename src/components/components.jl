@@ -8,7 +8,7 @@ include("delayed_events.jl")
 
 import .AbstractTypes: BaseComponent, GradientWaveform, EventComponent, RFPulseComponent, ReadoutComponent
 import .GradientWaveforms: ConstantGradient, ChangingGradient, NoGradient, split_gradient
-import .InstantGradients: InstantGradient1D, InstantGradient3D
+import .InstantGradients: InstantGradient
 import .Pulses: GenericPulse, InstantPulse, SincPulse, ConstantPulse
 import .Readouts: ADC, SingleReadout
 import .DelayedEvents: DelayedEvent
