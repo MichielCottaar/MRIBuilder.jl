@@ -75,7 +75,7 @@ end
 duration_trap1(spoilt::SpoiltSliceSelect) = 2 * spoilt.rise_time1 + spoilt.flat_time1 - spoilt.diff_time
 duration_trap2(spoilt::SpoiltSliceSelect) = 2 * spoilt.fall_time2 + spoilt.flat_time2 - spoilt.diff_time
 
-Base.keys(::SpoiltSliceSelect) = Val.(:rise1, :flat1, :fall1, :flat_pulse, :pulse, :rise2, :flat2, :fall2)
+Base.keys(::SpoiltSliceSelect) = Val.((:rise1, :flat1, :fall1, :flat_pulse, :pulse, :rise2, :flat2, :fall2))
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:rise1}) = ChangingGradient(0., slew_rate(spoilt), rise_time(spoilt)[1])
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat1}) = ConstantGradient(slew_rate(spoilt) * rise_time(spoilt)[1], flat_time(spoilt)[1])
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall1}) = ChangingGradient(slew_rate(spoilt) * rise_time(spoilt)[1], -slew_rate(spoilt), fall_time(spoilt)[1])
