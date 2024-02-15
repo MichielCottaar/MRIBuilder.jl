@@ -32,6 +32,7 @@ function Sequence(blocks::AbstractVector; TR=:min)
     if !(res.TR isa Number) || !(duration(res) isa Number)
         @constraint global_model() res.TR >= actual_duration
     end
+    return res
 end
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
