@@ -40,17 +40,20 @@ qval(cgb::ConstantGradient3D) = @. duration(cgb) * gradient_strength(cgb) * 2π
 _mult(g1::VariableType, g2::VariableType) = g1 * g2
 _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
 
+to_vec(cgb::ConstantGradient1D, g::VariableType) = cgb.orientation .* g
+to_vec(::ConstantGradient3D, g::AbstractVector) = g
+
 function bmat_gradient(cgb::ConstantGradient)
-    grad = 2π .* gradient_strength(cgb)
+    grad = to_vec(cgb, 2π .* gradient_strength(cgb))
     return _mult(grad, grad) .* duration(cgb)^3 ./3
 end
 
-function bmat_gradient(cgb::ConstantGradient, qstart)
+function bmat_gradient(cgb::ConstantGradient, qstart::AbstractVector)
     # \int dt (qstart + t * grad)^2 = 
     #   qstart^2 * duration +
     #   qstart * grad * duration^2 +
     #   grad * grad * duration^3 / 3 +
-    grad = 2π .* gradient_strength(cgb)
+    grad = to_vec(cgb, 2π .* gradient_strength(cgb))
     return (
         _mult(qstart, qstart) .* duration(cgb) .+
         _mult(qstart, grad) .* duration(cgb)^2 .+
