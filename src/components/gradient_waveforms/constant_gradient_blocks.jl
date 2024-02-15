@@ -2,6 +2,7 @@ module ConstantGradientBlocks
 import StaticArrays: SVector
 import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable
 import ...AbstractTypes: GradientWaveform
+import ..ChangingGradientBlocks: split_gradient
 
 """
     ConstantGradient(gradient_strength, duration)
