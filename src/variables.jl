@@ -12,7 +12,7 @@ In addition this defines:
 - [`gradient_orientation`](@ref): returns the gradient orientation of a waveform if fixed.
 """
 module Variables
-import JuMP: @constraint, @variable, Model, @objective, objective_function, value, AbstractJuMPScalar
+import JuMP: @constraint, @variable, Model, @objective, objective_function, AbstractJuMPScalar
 import ..Scanners: gradient_strength, slew_rate, Scanner
 import ..BuildSequences: global_model, global_scanner
 
@@ -330,14 +330,16 @@ function make_generic end
 Constraints [`gradient_strength`](@ref) and [`slew_rate`](@ref) to be less than the [`global_scanner`](@ref) maximum.
 """
 function scanner_constraints!(bb::AbstractBlock)
+    @show bb
     try
         global_scanner()
     catch e
         return
     end
-    for f in (gradient_strength, slew_rate)
+    for f in (slew_rate, gradient_strength)
+        value = nothing
         try
-            value = gradient_strength(bb)
+            value = f(bb)
         catch e
             if e isa VariableNotAvailable
                 continue
