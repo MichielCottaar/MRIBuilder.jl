@@ -239,7 +239,7 @@ for (target_name, all_vars) in all_variables_symbols
                 end
                 throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
             catch e
-                if $use_get_func && e isa VariableNotAvailable && hasmethod($get_func, Tuple(typeof(bb)))
+                if $use_get_func && e isa VariableNotAvailable && hasmethod($get_func, tuple(typeof(bb)))
                     return Variables.$variable_func($get_func(bb))
                 end
                 rethrow()
