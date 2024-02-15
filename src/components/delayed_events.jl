@@ -6,7 +6,7 @@ struct DelayedEvent{T<:EventComponent} <: EventComponent
     event :: T
     delay :: VariableType
     function DelayedEvent(event::EventComponent, delay=nothing)
-        new(event, get_free_variable(delay))
+        new{typeof(event)}(event, get_free_variable(delay))
     end
 end
 
