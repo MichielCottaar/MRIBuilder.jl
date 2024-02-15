@@ -330,7 +330,6 @@ function make_generic end
 Constraints [`gradient_strength`](@ref) and [`slew_rate`](@ref) to be less than the [`global_scanner`](@ref) maximum.
 """
 function scanner_constraints!(bb::AbstractBlock)
-    @show bb
     try
         global_scanner()
     catch e
