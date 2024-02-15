@@ -75,7 +75,7 @@ TR(bs::BaseSequence) = duration(bs)
 
 
 duration(bs::BaseSequence{0}) = 0.
-duration(bs::BaseSequence) = sum(duration.(bs))
+duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
 
 
 end

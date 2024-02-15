@@ -23,12 +23,14 @@ struct Sequence{N} <: BaseSequence{N}
 end
 
 function Sequence(blocks::AbstractVector; TR=:min)
+    blocks = to_block.(blocks)
+    actual_duration = sum(duration, blocks; init=0.)
     if TR == :min
-        TR = sum(duration, blocks; init=0.)
+        TR = actual_duration
     end
-    res = Sequence{length(blocks)}(SVector{length(blocks)}(to_block.(blocks)), get_free_variable(TR))
+    res = Sequence{length(blocks)}(SVector{length(blocks)}(blocks), get_free_variable(TR))
     if !(res.TR isa Number) || !(duration(res) isa Number)
-        @constraint global_model() res.TR >= sum(duration, blocks; init=0.)
+        @constraint global_model() res.TR >= actual_duration
     end
 end
 
