@@ -1,6 +1,6 @@
 module HelperFunctions
 import JuMP: @constraint
-import ..AllBuildingBlocks: BuildingBlock, Trapezoid, SpoiltSliceSelect, opposite_kspace_lines
+import ..AllBuildingBlocks: BuildingBlock, Trapezoid, SpoiltSliceSelect, opposite_kspace_lines, SliceSelect
 import ..BuildSequences: global_model, build_sequence
 import ..AllSequences: Sequence
 import ..Components: SincPulse, ConstantPulse, InstantPulse
@@ -14,7 +14,7 @@ function _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidt
     elseif shape in (:constant, :hard)
         pulse = ConstantPulse(flip_angle=flip_angle, phase=phase, frequency=frequency, group=group, bandwidth=bandwidth, duration=duration)
     elseif shape == :instant
-        pulse = InstantRFPulseBlock(flip_angle=flip_angle, phase=phase, group=group)
+        pulse = InstantPulse(flip_angle=flip_angle, phase=phase, group=group)
     end
     return pulse
 end
@@ -29,11 +29,11 @@ To enable slice selection `min_slice_thickness` has to be set to a number or to 
 If `min_slice_thickness` is not set or is set to `:min`, then either `bandwidth` or `duration` should be set, otherwise the optimisation might be unconstrained (ignore this for `shape=:instant`).
 
 ## Parameters
-For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `group` will be used. All other parameters are ignored.
+For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `group` will be used. All other parameters are ignored.
 - `optimise`: set to true to optimise this RF pulse separately from the embedding sequence.
 
 ### Pulse parameters
-- `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantRFPulseBlock`](@ref)).
+- `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantPulse`](@ref)).
 - `flip_angle`: size of the flip due to the RF pulse in degrees (default: 90).
 - `phase`: angle of the RF pulse in the x-y plane in degrees (default: 0).
 - `frequency`: frequency of the RF pulse relative to the Larmor frequency in kHz (default: 0).
@@ -51,7 +51,7 @@ For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_an
 function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, rephase=true, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, scanner=nothing, optimise=false)
     build_sequence(scanner; optimise=optimise) do
         pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
-        if pulse isa InstantRFPulseBlock
+        if pulse isa InstantPulse
             if !isinf(slice_thickness)
                 error("An instant RF pulse always affects all spins equally, so using `shape=:instant` is incompatible with setting `slice_thickness`.")
             end
@@ -61,7 +61,7 @@ function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, 
             return pulse
         end
 
-        grad = TrapezoidGradient(pulse=pulse, duration=:min, slice_thickness=[Inf, Inf, slice_thickness], orientation=[0, 0, 1.], rotate=rotate_grad)
+        grad = SliceSelect(pulse; duration=:min, slice_thickness=slice_thickness, orientation=[0, 0, 1.], group=:FOV)
         if !rephase
             return grad
         end
@@ -90,8 +90,8 @@ If `slice_thickness` is not set or is set to `:min`, then either `bandwidth` or 
 - `optimise`: set to true to optimise this RF pulse separately from the embedding sequence.
 
 ### Pulse parameters
-For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `group` will be used. All other parameters are ignored.
-- `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantRFPulseBlock`](@ref)).
+For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `group` will be used. All other parameters are ignored.
+- `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantPulse`](@ref)).
 - `flip_angle`: size of the flip due to the RF pulse in degrees (default: 180).
 - `phase`: angle of the RF pulse in the x-y plane in degrees (default: 0).
 - `frequency`: frequency of the RF pulse relative to the Larmor frequency in kHz (default: 0).
@@ -109,7 +109,7 @@ For an [`InstantRFPulseBlock`](@ref) (i.e., `shape=:instant`), only the `flip_an
 function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false)
     build_sequence(scanner; optimise=optimise) do
         pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
-        if pulse isa InstantRFPulseBlock && !isinf(slice_thickness)
+        if pulse isa InstantPulse && !isinf(slice_thickness)
             error("An instant RF pulse always affects all spins equally, so using `shape=:instant` is incompatible with setting `slice_thickness`.")
         end
         if isinf(spoiler)
