@@ -12,6 +12,7 @@ struct Wait <: BaseBuildingBlock
         if !(res.duration isa Number)
             @constraint global_model() res.duration >= 0
         end
+        return res
     end
 end
 
