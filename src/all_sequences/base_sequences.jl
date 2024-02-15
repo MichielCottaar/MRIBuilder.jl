@@ -1,7 +1,7 @@
 module BaseSequences
-import ...ContainerBlocks: ContainerBlock
+import ...ContainerBlocks: ContainerBlock, start_time
 import ...AllBuildingBlocks: BaseBuildingBlock
-import ...Variables: TR, duration, start_time
+import ...Variables: TR, duration
 
 """
 Super-type of any sequence of non-overlapping building blocks that should be played after each other.
