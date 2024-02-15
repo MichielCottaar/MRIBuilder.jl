@@ -1,7 +1,7 @@
 module BaseBuildingBlocks
 import ...ContainerBlocks: ContainerBlock
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient
-import ...Variables: qvec, bmat_gradient
+import ...Variables: qval, bmat_gradient
 
 """
 Basic BuildingBlock, which can consist of a gradient waveforms with any number of RF pulses/readouts overlaid
