@@ -97,12 +97,15 @@ end
 
 Base.keys(::Trapezoid) = (Val(:rise), Val(:flat), Val(:fall))
 
-Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(N == 3 ? zeros(3) : 0., slew_rate(pg), gradient_orientation(pg), rise_time(pg), pg.group)
-Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(gradient_strength(pg), gradient_orientation(pg), flat_time(pg), pg.group)
-Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(gradient_strength(pg), -slew_rate(pg), gradient_orientation(pg), rise_time(pg), pg.group)
+Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(N == 3 ? zeros(3) : 0., slew_rate(pg), gradient_orientation(pg), rise_time(pg), get_group(pg))
+Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(gradient_strength(pg), gradient_orientation(pg), flat_time(pg), get_group(pg))
+Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(gradient_strength(pg), -slew_rate(pg), gradient_orientation(pg), rise_time(pg), get_group(pg))
 gradient_orientation(::BaseTrapezoid{3}) = nothing
 gradient_orientation(pg::BaseTrapezoid{1}) = gradient_orientation(get_gradient(pg))
 gradient_orientation(pg::Trapezoid{1}) = pg.orientation
+
+get_group(pg::Trapezoid) = pg.group
+get_group(pg::BaseTrapezoid) = get_group(get_gradient(pg))
 
 rise_time(pg::Trapezoid) = pg.rise_time
 flat_time(pg::Trapezoid) = pg.flat_time
