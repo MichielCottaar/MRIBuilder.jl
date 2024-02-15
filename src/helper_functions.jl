@@ -1,10 +1,9 @@
 module HelperFunctions
 import JuMP: @constraint
-import ..BuildingBlocks: BuildingBlock
+import ..AllBuildingBlocks: BuildingBlock, Trapezoid, SpoiltSliceSelect, opposite_kspace_lines
 import ..BuildSequences: global_model, build_sequence
-import ..Sequences: Sequence
-import ..Pulses: SincPulse, ConstantPulse, InstantRFPulseBlock
-import ..Overlapping: TrapezoidGradient, SpoiltSliceSelect, opposite_kspace_lines
+import ..AllSequences: Sequence
+import ..Components: SincPulse, ConstantPulse, InstantPulse
 import ..Variables: qvec, flat_time, rise_time
 import ..Alternatives: AlternativeBlocks, match_blocks!
 
