@@ -17,7 +17,7 @@ struct Wait <: BaseBuildingBlock
 end
 
 duration(wb::Wait) = wb.duration
-Base.keys(::Wait) = (:empty)
-Base.getindex(wb::Wait) = NoGradient{1}(wb.duration)
+Base.keys(::Wait) = (Val(:empty),)
+Base.getindex(wb::Wait, ::Val{:empty}) = NoGradient{1}(wb.duration)
 
 end
