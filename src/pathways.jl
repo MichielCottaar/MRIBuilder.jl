@@ -1,10 +1,10 @@
 module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
-import ..Components: NoGradient, ConstantGradient, ChangingGradient, RFPulseComponent, ReadoutComponent, InstantGradient
-import ..AllSequences: BaseSequence
+import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
+import ..AllSequences: BaseSequence, Sequence
 import ..AllBuildingBlocks: BaseBuildingBlock, waveform, events, get_parts
-import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration, qval_square
+import ..Variables: qvec, qval, bmat_gradient, VariableType, start_time, effective_time, duration, qval_square, TR
 import ..Alternatives: AlternativeBlocks
 
 
@@ -265,42 +265,34 @@ The function should return `true` if the `Pathway` has reached its end (i.e., th
 """
 function walk_pathway!(seq::Sequence, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}) 
     current_TR = 0
-    while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * seq.TR))
+    nwait = length(pulse_effects) + nreadout[]
+    while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * TR(seq)))
+        new_nwait = length(pulse_effects) + nreadout[]
+        if nwait == new_nwait
+            error("Pathway iterated through the whole sequence without seeing a valid pulse or readout. Terminating...")
+        end
+        nwait = new_nwait
+
         current_TR += 1
     end
     return true
 end
 
-function walk_pathway!(grad::GradientBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType) 
-    update_walker_gradient!(grad, walker, block_start_time)
-    return false
-end
-
-function walk_pathway!(alt::AlternativeBlocks, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType) 
-    walk_pathway!(alt[1], walker, pulse_effects, nreadout, block_start_time)
-end
-
-function walk_pathway!(pulse::RFPulseBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType) 
-    update_walker_pulse!(walker, pulse_effects, block_start_time + effective_time(pulse))
-    return iszero(length(pulse_effects)) && iszero(nreadout[])
-end
-
-function walk_pathway!(container::ContainerBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
-    for index in get_children_indices(container)
-        child = container[index]
-        if walk_pathway!(child, walker, pulse_effects, nreadout, block_start_time + start_time(container, index))
+function walk_pathway!(seq::BaseSequence, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
+    for (index, child) in enumerate(seq)
+        if walk_pathway!(child, walker, pulse_effects, nreadout, block_start_time + start_time(seq, index))
             return true
         end
     end
     return false
 end
 
-walk_pathway!(wait::WaitBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType) = false
-
-function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
+function walk_pathway!(block::BuildingBlock, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
     current_index = nothing
     current_time = block_start_time
-    for (index_inter, interruption) in enumerate(interruptions(ao))
+    for (index_inter, interruption) in events(block)
+
+        # determine if action should be taken
         if interruption.object isa RFPulseBlock
             if iszero(length(pulse_effects))
                 error("Pathway definition is invalid! Another RF pulse was encountered before the number of readouts expected from `nreadout` where detected.")
@@ -318,10 +310,14 @@ function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_eff
                 continue
             end
         end 
+
+        # apply gradients up till interrupt
         for part in get_parts(ao, current_index, index_inter)
             update_walker_gradient!(part, walker, current_time)
             current_time = current_time + duration(part)
         end 
+
+        # apply interrupt
         if interruption.object isa RFPulseBlock
             update_walker_pulse!(walker, pulse_effects, current_time)
         end
@@ -331,23 +327,11 @@ function walk_pathway!(ao::AbstractOverlapping, walker::PathwayWalker, pulse_eff
             return true
         end
     end
+
+    # apply remaining gradients
     for part in get_parts(ao, current_index, nothing)
         update_walker_gradient!(part, walker, current_time)
         current_time = current_time + duration(part)
-    end
-    return false
-end
-
-function walk_pathway!(::Union{InstantReadout, ADC}, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time=0.::VariableType)
-    if length(pulse_effects) > 0
-        return false
-    end
-    nreadout[] -= 1
-    if iszero(nreadout[])
-        update_walker_till_time!(walker, block_start_time)
-        return true
-    elseif nreadout[] < 0
-        error("Pathway walker continued past the point where it should have ended. Did you start with a negative `nreadout`?")
     end
     return false
 end
@@ -467,7 +451,9 @@ The following steps will be taken:
 
 This requires [`bmat_gradient`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientBlock`](@ref).
 """
-function update_walker_gradient!(gradient::GradientBlock, walker::PathwayWalker, gradient_start_time::VariableType)
+update_walker_gradient!(gradient::NoGradient, walker::PathwayWalker, gradient_start_time::VariableType) = nothing
+
+function update_walker_gradient!(gradient::GradientWaveform, walker::PathwayWalker, gradient_start_time::VariableType)
     if !walker.is_transverse
         return
     end
