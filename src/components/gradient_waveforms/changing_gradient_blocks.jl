@@ -14,6 +14,7 @@ Usually, you do not want to create this object directly, use a `BuildingBlock` i
 """
 abstract type ChangingGradient{N} <: GradientWaveform{N} end
 (::Type{ChangingGradient})(grad1::VariableType, slew_rate::VariableType, orientation::AbstractVector, duration::VariableType, group=nothing) = ChangingGradient1D(grad1, slew_rate, orientation, duration, group)
+(::Type{ChangingGradient})(grad1::AbstractVector, slew_rate::AbstractVector, ::Nothing, duration::VariableType, group=nothing) = ChangingGradient3D(grad1, slew_rate, duration, group)
 (::Type{ChangingGradient})(grad1::AbstractVector, slew_rate::AbstractVector, duration::VariableType, group=nothing) = ChangingGradient3D(grad1, slew_rate, duration, group)
 
 struct ChangingGradient1D <: ChangingGradient{1}
