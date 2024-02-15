@@ -106,7 +106,7 @@ flat_time(pg::Trapezoid) = pg.flat_time
 gradient_strength(g::Trapezoid) = slew_rate(g) .* rise_time(g)
 slew_rate(g::Trapezoid) = g.slew_rate
 δ(g::Trapezoid) = rise_time(g) + flat_time(g)
-duration(g::Trapezoid) = 2 * rise_time(g) + flat_time(g)
+duration(g::BaseTrapezoid) = 2 * rise_time(g) + flat_time(g)
 
 qval(g::BaseTrapezoid, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
 
