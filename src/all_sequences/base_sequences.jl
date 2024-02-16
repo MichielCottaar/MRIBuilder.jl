@@ -38,7 +38,7 @@ function start_time(bs::BaseSequence{N}, index::Integer) where {N}
         throw(BoundsError(bs, index))
     end
     base_index = ((index - 1) % N) + 1
-    base_time = sum(i -> duration(bs[i]), 1:base_index)
+    base_time = sum(i -> duration(bs[i]), 1:base_index-1; init=0.)
     if iszero(nTR)
         return base_time
     else
