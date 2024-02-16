@@ -288,7 +288,7 @@ function set_simple_constraints!(block::AbstractBlock, kwargs)
             invert_value(value) = value
             try
                 apply_simple_constraint!(alt_var(block), invert_value(value))
-                return
+                continue
             catch e
                 if !(e isa VariableNotAvailable)
                     rethrow()
