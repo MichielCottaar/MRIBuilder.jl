@@ -35,7 +35,7 @@ gradient_strength(cgb::ConstantGradient) = cgb.gradient_strength
 slew_rate(::ConstantGradient1D) = 0.
 slew_rate(::ConstantGradient3D) = zero(SVector{3, Float64})
 qval(cgb::ConstantGradient1D) = duration(cgb) * gradient_strength(cgb) * 2π
-qval(cgb::ConstantGradient3D) = @. duration(cgb) * gradient_strength(cgb) * 2π
+qval(cgb::ConstantGradient3D) = duration(cgb) .* gradient_strength(cgb) .* 2π
 
 _mult(g1::VariableType, g2::VariableType) = g1 * g2
 _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)

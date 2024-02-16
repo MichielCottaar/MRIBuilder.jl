@@ -2,7 +2,7 @@ module EPIReadouts
 import ...AllBuildingBlocks: LineReadout, Trapezoid, opposite_kspace_lines
 import ...Components: ADC
 import ...Variables: get_free_variable, VariableType, qval, qvec, set_simple_constraints!, resolution, inverse_voxel_size, inverse_fov, resolution, get_readout, apply_simple_constraint!
-import ..BaseSequences: BaseSequence
+import ..BaseSequences: BaseSequence, get_index_single_TR
 
 """
     EPIReadout(resolution; ky_lines=-resolution[2]:resolution[2], recenter=false, group=:FOV, variables...)
@@ -21,7 +21,7 @@ Defines an (accelerated) EPI readout.
 - [`oversample`](@ref): by how much to oversample in the frequency-encode direcion.
 - [`dwell_time`](@ref): dwell time in the frequency-encode direction
 """
-struct EPIReadout <: BaseSequence{0}
+struct EPIReadout{N} <: BaseSequence{N}
     start_gradient :: Trapezoid
     positive_line :: LineReadout
     negative_line :: LineReadout
@@ -39,7 +39,7 @@ function EPIReadout(resolution::AbstractVector{<:Integer}; recenter=false, group
         ky_lines = -resolution[2]:resolution[2]
     end
     (pos, neg) = opposite_kspace_lines(; resolution=resolution[1], orientation=[1, 0, 0], group=group)
-    res = EPIReadout(
+    res = EPIReadout{2 * length(ky_lines) + recenter}(
         Trapezoid(group=group),
         pos,
         neg,
@@ -53,6 +53,9 @@ function EPIReadout(resolution::AbstractVector{<:Integer}; recenter=false, group
         sign = isodd(length(ky_lines)) ? -1 : 1
         apply_simple_constraint!(qvec(res.recenter_gradient), VariableType[sign * qval(pos)/2, -ky_lines[end] * res.ky_step, 0.])
     end
+    for shift in unique(ky_lines[2:end] - ky_lines[1:end-1])
+        res.blips[shift] = Trapezoid(orientation=[0, shift > 0 ? 1 : -1, 0], group=group, qval=abs(shift) * res.ky_step)
+    end
     set_simple_constraints!(res, variables)
     return res
 end
@@ -62,5 +65,23 @@ inverse_voxel_size(epi::EPIReadout) = [inverse_voxel_size(epi.positive_line), 1e
 resolution(epi::EPIReadout) = [resolution(epi.positive_line), maximum(abs.(epi.ky_lines))]
 get_readout(epi::EPIReadout) = epi.positive_line
 
+function get_index_single_TR(epi::EPIReadout, index::Integer)
+    if index == 1
+        return epi.start_gradient
+    elseif !isnothing(epi.recenter_gradient) && index == length(epi)
+        return epi.recenter_gradient
+    end
+    current_line = div(index, 2, RoundDown)
+    if isodd(index)
+        line_shift = epi.ky_lines[current_line + 1] - epi.ky_lines[current_line]
+        return epi.blips[line_shift]
+    else
+        if isodd(current_line)
+            return epi.positive_line
+        else
+            return epi.negative_line
+        end
+    end
+end
 
 end
