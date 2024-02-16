@@ -71,16 +71,16 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
     end
 end
 
-function build_sequence(f::Function, ::Nothing; optimise=false)
-    build_sequence(f, nothing, global_model(), optimise)
-end
-
-function build_sequence(f::Function, scanner::Scanner, optimiser_constructor; optimise=true, kwargs...)
-    model = Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...))
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, kwargs...)
+    if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
+        model = Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...))
+    else
+        model = global_model()
+    end
     build_sequence(f, scanner, model, optimise)
 end
 
-function build_sequence(f::Function, scanner::Scanner; print_level=2, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}; print_level=2, kwargs...)
     build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, kwargs...)
 end
 
