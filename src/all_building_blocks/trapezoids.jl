@@ -7,7 +7,7 @@ import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
 import ...Variables: qval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, qval_square, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
-import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout, gradient_orientation
+import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout, gradient_orientation, ramp_overlap
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ..BaseBuildingBlocks: BaseBuildingBlock
@@ -179,6 +179,10 @@ function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=
         get_free_variable(ramp_overlap)
     )
     set_simple_constraints!(res, variables)
+    if !(res.ramp_overlap isa Number)
+        @constraint global_model() res.ramp_overlap >= 0
+        @constraint global_model() res.ramp_overlap <= 1
+    end
     @constraint global_model() (res.ramp_overlap * rise_time(res.trapezoid) * 2 + flat_time(res.trapezoid)) == duration(res.adc)
     return res
 end
