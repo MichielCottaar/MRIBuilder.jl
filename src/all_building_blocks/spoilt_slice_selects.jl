@@ -38,7 +38,7 @@ end
 function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group=nothing, spoiler_scale=nothing, slice_thickness=nothing, kwargs...)
     model = global_model()
     res = nothing
-    if isinf(slice_thickness)
+    if slice_thickness isa Number && isinf(slice_thickness)
         rise_time_var = get_free_variable(nothing)
         flat_time_var = get_free_variable(nothing)
         res = SpoiltSliceSelect(
@@ -70,9 +70,9 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
         for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
             @constraint model time_var >= 0
         end
-        @constraint model res.diff_time <= res.rise_time1
-        @constraint model res.diff_time <= res.fall_time2
-        @constraint model qval(res, nothing, 1) == qval(res, 1, nothing)
+        #@constraint model res.diff_time <= res.rise_time1
+        #@constraint model res.diff_time <= res.fall_time2
+        #@constraint model qval(res, nothing, 1) == qval(res, 1, nothing)
     end
 
     if !isnothing(spoiler_scale)

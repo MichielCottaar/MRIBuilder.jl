@@ -119,19 +119,26 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
             current_grad_key = key
             current_start = nothing
         end
-        if key == first
+        if key == first || key == Val(first)
             @assert !started
             started = true
             current_start = effective_time(bb[key])
         end
-        if key == last
+        if key == last || key == Val(last)
             @assert started
             if isnothing(current_start)
                 push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], effective_time(bb[key]))[1]))
             else
                 push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], current_start, effective_time(bb[key]))[2]))
             end
+            return parts
         end
+    end
+    if !started
+        error("Starting index of $first not recognised.")
+    end
+    if !isnothing(last)
+        error("Final index of $last not recognised.")
     end
     return parts
 end
