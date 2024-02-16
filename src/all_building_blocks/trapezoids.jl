@@ -172,21 +172,41 @@ struct LineReadout{N} <: BaseTrapezoid{N}
     ramp_overlap :: VariableType
 end
 
-function LineReadout(adc::ADC; ramp_overlap=1., orientation=nothing, rise_time=nothing, flat_time=nothing, group=nothing, slew_rate=nothing, variables...)
+function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=nothing, variables...)
     res = LineReadout(
-        Trapezoid(; orientation=orientation, rise_time=rise_time, flat_time=flat_time, group=group, slew_rate=slew_rate),
+        Trapezoid(; orientation=orientation, group=group),
         adc,
         get_free_variable(ramp_overlap)
     )
     set_simple_constraints!(res, variables)
-    @constraint global_model() (res.ramp_overlap * rise_time(res.grad) * 2 + flat_time(res.grad)) == duration(res.adc)
+    @constraint global_model() (res.ramp_overlap * rise_time(res.trapezoid) * 2 + flat_time(res.trapezoid)) == duration(res.adc)
+    return res
 end
 
 ramp_overlap(lr::LineReadout) = lr.ramp_overlap
-inverse_fov(lr::LineReadout) = @. 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid)
-inverse_voxel_size(lr::LineReadout) = @. 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
+inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid)
+inverse_voxel_size(lr::LineReadout) = 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
 
 get_readout(lr::LineReadout) = lr.adc
 get_gradient(lr::LineReadout) = lr.trapezoid
+
+"""
+    opposite_kspace_lines(; orientation=[1, 0, 0], kwargs...)
+
+Return a positive and negative readout of a k-space line.
+"""
+function opposite_kspace_lines(; orientation=[1, 0, 0], kwargs...)
+    if isnothing(orientation)
+        error("orientation of k-space readout should be fixed at construction.")
+    end
+    positive = LineReadout(ADC(); orientation=orientation, kwargs...)
+    trap = positive.trapezoid
+    negative = LineReadout(
+        Trapezoid1D(trap.rise_time, trap.flat_time, trap.slew_rate, -orientation, trap.group),
+        positive.adc,
+        positive.ramp_overlap,
+    )
+    return (positive, negative)
+end
 
 end

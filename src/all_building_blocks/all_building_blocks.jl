@@ -7,7 +7,7 @@ include("wait_blocks.jl")
 
 import .BaseBuildingBlocks: waveform, waveform_sequence, events, BaseBuildingBlock
 import .BuildingBlocks: BuildingBlock
-import .Trapezoids: Trapezoid, SliceSelect, LineReadout
+import .Trapezoids: Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines
 import .SpoiltSliceSelects: SpoiltSliceSelect
 import .WaitBlocks: Wait
 

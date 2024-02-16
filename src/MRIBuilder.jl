@@ -33,8 +33,8 @@ export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, Si
 import .AllBuildingBlocks: waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Trapezoid, SliceSelect, LineReadout, SpoiltSliceSelect, Wait
 export waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Trapezoid, SliceSelect, LineReadout, SpoiltSliceSelect, Wait
 
-import .AllSequences: BaseSequence, nrepeat, Sequence
-export BaseSequence, nrepeat, Sequence
+import .AllSequences: BaseSequence, nrepeat, Sequence, EPIReadout
+export BaseSequence, nrepeat, Sequence, EPIReadout
 
 import .Alternatives: AlternativeBlocks, match_blocks!
 export AlternativeBlocks, match_blocks!
