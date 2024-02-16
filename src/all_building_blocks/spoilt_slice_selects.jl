@@ -70,9 +70,9 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
         for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
             @constraint model time_var >= 0
         end
-        #@constraint model res.diff_time <= res.rise_time1
-        #@constraint model res.diff_time <= res.fall_time2
-        #@constraint model qval(res, nothing, 1) == qval(res, 1, nothing)
+        @constraint model res.diff_time <= res.rise_time1
+        @constraint model res.diff_time <= res.fall_time2
+        @constraint model qval(res, nothing, :pulse) == qval(res, :pulse, nothing)
     end
 
     if !isnothing(spoiler_scale)
@@ -81,7 +81,7 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
         elseif spoiler_scale == :max
             @objective model Min objective_function(model) + qval(res, nothing, 1)
         else
-            @constraint model qval(res, nothing, 1) >= 2π * 1e-3 / spoiler_scale
+            @constraint model qval(res, nothing, :pulse) >= 2π * 1e-3 / spoiler_scale
         end
     end
     set_simple_constraints!(res, kwargs)
