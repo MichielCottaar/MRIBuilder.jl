@@ -110,6 +110,7 @@ It is used internally by [`build_sequence`](@ref).
 fixed(some_value) = some_value
 fixed(jump_variable::AbstractJuMPScalar) = value(jump_variable)
 fixed(jump_variable::AbstractArray) = fixed.(jump_variable)
+fixed(dict_variable::AbstractDict) = typeof(dict_variable)(k => fixed(v) for (k, v) in pairs(dict_variable))
 
 
 
