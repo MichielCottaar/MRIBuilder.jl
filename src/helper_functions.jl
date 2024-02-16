@@ -108,7 +108,7 @@ function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, sl
             if isinf(slice_thickness)
                 return pulse
             else
-                return SliceSelect(pulse=pulse, duration=:min, slice_thickness=slice_thickness, orientation=orientation, group=:FOV)
+                return SliceSelect(pulse; duration=:min, slice_thickness=slice_thickness, orientation=orientation, group=:FOV)
             end
         else
             res = SpoiltSliceSelect(pulse; orientation=orientation, duration=:min, group=:FOV, slice_thickness=slice_thickness, spoiler_scale=spoiler)

@@ -99,7 +99,7 @@ Setting constraints on these alternative functions can be helpful as it avoids s
 alternative_variables = Dict(
     qval => (qval_square, n->n^2, sqrt, false),
     slice_thickness => (inverse_slice_thickness, inv, inv, true),
-    spoiler_scale => (qvec, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true),
+    spoiler_scale => (qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true),
     bandwidth => (inverse_bandwidth, inv, inv, true),
     fov => (inverse_fov, inv, inv, true),
     voxel_size => (inverse_voxel_size, inv, inv, true),

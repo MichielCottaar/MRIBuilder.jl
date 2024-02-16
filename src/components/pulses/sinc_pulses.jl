@@ -50,6 +50,7 @@ function SincPulse(;
         group
     )
     @constraint global_model() res.amplitude >= 0
+    @constraint global_model() res.lobe_duration >= 0
     set_simple_constraints!(res, kwargs)
     return res
 end

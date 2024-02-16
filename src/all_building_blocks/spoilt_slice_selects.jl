@@ -52,7 +52,7 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
             group,
             slew_rate(global_scanner()),
         )
-        for time_var in (rise_time, flat_time)
+        for time_var in (rise_time_var, flat_time_var)
             @constraint model time_var >= 0
         end
     else
