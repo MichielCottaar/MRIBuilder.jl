@@ -12,7 +12,7 @@ Adds a readout event.
 
 ## Parameters
 - `center_halfway`: by default the `time_to_center` is assumed to be half of the `duration`. Set this to false to disable this assumption.
-- `oversample`: by how much the ADC should oversample (default: 2, unless both `resolution` and `nsamples` are set).
+- `oversample`: by how much the ADC should oversample (minimum of 1).
 
 ## Variables
 - `resolution`: number of voxels in the readout direction. This can be a non-integer value during optimisation.
@@ -29,11 +29,7 @@ struct ADC <: ReadoutComponent
     oversample :: VariableType
 end
 
-function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, oversample=nothing, nsamples=nothing, kwargs...)
-    if (isnothing(resolution) || isnothing(nsamples)) && isnothing(oversample)
-        oversample = 2.
-    end
-
+function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, oversample=nothing, kwargs...)
     res = ADC(
         get_free_variable(resolution),
         get_free_variable(dwell_time),
@@ -41,13 +37,13 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
         get_free_variable(oversample),
     )
     @constraint global_model() res.dwell_time >= 0
+    @constraint global_model() res.oversample >= 1
     if center_halfway
         apply_simple_constraint!(duration(res), 2 * res.time_to_center)
     else
         @constraint global_model() res.time_to_center >= 0
         @constraint global_model() res.time_to_center <= duration(res)
     end
-    apply_simple_constraint!(res.resolution * res.oversample, nsamples)
     set_simple_constraints!(res, kwargs)
     return res
 end
