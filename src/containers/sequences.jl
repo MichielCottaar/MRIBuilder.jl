@@ -94,7 +94,7 @@ Defines an MRI sequence from a vector of building blocks.
 - [`nrepeat`](@ref): how often the sequence will repeat itself (keep at default of 0 to repeat indefinetely).
 - [`TR`](@ref): how long between repeats in ms (defaults to the duration of the sequence). Can be set to `nothing` to be a free variable.
 """
-struct Sequence{N, S} <: BaseSequence{N}
+struct Sequence{S, N} <: BaseSequence{N}
     blocks :: SVector{N, Pair{<:Union{Symbol, Nothing}, <:ContainerBlock}}
     TR :: VariableType
 end
@@ -105,7 +105,7 @@ function Sequence(blocks::AbstractVector; TR=:min, name=:Sequence)
     if TR == :min
         TR = actual_duration
     end
-    res = Sequence{length(blocks), name}(SVector{length(blocks)}(blocks), get_free_variable(TR))
+    res = Sequence{name, length(blocks)}(SVector{length(blocks)}(blocks), get_free_variable(TR))
     if !(res.TR isa Number) || !(duration(res) isa Number)
         @constraint global_model() res.TR >= actual_duration
     end
@@ -134,12 +134,12 @@ for fn in keys(variables)
         if length(res) > 0
             return NamedTuple(res)
         else
-            error("None of the building blocks of $(typeof(seq)) define $($fn)")
+            error("None of the building blocks of $(typeof(seq)) define $(Variables.$fn)")
         end
     end
 end
 
-Base.show(io::IO, ::Type{<:Sequence{N, S}}) where {N, S} = print(io, S)
+Base.show(io::IO, ::Type{<:Sequence{S}}) where {S} = print(io, S)
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 
