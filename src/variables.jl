@@ -35,6 +35,7 @@ all_variables_symbols = [
     ],
     :sequence => [
         :TR => "Time on which an MRI sequence repeats itself in ms.",
+        :Δ => "Diffusion time in ms (i.e., time between start of the diffusion-weighted gradients).",
     ],
     :pulse => [
         :flip_angle => "The flip angle of the RF pulse in degrees",
