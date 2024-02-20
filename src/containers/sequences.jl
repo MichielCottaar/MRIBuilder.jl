@@ -139,7 +139,7 @@ for fn in keys(variables)
     end
 end
 
-Base.show(io::IO, ::Type{<:Sequence{S}}) where {S} = print(io, S)
+Base.show(io::IO, ::Type{<:Sequence{S, N}}) where {S, N} = print(io, S, "{$N}")
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 
