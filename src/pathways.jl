@@ -3,7 +3,7 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform, DelayedEvent
 import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
-import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, TR
+import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, TR, variables
 
 
 """
@@ -112,54 +112,81 @@ end
 
 
 """
-    qvec(pathway::Pathway; group=nothing)
+    qvec(pathway::Pathway)
 
 Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
 
-By default gradients that have been added to a specific `group` are ignored.
-You can set `group=<name>` to consider a specific `group.
+Returns a NamedTuple with the `qvec` for all gradient groups.
 """
-qvec(pathway::Pathway; group=nothing) = get(pathway.qvec, group, zero(SVector{3, Float64}))
+qvec(pathway::Pathway, group) = pathway.qvec[group]
 
 
 """
-    area_under_curve(pathway::Pathway; group=nothing)
+    area_under_curve(pathway::Pathway)
 
 Return net displacement in k-space (i.e., spoiling) experienced by the spins following a specific [`Pathway`](@ref).
 
 Only gradients active while the spins are in the transverse plane are considered.
 
-By default gradients that have been added to a specific `group` are ignored.
-You can set `group=<name>` to consider a specific `group.
+Returns a NamedTuple with the `area_under_curve` for all gradient groups.
 """
-area_under_curve(pathway::Pathway; group=nothing) = qval(pathway; group=group)
+area_under_curve(pathway::Pathway, group) = norm(qvec(pathway, group))
 
 
 """
-    bmat(pathway::Pathway; group=nothing)
+    bmat(pathway::Pathway)
 
 Return 3x3 diffusion-weighted matrix experienced by the spins following a specific [`Pathway`](@ref) in rad^2 ms/um^2.
 
 Only gradients active while the spins are in the transverse plane are considered.
 
-By default gradients that have been added to a specific `group` are ignored.
-You can set `group=<name>` to consider a specific `group.
+Returns a NamedTuple with the `bmat` for all gradient groups.
 """
-bmat(pathway::Pathway; group=nothing)  = get(pathway.bmat, group, zero(SMatrix{3, 3, Float64, 9}))
+bmat(pathway::Pathway, group)  = pathway.bmat[group]
 
 """
-    bval(pathway::Pathway; group=nothing)
+    bval(pathway::Pathway)
 
 Return size of diffusion-weighting experienced by the spins following a specific [`Pathway`](@ref) in rad^2 ms/um^2.
 
 Only gradients active while the spins are in the transverse plane will contribute to the diffusion weighting.
 
-By default gradients that have been added to a specific `group` are ignored.
-You can set `group=<name>` to consider a specific `group.
+Returns a NamedTuple with the `bval` for all gradient groups.
 """
-bval(pathway::Pathway; group=nothing) = tr(bmat(pathway; group=group))
+bval(pathway::Pathway, group) = tr(bmat(pathway, group))
+
+
+"""
+    get_pathway(sequence)
+
+Gets the main [`PathWay`](@ref) that spins are expected to experience in the sequence.
+
+Multiple pathways might be returned as an array or (named)tuple.
+"""
+function get_pathway end
+
+for fn in (:qvec, :area_under_curve, :bmat, :bval)
+    @eval function $fn(pathway::Pathway)
+        return NamedTuple(group => $fn(pathway, group) for group in keys(pathway.qvec))
+    end
+end
+
+for fn in (:qvec, :area_under_curve, :bmat, :bval, :duration_dephase, :duration_transverse)
+    @eval function $fn(seq::Sequence)
+        pathway = get_pathway(seq)
+        if pathway isa Pathway
+            return $fn(pathway)
+        elseif pathway isa AbstractVector || pathway isa Tuple
+            return $fn.(pathway)
+        elseif pathway isa NumedTuple
+            return NamedTuple(k => $fn(v) for (k, v) in pairs(pathway))
+        end
+        error("get_pathway returned unexpected type for $seq")
+    end
+    @eval variables[$(QuoteNode(fn))] = $fn
+end
 
 
 """

@@ -27,8 +27,8 @@ export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, Si
 import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR
 export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR
 
-import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
-export Pathway, duration_transverse, duration_dephase, bval, bmat
+import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
+export Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
 
 import .Parts: excitation_pulse, refocus_pulse, epi_readout, single_line_readout, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout
 export excitation_pulse, refocus_pulse, epi_readout, single_line_readout, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout
