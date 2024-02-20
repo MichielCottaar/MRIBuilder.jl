@@ -4,7 +4,7 @@ Defines [`BaseBuildingBlock`](@ref), [`BuildingBlock`](@ref) and [`Wait`](@ref).
 module BuildingBlocks
 import LinearAlgebra: norm
 import JuMP: @constraint
-import ..Abstract: ContainerBlock
+import ..Abstract: ContainerBlock, start_time
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, DelayedEvent, RFPulseComponent, ReadoutComponent
 import ...Variables: qval, bmat_gradient, effective_time, get_free_variable
@@ -33,6 +33,7 @@ Base.length(c::BaseBuildingBlock) = length(keys(c))
 Base.eltype(::Type{<:BaseBuildingBlock}) = BaseComponent
 Base.iterate(c::BaseBuildingBlock) = Base.iterate(c, 1)
 Base.iterate(c::BaseBuildingBlock, index::Integer) = length(c) < index ? nothing : (c[keys(c)[index]], index + 1)
+Base.getindex(bb::BaseBuildingBlock, s::Symbol) = bb[Val(s)]
 
 
 """
@@ -104,6 +105,26 @@ function waveform(bb::BaseBuildingBlock)
     return result
 end
 
+equal_key(i1::Val, i2) = i1 == Val(i2)
+equal_key(i1, i2::Val) = Val(i1) == i2
+equal_key(i1::Val, i2::Val) = i1 == i2
+equal_key(i1, i2) = i1 == i2
+
+function start_time(building_block::BaseBuildingBlock, index)
+    time = 0.
+    prev_time = 0.
+    for key in keys(building_block)
+        if equal_key(key, index)
+            return prev_time
+        end
+        component = building_block[key]
+        if component isa GradientWaveform
+            prev_time = time
+            time += duration(component)
+        end
+    end
+    error("Building block with index '$index' not found")
+end
 
 # Pathway support
 """
@@ -126,12 +147,12 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
             current_grad_key = key
             current_start = nothing
         end
-        if key == first || key == Val(first)
+        if equal_key(key, first)
             @assert !started
             started = true
             current_start = effective_time(bb[key])
         end
-        if key == last || key == Val(last)
+        if equal_key(key, last)
             @assert started
             if isnothing(current_start)
                 push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], effective_time(bb[key]))[1]))

@@ -150,6 +150,7 @@ inverse_slice_thickness(ss::SliceSelect) = 1e3 * gradient_strength(ss.trapezoid)
 
 get_pulse(ss::SliceSelect) = ss.pulse
 get_gradient(ss::SliceSelect) = ss.trapezoid
+effective_time(ss::SliceSelect) = effective_time(lr, :pulse)
 
 """
     LineReadout(adc; ramp_overlap=1., orientation=nothing, group=nothing, variables...)
@@ -193,6 +194,7 @@ Base.getindex(lr::LineReadout, ::Val{:adc}) = lr.adc
 ramp_overlap(lr::LineReadout) = lr.ramp_overlap
 inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid)
 inverse_voxel_size(lr::LineReadout) = 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
+effective_time(lr::LineReadout) = effective_time(lr, :adc)
 
 get_readout(lr::LineReadout) = lr.adc
 get_gradient(lr::LineReadout) = lr.trapezoid
