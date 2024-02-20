@@ -1,5 +1,5 @@
-module ContainerBlocks
-import ..Variables: AbstractBlock, duration, effective_time
+module Abstract
+import ...Variables: AbstractBlock, duration, effective_time
 
 """
 Parent type for `BuildingBlock` or `BaseSequence`, i.e., any building block that contains other MRI components/blocks.

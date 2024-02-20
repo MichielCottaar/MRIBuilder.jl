@@ -2,11 +2,8 @@ module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform, DelayedEvent
-import ..AllSequences: BaseSequence, Sequence
-import ..AllBuildingBlocks: BaseBuildingBlock, waveform, events, waveform_sequence
+import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
 import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, TR
-import ..ContainerBlocks: start_time
-import ..Alternatives: AlternativeBlocks
 
 
 """

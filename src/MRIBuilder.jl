@@ -7,12 +7,9 @@ include("scanners.jl")
 include("build_sequences.jl")
 include("variables.jl")
 include("components/components.jl")
-include("container_blocks.jl")
-include("all_building_blocks/all_building_blocks.jl")
-include("all_sequences/all_sequences.jl")
-include("alternatives.jl")
+include("containers/containers.jl")
 include("pathways.jl")
-include("helper_functions.jl")
+include("parts/parts.jl")
 #include("printing.jl")
 
 import .BuildSequences: build_sequence, global_model, global_scanner
@@ -24,26 +21,17 @@ export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 import .Variables: variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inverse_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale
 export variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inversne_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale
 
-import .ContainerBlocks: ContainerBlock, start_time, end_time
-export start_time, end_time
-
 import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC
 export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC
 
-import .AllBuildingBlocks: waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Trapezoid, SliceSelect, LineReadout, SpoiltSliceSelect, Wait
-export waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Trapezoid, SliceSelect, LineReadout, SpoiltSliceSelect, Wait
-
-import .AllSequences: BaseSequence, nrepeat, Sequence, EPIReadout
-export BaseSequence, nrepeat, Sequence, EPIReadout
-
-import .Alternatives: AlternativeBlocks, match_blocks!
-export AlternativeBlocks, match_blocks!
+import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR
+export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR
 
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat
 export Pathway, duration_transverse, duration_dephase, bval, bmat
 
-import .HelperFunctions: excitation_pulse, refocus_pulse, epi_readout, single_line_readout
-export excitation_pulse, refocus_pulse, epi_readout, single_line_readout
+import .Parts: excitation_pulse, refocus_pulse, epi_readout, single_line_readout, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout
+export excitation_pulse, refocus_pulse, epi_readout, single_line_readout, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout
 
 import JuMP: @constraint, @objective, objective_function, value, Model
 export @constraint, @objective, objective_function, value, Model

@@ -10,7 +10,7 @@ import ...Variables: qval, rise_time, flat_time, slew_rate, gradient_strength, v
 import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout, gradient_orientation, ramp_overlap
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
-import ..BaseBuildingBlocks: BaseBuildingBlock
+import ...Containers: BaseBuildingBlock
 
 
 """

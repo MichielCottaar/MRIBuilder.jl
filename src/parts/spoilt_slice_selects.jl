@@ -6,7 +6,7 @@ import JuMP: @constraint, @objective, objective_function
 import ...BuildSequences: global_model, global_scanner
 import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qval, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse, set_simple_constraints!, gradient_orientation
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
-import ..BaseBuildingBlocks: BaseBuildingBlock
+import ...Containers: BaseBuildingBlock
 
 
 """

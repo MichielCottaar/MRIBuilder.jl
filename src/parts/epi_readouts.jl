@@ -1,8 +1,8 @@
 module EPIReadouts
-import ...AllBuildingBlocks: LineReadout, Trapezoid, opposite_kspace_lines
+import ...Containers: BaseSequence, get_index_single_TR
+import ..Trapezoids: Trapezoid, opposite_kspace_lines, LineReadout
 import ...Components: ADC
 import ...Variables: get_free_variable, VariableType, qval, qvec, set_simple_constraints!, resolution, inverse_voxel_size, inverse_fov, resolution, get_readout, apply_simple_constraint!
-import ..BaseSequences: BaseSequence, get_index_single_TR
 
 """
     EPIReadout(resolution; ky_lines=-resolution[2]:resolution[2], recenter=false, group=:FOV, variables...)

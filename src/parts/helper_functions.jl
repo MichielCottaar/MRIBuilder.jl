@@ -1,11 +1,13 @@
 module HelperFunctions
 import JuMP: @constraint
-import ..AllBuildingBlocks: BuildingBlock, Trapezoid, SpoiltSliceSelect, opposite_kspace_lines, SliceSelect
-import ..BuildSequences: global_model, build_sequence
-import ..AllSequences: Sequence, SliceSelectRephase
-import ..Components: SincPulse, ConstantPulse, InstantPulse
-import ..Variables: qvec, flat_time, rise_time
-import ..Alternatives: AlternativeBlocks, match_blocks!
+import ...Containers: AlternativeBlocks, match_blocks!, BuildingBlock
+import ..Trapezoids: Trapezoid, opposite_kspace_lines, SliceSelect
+import ..SpoiltSliceSelects: SpoiltSliceSelect
+import ..SliceSelectRephases: SliceSelectRephase
+import ...BuildSequences: global_model, build_sequence
+import ...Containers: Sequence
+import ...Components: SincPulse, ConstantPulse, InstantPulse
+import ...Variables: qvec, flat_time, rise_time
 
 
 function _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)

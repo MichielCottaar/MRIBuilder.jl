@@ -1,6 +1,6 @@
 module SliceSelectRephases
-import ..BaseSequences: BaseSequence, get_index_single_TR
-import ...AllBuildingBlocks: SliceSelect, Trapezoid
+import ...Containers: BaseSequence, get_index_single_TR
+import ..Trapezoids: SliceSelect, Trapezoid
 import ...Variables: get_pulse, qval, apply_simple_constraint!
 import ...Components: RFPulseComponent
 

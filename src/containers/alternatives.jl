@@ -1,8 +1,8 @@
 module Alternatives
 import JuMP: @constraint
-import ..ContainerBlocks: ContainerBlock
-import ..BuildSequences: global_model, fixed
-import ..Variables: duration, make_generic
+import ..Abstract: ContainerBlock
+import ...BuildSequences: global_model, fixed
+import ...Variables: duration, make_generic
 
 """
     AlternativeBlocks(name, blocks)
