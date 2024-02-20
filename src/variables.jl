@@ -328,6 +328,11 @@ apply_simple_constraint!(variable, ::Val{:max}) = @objective global_model() Min 
 apply_simple_constraint!(variable, value::VariableType) = @constraint global_model() variable == value
 apply_simple_constraint!(variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(v1, v2) for (v1, v2) in zip(variable, value)]
 apply_simple_constraint!(variable::Number, value::Number) = @assert variable ≈ value "Variable set to multiple incompatible values."
+function apply_simple_constraint!(variable::NamedTuple, value::NamedTuple)
+    for key in keys(value)
+        apply_simple_constraint!(variable[key], value[key])
+    end
+end
 
 
 """
