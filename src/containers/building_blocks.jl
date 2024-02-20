@@ -5,8 +5,9 @@ module BuildingBlocks
 import LinearAlgebra: norm
 import JuMP: @constraint
 import ..Abstract: ContainerBlock
+import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, DelayedEvent, RFPulseComponent, ReadoutComponent
-import ...Variables: qval, bmat_gradient, effective_time
+import ...Variables: qval, bmat_gradient, effective_time, get_free_variable
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!
 
 """
