@@ -4,7 +4,7 @@ Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 module Sequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, TR, VariableType, duration, variables, VariableNotAvailable, Variables
+import ...Variables: get_free_variable, TR, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!
 import ...BuildSequences: global_model
 import ...Components: EventComponent
 import ..Abstract: ContainerBlock, start_time
@@ -96,47 +96,13 @@ Defines an MRI sequence from a vector of building blocks.
 """
 struct Sequence{S, N} <: BaseSequence{N}
     blocks :: SVector{N, Pair{<:Union{Symbol, Nothing}, <:ContainerBlock}}
-    TR :: VariableType
 end
 
-function Sequence(blocks::AbstractVector; TR=:min, name=:Sequence)
+function Sequence(blocks::AbstractVector; name=:Sequence, variables...)
     blocks = to_block_pair.(blocks)
-    actual_duration = sum(pair -> duration(pair[2]), blocks; init=0.)
-    if TR == :min
-        TR = actual_duration
-    end
-    res = Sequence{name, length(blocks)}(SVector{length(blocks)}(blocks), get_free_variable(TR))
-    if !(res.TR isa Number) || !(duration(res) isa Number)
-        @constraint global_model() res.TR >= actual_duration
-    end
+    res = Sequence{name, length(blocks)}(SVector{length(blocks)}(blocks))
+    set_simple_constraints!(res, variables)
     return res
-end
-
-for fn in keys(variables)
-    if fn in (:duration, :TR)
-        continue
-    end
-    @eval function Variables.$fn(seq::Sequence)
-        res = []
-        for (name, block) in seq.blocks
-            if isnothing(name)
-                continue
-            end
-            try
-                push!(res, name => Variables.$fn(block))
-            catch e
-                if e isa VariableNotAvailable
-                    continue
-                end
-                rethrow()
-            end
-        end
-        if length(res) > 0
-            return NamedTuple(res)
-        else
-            error("None of the building blocks of $(typeof(seq)) define $(Variables.$fn)")
-        end
-    end
 end
 
 Base.show(io::IO, ::Type{<:Sequence{S, N}}) where {S, N} = print(io, S, "{$N}")
@@ -146,7 +112,6 @@ Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 get_index_single_TR(s::Sequence, i::Integer) = s.blocks[i][2]
 Base.getindex(seq::Sequence, sym::Symbol) = seq[findfirst(p -> p[1] == sym, seq.blocks)]
 nrepeat(::Sequence) = 0
-TR(s::Sequence) = s.TR
 
 to_block_pair(pair::Pair) = pair[1] => to_block(pair[2])
 to_block_pair(other) = nothing => to_block(other)
