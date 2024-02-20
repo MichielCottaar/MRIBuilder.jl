@@ -95,13 +95,13 @@ Defines an MRI sequence from a vector of building blocks.
 - [`TR`](@ref): how long between repeats in ms (defaults to the duration of the sequence). Can be set to `nothing` to be a free variable.
 """
 struct Sequence{N} <: BaseSequence{N}
-    blocks :: SVector{N, <:ContainerBlock}
+    blocks :: SVector{N, Pair{<:Union{Symbol, Nothing}, <:ContainerBlock}}
     TR :: VariableType
 end
 
 function Sequence(blocks::AbstractVector; TR=:min)
-    blocks = to_block.(blocks)
-    actual_duration = sum(duration, blocks; init=0.)
+    blocks = to_block_pair.(blocks)
+    actual_duration = sum(pair -> duration(pair[2]), blocks; init=0.)
     if TR == :min
         TR = actual_duration
     end
@@ -114,8 +114,12 @@ end
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 
-get_index_single_TR(s::Sequence, i::Integer) = s.blocks[i]
+get_index_single_TR(s::Sequence, i::Integer) = s.blocks[i][2]
+Base.getindex(seq::Sequence, sym::Symbol) = seq[findfirst(p -> p[1] == sym, seq.blocks)]
 nrepeat(::Sequence) = 0
+
+to_block_pair(pair::Pair) = pair[1] => to_block(pair[2])
+to_block_pair(other) = nothing => to_block(other)
 
 """
     to_block(block_like)
