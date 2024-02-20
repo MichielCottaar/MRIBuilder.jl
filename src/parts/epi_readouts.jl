@@ -2,7 +2,8 @@ module EPIReadouts
 import ...Containers: BaseSequence, get_index_single_TR
 import ..Trapezoids: Trapezoid, opposite_kspace_lines, LineReadout
 import ...Components: ADC
-import ...Variables: get_free_variable, VariableType, qval, qvec, set_simple_constraints!, resolution, inverse_voxel_size, inverse_fov, resolution, get_readout, apply_simple_constraint!
+import ...Variables: get_free_variable, VariableType, qval, qvec, set_simple_constraints!, resolution, inverse_voxel_size, inverse_fov, resolution, get_readout, apply_simple_constraint!, effective_time
+import ...Pathways: PathwayWalker, update_walker_till_time!
 
 """
     EPIReadout(resolution; ky_lines=-resolution[2]:resolution[2], recenter=false, group=:FOV, variables...)
@@ -64,6 +65,13 @@ inverse_fov(epi::EPIReadout) = [inverse_fov(epi.positive_line), 1e3 * epi.ky_ste
 inverse_voxel_size(epi::EPIReadout) = [inverse_voxel_size(epi.positive_line), 1e3 * epi.ky_step * maximum(abs.(epi.ky_lines))]
 resolution(epi::EPIReadout) = [resolution(epi.positive_line), maximum(abs.(epi.ky_lines))]
 get_readout(epi::EPIReadout) = epi.positive_line
+function effective_time(epi::EPIReadout)
+    index = findfirst(iszero, epi.ky_lines)
+    if isnothing(index)
+        error("EPI readout does not pass through the centre of k-space")
+    end
+    return effective_time(epi, index * 2)
+end
 
 function get_index_single_TR(epi::EPIReadout, index::Integer)
     if index == 1
@@ -82,6 +90,19 @@ function get_index_single_TR(epi::EPIReadout, index::Integer)
             return epi.negative_line
         end
     end
+end
+
+# overrides default pathway behaviour, so that EPI is counted as a single readout
+function walk_pathway!(epi::EPIReadout, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}, block_start_time::VariableType)
+    if length(pulse_effects) > 0
+        return false
+    end
+    nreadout[] -= 1
+    if nreadout[] > 0
+        return false
+    end
+    update_walker_till_time!(walker, block_start_time + effective_time(epi))
+    return true
 end
 
 end
