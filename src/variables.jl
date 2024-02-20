@@ -249,7 +249,15 @@ for (target_name, all_vars) in all_variables_symbols
                 throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
             catch e
                 if $use_get_func && e isa VariableNotAvailable && hasmethod($get_func, tuple(typeof(bb)))
-                    return Variables.$variable_func($get_func(bb))
+                    apply_to = $(get_func)(bb)
+                    if apply_to isa AbstractBlock
+                        return Variables.$variable_func(apply_to)
+                    elseif apply_to isa NamedTuple
+                        return NamedTuple(k => Variables.$variable_func(v) for (k, v) in pairs(apply_to))
+                    elseif apply_to isa AbstractVector{<:AbstractBlock} || apply_to isa Tuple
+                        return Variables.$variable_func.(apply_to)
+                    end
+                    error("$($(use_get_func)) returned an unexpected type for $(bb).")
                 end
                 rethrow()
             end
