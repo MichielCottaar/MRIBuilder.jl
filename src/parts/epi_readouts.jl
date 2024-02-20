@@ -3,7 +3,7 @@ import ...Containers: BaseSequence, get_index_single_TR
 import ..Trapezoids: Trapezoid, opposite_kspace_lines, LineReadout
 import ...Components: ADC
 import ...Variables: get_free_variable, VariableType, qval, qvec, set_simple_constraints!, resolution, inverse_voxel_size, inverse_fov, resolution, get_readout, apply_simple_constraint!, effective_time
-import ...Pathways: PathwayWalker, update_walker_till_time!
+import ...Pathways: PathwayWalker, update_walker_till_time!, walk_pathway!
 
 """
     EPIReadout(resolution; ky_lines=-resolution[2]:resolution[2], recenter=false, group=:FOV, variables...)
