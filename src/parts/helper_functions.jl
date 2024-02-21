@@ -4,9 +4,10 @@ import ...Containers: AlternativeBlocks, match_blocks!, BuildingBlock
 import ..Trapezoids: Trapezoid, opposite_kspace_lines, SliceSelect
 import ..SpoiltSliceSelects: SpoiltSliceSelect
 import ..SliceSelectRephases: SliceSelectRephase
+import ..EPIReadouts: EPIReadout
 import ...BuildSequences: global_model, build_sequence
 import ...Containers: Sequence
-import ...Components: SincPulse, ConstantPulse, InstantPulse
+import ...Components: SincPulse, ConstantPulse, InstantPulse, SingleReadout
 import ...Variables: qvec, flat_time, rise_time
 
 
@@ -119,101 +120,32 @@ function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, sl
     end
 end
 
-"""
-    epi_readout(; resolution=, fov/voxel_size=; scanner=nothing, optimise=false, variables...)
-
-Creates an EPI readout with given `resolution` and `fov` or `voxel_size`.
-
-## Parameters
-- `optimise`: set to true to optimise this readout separately from the embedding sequence.
-- `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
-- `resolution`: 2-element vector with number of voxels of the output image in the x- and y-direction. This parameter is required.
-- `fov`: 2-element vector with size of the output image in the x- and y-direction in mm. Either this parameter or `voxel_size` should be set.
-- `voxel_size`: 2-element vector with size of the voxels in the output image in the x- and y-direction in mm. Either this parameter or `fov` should be set.
-- `oversample`: by how much to oversample in the x-direction.
-"""
-function epi_readout(; resolution, fov=nothing, voxel_size=nothing, kwargs...)
-    start_lines = [-resolution[2]]
-    readout_lines = 0:(2 * resolution[2])
-    fov = _get_fov(fov, voxel_size, resolution)
-    return cartesian_readout(start_lines, readout_lines, fov, resolution[1]; kwargs...)
-end
 
 """
-    single_line_readout(; resolution=, fov/voxel_size=; scanner=nothing, optimise=false, variables...)
+    readout_event(; type, optimise=false, variables...)
 
-Creates a readout that scans a single line in k-space at a time with given `resolution` and `fov` or `voxel_size`.
+Adds a readout event to the sequence.
 
 ## Parameters
-- `optimise`: set to true to optimise this readout separately from the embedding sequence.
-- `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
-- `resolution`: 2-element vector with number of voxels of the output image in the x- and y-direction. This parameter is required.
-- `fov`: 2-element vector with size of the output image in the x- and y-direction in mm. Either this parameter or `voxel_size` should be set.
-- `voxel_size`: 2-element vector with size of the voxels in the output image in the x- and y-direction in mm. Either this parameter or `fov` should be set.
-- `oversample`: by how much to oversample in the x-direction.
+- `type`: A symbol describing the type of readout. One of the following:
+    - `:epi`: EPI readout. See [`EPIReadout`](@ref) for the relevant `variables`.
+    - `:instant`: single isolated readout event [`SingleReadout`](@ref) (e.g., for NMR). Does not expect any `variables`.
+- `optimise`: Whether to optimise this readout event in isolation from the rest of the sequence. Use this with caution. It can speed up the optimisation (and for very complicated sequences make it more robust), however the resulting parameters might not represent the optimal solution of any external constraints (which are ignored if the readout is optimised in isolation).
+- `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
 """
-function single_line_readout(; resolution, fov=nothing, voxel_size=nothing, kwargs...)
-    start_lines = -resolution[2]:resolution[2]
-    readout_lines = [0]
-    fov = _get_fov(fov, voxel_size, resolution)
-    return cartesian_readout(start_lines, readout_lines, fov, resolution[1]; kwargs...)
-end
-
-"""
-Helper function that detects consistency between `fov`, `voxel_size`, and `resolution`.
-It computes the `fov` if needed.
-"""
-function _get_fov(fov, voxel_size, resolution)
-    if isnothing(fov)
-        if isnothing(voxel_size)
-            error("Set either FOV or voxel size when creating an single line readout.")
-        end
-        return voxel_size .* resolution
-    elseif !isnothing(voxel_size)
-        @assert all(fov .≈ voxel_size .* resolution) "FOV, resolution, and voxel_size have been set to inconsistent values."
+function readout_event(; type, optimise=false, scanner=nothing, variables...)
+    if type == :instant
+        optimise = false # there is nothing to optimise
     end
-    return fov
-end
-
-"""
-    cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanner=nothing, optimise=false, kwargs...)
-
-Helper function used to build the readout for any Cartesian readout, i.e.:
-- [`epi_readout`](@ref)
-- [`single_line_readout`](@ref)
-"""
-function cartesian_readout(start_lines, readout_lines, fov, resolution_x; scanner=nothing, optimise=false, kwargs...)
-    @assert iszero(readout_lines[1])
-    build_sequence(scanner; optimise=optimise) do
-        (pos_line, neg_line) = opposite_kspace_lines(; rotate=:FOV, fov=fov[1], resolution=resolution_x, kwargs...)
-        ky = @. start_lines * 1e-3 / fov[2]
-        if length(start_lines) == 1
-            prepare_kspace = Trapezoid(rotate=:FOV, duration=:min, qvec=[-qvec(pos_line, nothing, 1)[1], ky[1], 0.])
-        else
-            prepare_kspace = AlternativeBlocks(
-                :readout_segment,
-                [Trapezoid(rotate=:FOV, duration=:min, qvec=[-qvec(pos_line, nothing, 1)[1], ky_prep, 0.]) for ky_prep in ky]
-            )
-            match_blocks!(prepare_kspace, flat_time)
-            match_blocks!(prepare_kspace, rise_time)
-        end
-
-        steps = (readout_lines[2:end] - readout_lines[1:end-1])
-        blips = Dict(
-            s => Trapezoid(orientation=[0, 1, 0], rotate=:FOV, duration=:min)
-            for s in steps
+    build_sequence(scanner; optimise=optimise) do 
+        func_dict = Dict(
+            :epi => EPIReadout,
+            :instant => SingleReadout,
         )
-        for (s, trap) in blips
-            @constraint global_model() qvec(trap)[2] == 1e-3 * s / fov[2]
+        if !(type in keys(func_dict))
+            error("Readout event type `$type` has not been implemented. Please use one of $(keys(func_dict)).")
         end
-
-        result = BuildingBlock[prepare_kspace, pos_line]
-        next_line = neg_line
-        for s in steps
-            append!(result, [blips[s], next_line])
-            next_line = next_line == pos_line ? neg_line : pos_line
-        end
-        return Sequence(result...; TR=Inf)
+        return func_dict[type](variables...)
     end
 end
 
