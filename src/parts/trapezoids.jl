@@ -192,7 +192,7 @@ Base.keys(::LineReadout) = (Val(:rise), Val(:flat), Val(:adc), Val(:fall))
 Base.getindex(lr::LineReadout, ::Val{:adc}) = lr.adc
 
 ramp_overlap(lr::LineReadout) = lr.ramp_overlap
-inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid)
+inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid) * lr.adc.oversample
 inverse_voxel_size(lr::LineReadout) = 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
 effective_time(lr::LineReadout) = effective_time(lr, :adc)
 
