@@ -187,12 +187,16 @@ function dwi_gradients(; type=:trapezoid, optimise=false, scanner=nothing, refoc
             :trapezoid => [:rise_time, :flat_time, :slew_rate],
         ), type, [])
     end
+
+    get_index(var::Union{Tuple, AbstractVector}, i) = length(var) == 2 ? var[i] : var
+    get_index(var::NamedTuple, i) = var
+    get_index(var, i) = var
+
     build_sequence(scanner; optimise=optimise) do 
         other_orientation = isnothing(orientation) ? nothing : (refocus ? orientation : -orientation)
-        (g1, g2) = (
-            func_dict[type](group=group, orientation=orientation, real_variables...),
-            func_dict[type](group=group, orientation=other_orientation, real_variables...)
-        )
+        (g1, g2) = [func_dict[type](;
+            group=group, orientation=o, Dict(key => get_index(value, i) for (key, value) in pairs(real_variables))...
+            ) for (i, o) in enumerate((orientation, other_orientation))]
         if !isnothing(orientation) || refocus
             apply_simple_constraint!(qval(g1), qval(g2))
         else
