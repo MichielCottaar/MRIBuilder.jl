@@ -135,17 +135,21 @@ end
 Adds a readout event to the sequence.
 
 ## Parameters
-- `type`: A symbol describing the type of readout. One of the following:
+- `type`: A symbol describing the type of readout. It will default to `:epi` if a resolution has been set and `:instant` otherwise. Can be set to one of the following:
     - `:epi`: EPI readout. See [`EPIReadout`](@ref) for the relevant `variables`.
     - `:instant`: single isolated readout event [`SingleReadout`](@ref) (e.g., for NMR). Does not expect any `variables`.
 - `optimise`: Whether to optimise this readout event in isolation from the rest of the sequence. Use this with caution. It can speed up the optimisation (and for very complicated sequences make it more robust), however the resulting parameters might not represent the optimal solution of any external constraints (which are ignored if the readout is optimised in isolation).
 - `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
 """
-function readout_event(; type=:epi, optimise=false, scanner=nothing, all_variables...)
+function readout_event(; type=nothing, optimise=false, scanner=nothing, all_variables...)
+    real_variables = Dict(key => value for (key, value) in pairs(all_variables) if !(isnothing(value) || (value isa AbstractVector && all(isnothing.(value)))))
+    if isnothing(type)
+        resolution = get(real_variables, :resolution, nothing)
+        type = (isnothing(resolution) || (resolution isa Union{Tuple, AbstractVector} && all(isnothing.(resolution)))) ? :instant : :epi
+    end
     if type == :instant
         optimise = false # there is nothing to optimise
     end
-    real_variables = Dict(key => value for (key, value) in pairs(all_variables) if !(isnothing(value) || (value isa AbstractVector && all(isnothing.(value)))))
     build_sequence(scanner; optimise=optimise) do 
         func_dict = Dict(
             :epi => EPIReadout,
