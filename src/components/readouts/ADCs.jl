@@ -58,8 +58,8 @@ resolution(adc::ADC) = adc.resolution
 
 function fixed(adc::ADC)
     # round nsamples during fixing
-    r = Int(round(value(resolution(adc))))
-    n = Int(round(value(nsamples(adc))))
+    r = Int(round(value(resolution(adc)), RoundNearest))
+    n = Int(round(value(nsamples(adc)), RoundNearest))
     if iszero(n)
         return ADC(0, NaN, NaN, NaN)
     end
