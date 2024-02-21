@@ -210,6 +210,8 @@ bmat_gradient(bb::BaseBuildingBlock, qstart) = bmat_gradient(bb, qstart, nothing
 Generic [`BaseBuildingBlock`](@ref) that can capture any overlapping gradients, RF pulses, and/or readouts.
 The gradients cannot contain any free variables.
 
+Scanner constraints are automatically applied.
+
 ## Arguments
 - `waveform`: Sequence of 2-element tuples with (time, (Gx, Gy, Gz)). If `orientation` is set then the tuple is expected to look like (time, G). This cannot contain any free variables.
 - `events`: Sequence of 2-element tuples with (index, pulse/readout). The start time of the pulse/readout at the start of the gradient waveform element with index `index` (use [`DelayedEvent`](@ref) to make this earlier or later).
@@ -219,13 +221,6 @@ The gradients cannot contain any free variables.
 """
 struct BuildingBlock <: BaseBuildingBlock
     parts :: Vector{<:BaseComponent}
-    function BuildingBlock(parts::AbstractVector{<:BaseComponent})
-        res = new(parts)
-        for (_, part) in waveform_sequence(res)
-            scanner_constraints!(part)
-        end
-        return res
-    end
 end
 
 function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orientation=nothing, group=nothing)
@@ -253,10 +248,13 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
             push!(components, event)
         end
     end
+    #for comp in components
+    #    scanner_constraints!(comp)
+    #end
     return BuildingBlock(components)
 end
 
-make_generic(other_block::BaseBuildingBlock) = BuildingBlock(duration(other_block), [other_block...])
+make_generic(other_block::BaseBuildingBlock) = BuildingBlock([other_block...])
 Base.keys(bb::BuildingBlock) = 1:length(bb.parts)
 Base.getindex(bb::BuildingBlock, i::Integer) = bb.parts[i]
 
