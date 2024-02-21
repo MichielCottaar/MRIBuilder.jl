@@ -217,4 +217,49 @@ function dwi_gradients(; type=:trapezoid, optimise=false, scanner=nothing, refoc
 end
 
 
+"""
+    interpret_image_size(fov, resolution, voxel_size, slice_thickness)
+
+Combines the user-provided information of the image size to produce a tuple with:
+- `slice_thickness`: if not set explicitly, will be set to the third element of `voxel_size`
+- `resolution_z`: number of voxels in the slice-select direction.
+- keywords parameters for the [`readout_event`](@ref) functions with the `fov`, `resolution`, and `voxel_size` in the x- and y- dimensions.
+"""
+function interpret_image_size(fov, resolution, voxel_size, slice_thickness)
+    _real_value(n::Number) = true
+    _real_value(n::NTuple{N, <:Number}) where {N} = true
+    _real_value(n::AbstractVector{<:Number}) = true
+    _real_value(other) = false
+
+    if all(isnothing.((fov, resolution, voxel_size)))
+        return (slice_thickness, nothing, (fov=nothing, resolution=nothing, voxel_size=nothing))
+    end
+    if !_real_value(resolution)
+        if !(_real_value(fov) && _real_value(voxel_size))
+            error("`resolution` needs to be fully defined; either by setting it directly or by setting `fov` and `voxel_size` to concrete values.")
+        end
+        resolution = Int.(div.(fov, voxel_size, RoundUp))
+        fov = resolution .* voxel_size
+    end
+
+    getz(v::Union{Tuple, AbstractVector}) = length(v) == 2 ? nothing : v[3]
+    getz(v) = v
+    if isnothing(slice_thickness)
+        slice_thickness = getz(voxel_size)
+        if isnothing(slice_thickness)
+            fovz = getz(fov)
+            if isnothing(fovz)
+                slice_thickness = Inf
+            else
+                slice_thickness = fovz / getz(resolution)
+            end
+        end
+    end
+
+    getxy(v::Union{Tuple, AbstractVector}) = [v[1], v[2]]
+    getxy(v) = [v, v]
+
+    return (slice_thickness, getz(resolution), (fov=getxy(fov), resolution=getxy(resolution), voxel_size=getxy(voxel_size)))
+end
+
 end
