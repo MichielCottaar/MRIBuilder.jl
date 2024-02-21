@@ -24,7 +24,6 @@ Main interface:
 Sub-types need to implement:
 - `Base.keys`: returns sequence of keys to all the components.
 - `Base.getindex`: returns the actual component for each key.
-- [`duration`](@ref): total duration of the building block.
 """
 abstract type BaseBuildingBlock <: ContainerBlock end
 
@@ -125,6 +124,8 @@ function start_time(building_block::BaseBuildingBlock, index)
     end
     error("Building block with index '$index' not found")
 end
+
+duration(bb::BaseBuildingBlock) = sum([duration(wv) for (_, wv) in waveform_sequence(bb)])
 
 # Pathway support
 """
@@ -258,8 +259,6 @@ end
 make_generic(other_block::BaseBuildingBlock) = BuildingBlock(duration(other_block), [other_block...])
 Base.keys(bb::BuildingBlock) = 1:length(bb.parts)
 Base.getindex(bb::BuildingBlock, i::Integer) = bb.parts[i]
-
-duration(bb::BuildingBlock) = sum(duration, waveform_sequence(bb); init=0.)
 
 function get_pulse(bb::BuildingBlock)
     pulses = [p for p in events(bb) if p isa RFPulseComponent]

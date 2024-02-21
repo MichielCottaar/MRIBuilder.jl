@@ -23,7 +23,7 @@ struct NoGradient{N} <: GradientWaveform{N}
     end
 end
 
-duration(ngb::NoGradient) = duration(ngb)
+duration(ngb::NoGradient) = ngb.duration
 for func in (:qval, :gradient_strength, :slew_rate)
     @eval $func(::NoGradient{1}) = 0.
     @eval $func(::NoGradient{3}) = zero(SVector{3, Float64})
