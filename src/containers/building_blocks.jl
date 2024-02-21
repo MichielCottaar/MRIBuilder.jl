@@ -227,7 +227,7 @@ struct BuildingBlock <: BaseBuildingBlock
     end
 end
 
-function BuildingBlock(waveform::AbstractVector, events::AbstractVector; duration=nothing, orientation=nothing, group=nothing)
+function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orientation=nothing, group=nothing)
     events = Any[events...]
     waveform = Any[waveform...]
     ndim = isnothing(orientation) ? 1 : 3
@@ -237,13 +237,6 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; duratio
         events = [(i+1, e) for (i, e) in events]
     end
 
-    if isnothing(duration)
-        duration = waveform[end][1]
-    end
-    if !(duration ≈ waveform[end][1])
-        @assert duration > waveform[end][1]
-        push!(waveform, (duration, zero_grad))
-    end
     components = BaseComponent[]
     for (index_grad, ((prev_time, prev_grad), (time, grad))) in enumerate(zip(waveform[1:end-1], waveform[2:end]))
         duration = time - prev_time
