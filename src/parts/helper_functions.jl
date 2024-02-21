@@ -148,7 +148,7 @@ Adds a readout event to the sequence.
 - `optimise`: Whether to optimise this readout event in isolation from the rest of the sequence. Use this with caution. It can speed up the optimisation (and for very complicated sequences make it more robust), however the resulting parameters might not represent the optimal solution of any external constraints (which are ignored if the readout is optimised in isolation).
 - `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
 """
-function readout_event(; type=nothing, optimise=false, scanner=nothing, oversample=2, all_variables...)
+function readout_event(; type=nothing, optimise=false, scanner=nothing, oversample=2, duration=:min, all_variables...)
     real_variables = Dict(key => value for (key, value) in pairs(all_variables) if !(isnothing(value) || (value isa AbstractVector && all(isnothing.(value)))))
     if isnothing(type)
         resolution = get(real_variables, :resolution, nothing)
@@ -166,7 +166,7 @@ function readout_event(; type=nothing, optimise=false, scanner=nothing, oversamp
         if !(type in keys(func_dict))
             error("Readout event type `$type` has not been implemented. Please use one of $(keys(func_dict)).")
         end
-        return func_dict[type](; oversample=oversample, real_variables...)
+        return func_dict[type](; duration=duration, oversample=oversample, real_variables...)
     end
 end
 
