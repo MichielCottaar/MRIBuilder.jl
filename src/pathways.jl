@@ -7,7 +7,7 @@ import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, dur
 
 
 """
-    Pathway(sequence::Sequence, pulse_effects::Vector{:Symbol/Number}, readout_index=1)
+    Pathway(sequence::Sequence, pulse_effects::Vector{:Symbol/Number}, readout_index=1; group=nothing)
 
 Describes how a specific spin/isochromat might experience the sequence.
 
@@ -28,6 +28,7 @@ The RF pulses cause mappings between these different states as described below.
     - `:excite`/90: Takes spin state one step along the following sequence +longitudinal -> +transverse -> -longitudinal -> -transverse -> +longitudinal
     - `:neg_excite`/270/-90: Inverse step compared with `:excite`.
 - `readout_index`: After encountering the number of pulses as defined in `pulse_effects`, continue the `PathWay` until the readout given by `index` is reached. If set to 0 the `PathWay` is terminated immediately after the last RF pulse.
+- `group`: which gradient grouping to consider for the `qvec` and `bmat`.
 
 ## Attributes
 Over the pathway the following values are computed. Each can be accessed by calling the appropriate function:
@@ -39,7 +40,6 @@ Over the pathway the following values are computed. Each can be accessed by call
 
 ### Effect of gradients
 The area under curve, q-values, and b-values are computed separately for each group of gradients (depending on the `group` keyword set during construction).
-You can select which gradients to consider when accessing these values.
 - [`qvec`](@ref): Net displacement vector in k-space/q-space.
 - [`qval`](@ref)/[`area_under_curve`](@ref): size of the displacement in k-space/q-space. For a spoiled pathway, this should be large compared with 1/voxel size; for unspoiled pathways it should be (close to) zero.
 - [`bmat`](@ref): Net diffusion weighting due to gradients along the [`Pathway`](@ref) in matrix form.
@@ -53,20 +53,21 @@ struct Pathway
 
     # computed
     duration_states :: SVector{4, <:VariableType}
-    qvec :: Dict{Any, SVector{3, <:VariableType}}
-    bmat :: Dict{Any, SMatrix{3, 3, <:VariableType, 9}}
+    qvec :: SVector{3, <:VariableType}
+    bmat :: SMatrix{3, 3, <:VariableType, 9}
 end
 
-function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_index::Integer=1)
+function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_index::Integer=1; group=nothing)
     walker = PathwayWalker()
     walk_pathway!(sequence, walker, interpret_pulse_effects.(pulse_effects), Ref(readout_index))
+    tracker = walker.gradient_trackers[group]
     return Pathway(
         sequence,
         pulse_effects,
         readout_index,
         SVector{4}(walker.duration_states),
-        Dict(k => SVector{3}(v.qvec) for (k, v) in pairs(walker.gradient_trackers)),
-        Dict(k => SMatrix{3, 3}(v.bmat) for (k, v) in pairs(walker.gradient_trackers)),
+        tracker.qvec,
+        tracker.bmat,
     )
 end
 
@@ -120,7 +121,7 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `qvec` for all gradient groups.
 """
-qvec(pathway::Pathway, group) = pathway.qvec[group]
+qvec(pathway::Pathway) = pathway.qvec
 
 
 """
@@ -132,7 +133,7 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `area_under_curve` for all gradient groups.
 """
-area_under_curve(pathway::Pathway, group) = norm(qvec(pathway, group))
+area_under_curve(pathway::Pathway) = norm(qvec(pathway))
 
 
 """
@@ -144,7 +145,7 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `bmat` for all gradient groups.
 """
-bmat(pathway::Pathway, group)  = pathway.bmat[group]
+bmat(pathway::Pathway)  = pathway.bmat
 
 """
     bval(pathway::Pathway)
@@ -155,7 +156,7 @@ Only gradients active while the spins are in the transverse plane will contribut
 
 Returns a NamedTuple with the `bval` for all gradient groups.
 """
-bval(pathway::Pathway, group) = tr(bmat(pathway, group))
+bval(pathway::Pathway) = tr(bmat(pathway))
 
 
 """
@@ -166,12 +167,6 @@ Gets the main [`PathWay`](@ref) that spins are expected to experience in the seq
 Multiple pathways might be returned as an array or (named)tuple.
 """
 function get_pathway end
-
-for fn in (:qvec, :area_under_curve, :bmat, :bval)
-    @eval function $fn(pathway::Pathway)
-        return NamedTuple(group => $fn(pathway, group) for group in keys(pathway.qvec))
-    end
-end
 
 for fn in (:qvec, :area_under_curve, :bmat, :bval, :duration_dephase, :duration_transverse)
     @eval function $fn(seq::Sequence)
