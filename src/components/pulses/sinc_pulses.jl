@@ -49,8 +49,12 @@ function SincPulse(;
         [get_free_variable(value) for value in (amplitude, phase, frequency, lobe_duration)]...,
         group
     )
-    @constraint global_model() res.amplitude >= 0
-    @constraint global_model() res.lobe_duration >= 0
+    if !(res.amplitude isa Number)
+        @constraint global_model() res.amplitude >= 0
+    end
+    if !(res.lobe_duration isa Number)
+        @constraint global_model() res.lobe_duration >= 0
+    end
     set_simple_constraints!(res, kwargs)
     return res
 end
