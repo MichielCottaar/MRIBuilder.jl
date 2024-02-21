@@ -53,6 +53,14 @@ function start_time(bs::BaseSequence{N}, index::Integer) where {N}
     end
 end
 
+function start_time(bs::BaseSequence{N}, s::Symbol) where {N}
+    index = findfirst(p -> p[1] == s, bs.blocks)
+    if isnothing(index)
+        error("Sequence does not contain a block with name $s")
+    end
+    return start_time(bs, index)
+end
+
 
 """
     get_index_single_TR(sequence, index)
