@@ -6,7 +6,7 @@ import StaticArrays: SVector
 import JuMP: @constraint
 import ...Variables: get_free_variable, TR, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!
 import ...BuildSequences: global_model
-import ...Components: EventComponent, NoGradient
+import ...Components: EventComponent
 import ..Abstract: ContainerBlock, start_time
 import ..BuildingBlocks: Wait, BuildingBlock, BaseBuildingBlock
 
@@ -127,6 +127,6 @@ Converst object into something that can be included in the sequence:
 to_block(cb::ContainerBlock) = cb
 to_block(s::Symbol) = to_block(Val(s))
 to_block(s::Union{VariableType, Nothing, Val{:min}, Val{:max}}) = Wait(s)
-to_block(ec::EventComponent) = BuildingBlock([NoGradient(duration(ec))], [(1, ec)])
+to_block(ec::EventComponent) = BuildingBlock([(0., 0.), (duration(ec), 0.)], [(1, ec)])
 
 end
