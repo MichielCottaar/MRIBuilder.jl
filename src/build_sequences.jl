@@ -58,11 +58,11 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
                 for attempt in 1:100
                     optimize!(model)
                     if termination_status(model) in (LOCALLY_SOLVED, OPTIMAL)
-                        println("Success after $(attempt-1) restarts.")
+                        println("Optimisation succeeded after $(attempt-1) restarts.")
                         break
                     else
                         old_values = value.(all_variables(model))
-                        size_kick = 0.2 / attempt
+                        size_kick = 0.5 / attempt
                         new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
                         for (var, v) in zip(all_variables(model), new_values)
                             set_start_value(var, v)
