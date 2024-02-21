@@ -6,13 +6,13 @@ import ..Variables: VariableType, variables, AbstractBlock, VariableNotAvailable
 
 function _robust_value(possible_number::VariableType)
     try
-        return value(possible_number)
+        return round(value(possible_number), sigdigits=3)
     catch
         return nothing
     end
 end
 
-function _robust_value(possible_vector::AbstractVector) 
+function _robust_value(possible_vector::AbstractArray) 
     result = _robust_value.(possible_vector)
     if any(isnothing.(result))
         return nothing
@@ -21,6 +21,7 @@ function _robust_value(possible_vector::AbstractVector)
 end
 
 _robust_value(possible_tuple::Tuple) = _robust_value([possible_tuple...])
+_robust_value(possible_tuple::NamedTuple) = NamedTuple(k => _robust_value(v) for (k, v) in pairs(possible_tuple))
 
 
 function Base.show(io::IO, block::AbstractBlock)
@@ -36,7 +37,8 @@ function Base.show(io::IO, block::AbstractBlock)
         end
         if (
             ft <: Union{Nothing, AbstractBlock} ||
-            (ft <: AbstractVector && eltype(ft) <: AbstractBlock)
+            (ft <: AbstractVector && eltype(ft) <: AbstractBlock) ||
+            (ft <: AbstractVector && eltype(ft) <: Pair)
         )
             continue
         end
@@ -53,12 +55,7 @@ function Base.show(io::IO, block::AbstractBlock)
             if isnothing(numeric_value)
                 continue
             end
-            if numeric_value isa AbstractVector
-                printed_value = "[" * join(map(v -> @sprintf("%.3g", v), numeric_value), ", ") * "]"
-            else
-                printed_value = @sprintf("%.3g", numeric_value)
-            end
-            print(io, "$(nameof(fn))=$(printed_value), ")
+            print(io, "$(nameof(fn))=$(numeric_value), ")
         catch e
             if e isa VariableNotAvailable
                 continue
