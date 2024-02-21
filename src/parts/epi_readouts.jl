@@ -32,7 +32,7 @@ struct EPIReadout{N} <: BaseSequence{N}
     ky_lines :: AbstractVector{<:Integer}
 end
 
-function EPIReadout(resolution::AbstractVector{<:Integer}; recenter=false, group=:FOV, ky_lines=nothing, variables...)
+function EPIReadout(; resolution::AbstractVector{<:Integer}, recenter=false, group=:FOV, ky_lines=nothing, variables...)
     if length(resolution) != 2
         error("EPIReadout expects the image resolution in the x- and y-direction.")
     end

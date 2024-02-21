@@ -154,7 +154,7 @@ function readout_event(; type, optimise=false, scanner=nothing, variables...)
         if !(type in keys(func_dict))
             error("Readout event type `$type` has not been implemented. Please use one of $(keys(func_dict)).")
         end
-        return func_dict[type](real_variables...)
+        return func_dict[type](; real_variables...)
     end
 end
 
