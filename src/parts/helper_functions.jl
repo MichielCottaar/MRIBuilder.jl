@@ -7,8 +7,8 @@ import ..SliceSelectRephases: SliceSelectRephase
 import ..EPIReadouts: EPIReadout
 import ...BuildSequences: global_model, build_sequence
 import ...Containers: Sequence
-import ...Components: SincPulse, ConstantPulse, InstantPulse, SingleReadout
-import ...Variables: qvec, flat_time, rise_time
+import ...Components: SincPulse, ConstantPulse, InstantPulse, SingleReadout, InstantGradient
+import ...Variables: qvec, flat_time, rise_time, qval, apply_simple_constraint!
 
 
 function _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
@@ -141,7 +141,7 @@ Adds a readout event to the sequence.
 - `optimise`: Whether to optimise this readout event in isolation from the rest of the sequence. Use this with caution. It can speed up the optimisation (and for very complicated sequences make it more robust), however the resulting parameters might not represent the optimal solution of any external constraints (which are ignored if the readout is optimised in isolation).
 - `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
 """
-function readout_event(; type, optimise=false, scanner=nothing, variables...)
+function readout_event(; type=:epi, optimise=false, scanner=nothing, variables...)
     if type == :instant
         optimise = false # there is nothing to optimise
     end
@@ -158,6 +158,43 @@ function readout_event(; type, optimise=false, scanner=nothing, variables...)
     end
 end
 
+
+"""
+    dwi_gradients(; type, optimise=false, refocus=true, orientation=[1, 0, 0], group=:DWI, variables...)
+
+Returns two DWI gradients that are guaranteed to cancel each other out.
+
+## Parameters
+- `type`: A symbol describing the type of gradient. One of:
+    - `:trapezoid`: Pulsed trapezoidal gradient profile. See [`Trapezoid`](@ref) for the relevant `variables`.
+    - `:instant`: instantaneous gradient (e.g., to test short-pulse approximations). See [`InstantGradient`](@ref) for the relevant `variables`.
+- `optimise`: Whether to optimise this readout event in isolation from the rest of the sequence. Use this with caution. It can speed up the optimisation (and for very complicated sequences make it more robust), however the resulting parameters might not represent the optimal solution of any external constraints (which are ignored if the readout is optimised in isolation).
+- `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
+"""
+function dwi_gradients(; type=:trapezoid, optimise=false, scanner=nothing, refocus=true, orientation=[1, 0, 0], group=:DWI, variables...)
+    real_variables = Dict(key => value for (key, value) in pairs(variables) if (!isnothing(value)) && (value isa AbstractVector && !all(isnothing.(value))))
+
+    func_dict = Dict(
+        :trapezoid => Trapezoid,
+        :instant => InstantGradient,
+    )
+    if !(type in keys(func_dict))
+        error("DWI gradients type `$type` has not been implemented. Please use one of $(keys(func_dict)).")
+    end
+    build_sequence(scanner; optimise=optimise) do 
+        other_orientation = isnothing(orientation) ? nothing : (refocus ? orientation : -orientation)
+        (g1, g2) = (
+            func_dict[type](group=group, orientation=orientation, real_variables...),
+            func_dict[type](group=group, orientation=other_orientation, real_variables...)
+        )
+        if !isnothing(orientation) || refocus
+            apply_simple_constraint!(qval(g1), qval(g2))
+        else
+            apply_simple_constraint!(qval(g1), -qval(g2))
+        end
+        return (g1, g2)
+    end
+end
 
 
 end

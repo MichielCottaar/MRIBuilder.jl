@@ -9,7 +9,7 @@ import .Trapezoids: Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines
 import .SpoiltSliceSelects: SpoiltSliceSelect
 import .SliceSelectRephases: SliceSelectRephase
 import .EPIReadouts: EPIReadout
-import .HelperFunctions: excitation_pulse, refocus_pulse, readout_event
+import .HelperFunctions: excitation_pulse, refocus_pulse, readout_event, dwi_gradients
 
 
 end
