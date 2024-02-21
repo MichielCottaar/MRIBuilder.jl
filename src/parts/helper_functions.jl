@@ -145,7 +145,7 @@ function readout_event(; type, optimise=false, scanner=nothing, variables...)
     if type == :instant
         optimise = false # there is nothing to optimise
     end
-    real_variables = Dict(key => value for (key, value) in pairs(variables) if !isnothing(variables))
+    real_variables = Dict(key => value for (key, value) in pairs(variables) if (!isnothing(value)) && (value isa AbstractVector && !all(isnothing.(value))))
     build_sequence(scanner; optimise=optimise) do 
         func_dict = Dict(
             :epi => EPIReadout,
