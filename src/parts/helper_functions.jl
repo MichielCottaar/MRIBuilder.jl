@@ -56,6 +56,9 @@ function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=nothing
     if length(bad_keys) > 0
         error("Unrecognised keyword arguments in call of `excitation_pulse`: $bad_keys")
     end
+    if isnothing(slice_thickness) || slice_thickness isa Symbol
+        error("slice thickness cannot be a free parameter")
+    end
     if isnothing(shape)
         shape = isinf(slice_thickness) ? :instant : :sinc
     end
@@ -113,6 +116,9 @@ function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=nothing, 
     bad_keys = [key for (key, value) in pairs(other_kwargs) if !isnothing(value)]
     if length(bad_keys) > 0
         error("Unrecognised keyword arguments in call of `refocus_pulse`: $bad_keys")
+    end
+    if isnothing(slice_thickness) || slice_thickness isa Symbol
+        error("slice thickness cannot be a free parameter")
     end
     if isnothing(shape)
         shape = isinf(slice_thickness) ? :instant : :sinc
@@ -240,7 +246,7 @@ function interpret_image_size(fov, resolution, voxel_size, slice_thickness)
     _real_value(other) = false
 
     if all(isnothing.((fov, resolution, voxel_size)))
-        return (slice_thickness, nothing, (fov=nothing, resolution=nothing, voxel_size=nothing))
+        return (isnothing(voxel_size) ? Inf : voxel_size, nothing, (fov=nothing, resolution=nothing, voxel_size=nothing))
     end
     if !_real_value(resolution)
         if !(_real_value(fov) && _real_value(voxel_size))
