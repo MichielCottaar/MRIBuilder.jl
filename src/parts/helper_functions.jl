@@ -145,7 +145,7 @@ function readout_event(; type=:epi, optimise=false, scanner=nothing, variables..
     if type == :instant
         optimise = false # there is nothing to optimise
     end
-    real_variables = Dict(key => value for (key, value) in pairs(variables) if (!isnothing(value)) && (value isa AbstractVector && !all(isnothing.(value))))
+    real_variables = Dict(key => value for (key, value) in pairs(variables) if !(isnothing(value) || (value isa AbstractVector && all(isnothing.(value)))))
     build_sequence(scanner; optimise=optimise) do 
         func_dict = Dict(
             :epi => EPIReadout,
@@ -172,7 +172,7 @@ Returns two DWI gradients that are guaranteed to cancel each other out.
 - `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
 """
 function dwi_gradients(; type=:trapezoid, optimise=false, scanner=nothing, refocus=true, orientation=[1, 0, 0], group=:DWI, variables...)
-    real_variables = Dict(key => value for (key, value) in pairs(variables) if (!isnothing(value)) && (value isa AbstractVector && !all(isnothing.(value))))
+    real_variables = Dict(key => value for (key, value) in pairs(variables) if !(isnothing(value) || (value isa AbstractVector && all(isnothing.(value)))))
 
     func_dict = Dict(
         :trapezoid => Trapezoid,
