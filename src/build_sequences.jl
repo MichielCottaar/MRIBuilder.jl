@@ -1,5 +1,5 @@
 module BuildSequences
-import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables
+import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED
 import Ipopt
 import Juniper
 import ..Scanners: Scanner, gradient_strength
@@ -55,7 +55,20 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
         sequence = f()
         if optimise
             if !iszero(num_variables(model))
-                optimize!(model)
+                for attempt in 1:100
+                    optimize!(model)
+                    if termination_status(model) in (LOCALLY_SOLVED, OPTIMAL)
+                        println("Success after $(attempt-1) restarts.")
+                        break
+                    else
+                        old_values = value.(all_variables(model))
+                        size_kick = 0.2 / attempt
+                        new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
+                        for (var, v) in zip(all_variables(model), new_values)
+                            set_start_value(var, v)
+                        end
+                    end
+                end
                 if !(termination_status(model) in (LOCALLY_SOLVED, OPTIMAL))
                     @warn "Optimisation did not report successful convergence. Please check the output sequence."
                     println(solution_summary(model))
