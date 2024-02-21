@@ -255,7 +255,11 @@ for (target_name, all_vars) in all_variables_symbols
                 throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
             catch e
                 if $use_get_func && e isa VariableNotAvailable && hasmethod($get_func, tuple(typeof(bb)))
-                    apply_to = $(get_func)(bb)
+                    apply_to = try
+                        $(get_func)(bb)
+                    catch
+                        throw(VariableNotAvailable(typeof(bb), Variables.$variable_func))
+                    end
                     if apply_to isa AbstractBlock
                         return Variables.$variable_func(apply_to)
                     elseif apply_to isa NamedTuple
@@ -274,7 +278,9 @@ end
 
 function qvec(bb::AbstractBlock, args...; kwargs...)
     value = qval(bb, args...; kwargs...)
-    if value isa AbstractVector
+    if value isa Number && iszero(value)
+        return value
+    elseif value isa AbstractVector
         return value
     else
         return gradient_orientation(bb) .* value
