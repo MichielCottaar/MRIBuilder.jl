@@ -3,7 +3,7 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform, DelayedEvent
 import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
-import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, TR, variables
+import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, TR, bmat, bval, area_under_curve, duration_dephase, duration_transverse
 
 
 """
@@ -180,7 +180,6 @@ for fn in (:qvec, :area_under_curve, :bmat, :bval, :duration_dephase, :duration_
         end
         error("get_pathway returned unexpected type for $seq")
     end
-    @eval variables[$(QuoteNode(fn))] = $fn
 end
 
 

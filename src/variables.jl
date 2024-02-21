@@ -36,6 +36,12 @@ all_variables_symbols = [
     :sequence => [
         :TR => "Time on which an MRI sequence repeats itself in ms.",
         :Δ => "Diffusion time in ms (i.e., time between start of the diffusion-weighted gradients).",
+        :qvec => "Net dephasing due to gradients in rad/um.",
+        :area_under_curve => "Net dephasing due to gradients in rad/um (same as [`qvec`](@ref)).",
+        :bmat => "Full 3x3 diffusion-weighting matrix in ms/um^2.",
+        :bval => "Size of diffusion-weighting in ms/um^2 (trace of [`bmat`](@ref)).",
+        :duration_dephase => "Net T2' dephasing experienced over a sequence (in ms).",
+        :duration_transverse => "Net T2 signal loss experienced over a sequence (in ms). This is the total duration spins spent in the transverse plane.",
     ],
     :pulse => [
         :flip_angle => "The flip angle of the RF pulse in degrees",
@@ -70,7 +76,7 @@ all_variables_symbols = [
         :resolution => "Number of voxels in the final readout. During the optimisation this might produce non-integer values, but this will be fixed after optimsation.",
         :oversample => "How much to oversample with ([`nsamples`](@ref) / [`resolution`](@ref))",
         :ramp_overlap => "Fraction of overlap between ADC event and underlying gradient pulse ramp (between 0 and 1)."
-    ]
+    ],
 ]
 
 """

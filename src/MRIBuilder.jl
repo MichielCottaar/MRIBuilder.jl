@@ -10,7 +10,7 @@ include("components/components.jl")
 include("containers/containers.jl")
 include("pathways.jl")
 include("parts/parts.jl")
-#include("printing.jl")
+include("printing.jl")
 
 import .BuildSequences: build_sequence, global_model, global_scanner, fixed
 export build_sequence, global_model, global_scanner, fixed
