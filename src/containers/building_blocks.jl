@@ -219,8 +219,8 @@ The gradients cannot contain any free variables.
 struct BuildingBlock <: BaseBuildingBlock
     parts :: Vector{<:BaseComponent}
     function BuildingBlock(parts::AbstractVector{<:BaseComponent})
-        res = new(duration, parts)
-        for (_, part) in waveform_sequence(parts)
+        res = new(parts)
+        for (_, part) in waveform_sequence(res)
             scanner_constraints!(part)
         end
         return res
