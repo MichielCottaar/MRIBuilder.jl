@@ -252,7 +252,7 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
             push!(components, event)
         end
     end
-    return components
+    return BuildingBlock(components)
 end
 
 make_generic(other_block::BaseBuildingBlock) = BuildingBlock(duration(other_block), [other_block...])
