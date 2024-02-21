@@ -267,7 +267,14 @@ function interpret_image_size(fov, resolution, voxel_size, slice_thickness)
     getxy(v::Union{Tuple, AbstractVector}) = [v[1], v[2]]
     getxy(v) = [v, v]
 
-    return (slice_thickness, getz(resolution), (fov=getxy(fov), resolution=getxy(resolution), voxel_size=getxy(voxel_size)))
+    fov=getxy(fov)
+    resolution=getxy(resolution)
+    voxel_size=getxy(voxel_size)
+    if all(isnothing.(voxel_size))
+        return (slice_thickness, getz(resolution), (resolution=resolution, fov=fov))
+    else
+        return (slice_thickness, getz(resolution), (resolution=resolution, voxel_size=voxel_size))
+    end
 end
 
 end
