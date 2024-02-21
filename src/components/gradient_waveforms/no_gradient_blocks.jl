@@ -1,6 +1,6 @@
 module NoGradientBlocks
 import StaticArrays: SVector, SMatrix
-import ....Variables: VariableType, duration, qval, qvec, bmat_gradient, gradient_strength, slew_rate, get_free_variable
+import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable
 import ...AbstractTypes: GradientWaveform
 import ..ChangingGradientBlocks: split_gradient
 
@@ -30,9 +30,6 @@ for func in (:qval, :gradient_strength, :slew_rate)
 end
 
 NoGradient(duration) = NoGradient{1}(duration)
-
-qvec(::NoGradient, index1, index2) = zero(SVector{3, Float64})
-qvec(::NoGradient) = zero(SVector{3, Float64})
 
 bmat_gradient(::NoGradient{1}) = 0.
 bmat_gradient(::NoGradient{3}) = zero(SMatrix{3, 3, Float64, 9})

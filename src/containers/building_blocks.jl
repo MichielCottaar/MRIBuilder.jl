@@ -7,7 +7,7 @@ import JuMP: @constraint
 import ..Abstract: ContainerBlock, start_time
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, DelayedEvent, RFPulseComponent, ReadoutComponent
-import ...Variables: qval, bmat_gradient, effective_time, get_free_variable
+import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!
 
 """
@@ -19,7 +19,7 @@ Main interface:
 - [`waveform_sequence`](@ref) returns just the gradient waveform as a sequence of [`GradientWaveform`](@ref) objects.
 - [`waveform`](@ref) returns just the gradient waveform as a sequence of (time, gradient_strength) tuples.
 - [`events`](@ref) returns the RF pulses and readouts.
-- [`qvec`](@ref) returns area under curve for (part of) the gradient waveform.
+- [`qval3`](@ref) returns area under curve for (part of) the gradient waveform.
 
 Sub-types need to implement:
 - `Base.keys`: returns sequence of keys to all the components.
@@ -183,7 +183,7 @@ Similarly, if `last_event` is set to something else than `nothing`, only the gra
 """
 function qval(bb::BaseBuildingBlock, index1, index2)
     if (!isnothing(index1)) && (index1 == index2)
-        return zeros(3)
+        return 0.
     end
     sum([qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)]; init=0.)
 end
@@ -198,7 +198,7 @@ function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
 
     for (_, part) in waveform_sequence(bb, index1, index2)
         result = result .+ bmat_gradient(part, qcurrent)
-        qcurrent = qcurrent .+ qvec(part, qcurrent)
+        qcurrent = qcurrent .+ qval3(part, qcurrent)
     end
     return result
 end

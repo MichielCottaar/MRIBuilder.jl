@@ -3,7 +3,7 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform, DelayedEvent
 import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
-import ..Variables: qvec, qval, bmat_gradient, VariableType, effective_time, duration, TR, bmat, bval, area_under_curve, duration_dephase, duration_transverse
+import ..Variables: qvec, qval, qval3, bmat_gradient, VariableType, effective_time, duration, TR, bmat, bval, area_under_curve, duration_dephase, duration_transverse
 
 
 """
@@ -481,7 +481,7 @@ function update_walker_gradient!(gradient::GradientWaveform, walker::PathwayWalk
     # update qvec/bmat during gradient
     tracker = walker.gradient_trackers[key]
     tracker.bmat = tracker.bmat .+ bmat_gradient(gradient, tracker.qvec)
-    tracker.qvec = tracker.qvec .+ qvec(gradient)
+    tracker.qvec = tracker.qvec .+ qval3(gradient)
     tracker.last_gradient_time = gradient_start_time + duration(gradient)
 end
 

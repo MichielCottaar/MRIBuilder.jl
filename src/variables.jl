@@ -56,7 +56,7 @@ all_variables_symbols = [
         :inverse_slice_thickness => "Inverse of slice thickness of an RF pulse that is active during a gradient in 1/mm. Also, see [`slice_thickness`](@ref).",
     ],
     :gradient => [
-        :qvec => "The spatial range with orientation on which the displacements can be detected due to this gradient in rad/um (also see [`qval`](@ref)).",
+        :qval3 => "The spatial range with orientation on which the displacements can be detected due to this gradient in rad/um (also see [`qval`](@ref)).",
         :qval => "The spatial range on which the displacements can be detected due to this gradient in rad/um. This will be a scalar if the orientation is fixed and a scalar otherwise. If you always want a vector, use [`qvec`](@ref).",
         :qval_square => "Square of [`qval`](@ref) in rad^2/um^2.",
         :δ => "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms.",
@@ -228,7 +228,7 @@ end
 
 for (target_name, all_vars) in all_variables_symbols
     for (variable_func, _) in all_vars
-        if variable_func in [:qvec, ]
+        if variable_func == :qval3
             continue
         end
         get_func = Symbol("get_" * string(target_name))
@@ -276,7 +276,7 @@ for (target_name, all_vars) in all_variables_symbols
 end
 
 
-function qvec(bb::AbstractBlock, args...; kwargs...)
+function qval3(bb::AbstractBlock, args...; kwargs...)
     value = qval(bb, args...; kwargs...)
     if value isa Number && iszero(value)
         return value
@@ -340,6 +340,7 @@ apply_simple_constraint!(variable, ::Val{:min}) = @objective global_model() Min 
 apply_simple_constraint!(variable, ::Val{:max}) = @objective global_model() Min objective_function(global_model()) - variable
 apply_simple_constraint!(variable, value::VariableType) = @constraint global_model() variable == value
 apply_simple_constraint!(variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(v1, v2) for (v1, v2) in zip(variable, value)]
+apply_simple_constraint!(variable::AbstractVector, value::VariableType) = [apply_simple_constraint!(v1, value) for v1 in variable]
 apply_simple_constraint!(variable::Number, value::Number) = @assert variable ≈ value "Variable set to multiple incompatible values."
 function apply_simple_constraint!(variable::NamedTuple, value::NamedTuple)
     for key in keys(value)

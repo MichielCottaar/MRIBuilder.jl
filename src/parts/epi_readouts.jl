@@ -2,7 +2,7 @@ module EPIReadouts
 import ...Containers: BaseSequence, get_index_single_TR
 import ..Trapezoids: Trapezoid, opposite_kspace_lines, LineReadout
 import ...Components: ADC
-import ...Variables: get_free_variable, VariableType, qval, qvec, set_simple_constraints!, resolution, inverse_voxel_size, inverse_fov, resolution, get_readout, apply_simple_constraint!, effective_time
+import ...Variables: get_free_variable, VariableType, qval, qval3, set_simple_constraints!, resolution, inverse_voxel_size, inverse_fov, resolution, get_readout, apply_simple_constraint!, effective_time
 import ...Pathways: PathwayWalker, update_walker_till_time!, walk_pathway!
 
 """
@@ -49,10 +49,10 @@ function EPIReadout(; resolution::AbstractVector{<:Integer}, recenter=false, gro
         get_free_variable(nothing),
         ky_lines
     )
-    apply_simple_constraint!(qvec(res.start_gradient), VariableType[-qval(pos)/2, ky_lines[1] * res.ky_step, 0.])
+    apply_simple_constraint!(qval3(res.start_gradient), VariableType[-qval(pos)/2, ky_lines[1] * res.ky_step, 0.])
     if recenter
         sign = isodd(length(ky_lines)) ? -1 : 1
-        apply_simple_constraint!(qvec(res.recenter_gradient), VariableType[sign * qval(pos)/2, -ky_lines[end] * res.ky_step, 0.])
+        apply_simple_constraint!(qval3(res.recenter_gradient), VariableType[sign * qval(pos)/2, -ky_lines[end] * res.ky_step, 0.])
     end
     for shift in unique(ky_lines[2:end] - ky_lines[1:end-1])
         res.blips[shift] = Trapezoid(orientation=[0, shift > 0 ? 1 : -1, 0], group=group, qval=abs(shift) * res.ky_step)
