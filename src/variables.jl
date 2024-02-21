@@ -135,7 +135,7 @@ The result is guaranteed to be a [`VariableType`](@ref).
 """
 get_free_variable(value::Number; integer=false, kwargs...) = integer ? Int(value) : Float64(value)
 get_free_variable(value::VariableType; kwargs...) = value
-get_free_variable(::Nothing; integer=false, start=0.01) = @variable(global_model(), start=start, integer=integer)
+get_free_variable(::Nothing; integer=false, start=nothing) = @variable(global_model(), start=isnothing(start) ? rand() : start, integer=integer)
 get_free_variable(value::Symbol; kwargs...) = integer ? error("Cannot maximise or minimise an integer variable") : get_free_variable(Val(value); kwargs...)
 function get_free_variable(::Val{:min}; kwargs...)
     var = get_free_variable(nothing; kwargs...)
