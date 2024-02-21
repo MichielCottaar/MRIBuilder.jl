@@ -246,7 +246,7 @@ function interpret_image_size(fov, resolution, voxel_size, slice_thickness)
     _real_value(other) = false
 
     if all(isnothing.((fov, resolution, voxel_size)))
-        return (isnothing(voxel_size) ? Inf : voxel_size, nothing, (fov=nothing, resolution=nothing, voxel_size=nothing))
+        return (isnothing(slice_thickness) ? Inf : slice_thickness, nothing, (fov=nothing, resolution=nothing, voxel_size=nothing))
     end
     if !_real_value(resolution)
         if !(_real_value(fov) && _real_value(voxel_size))
