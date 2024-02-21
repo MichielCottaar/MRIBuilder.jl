@@ -36,7 +36,7 @@ For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `
 - `optimise`: set to true to optimise this RF pulse separately from the embedding sequence.
 
 ### Pulse parameters
-- `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantPulse`](@ref)).
+- `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantPulse`](@ref)). Default is :sinc for slice-selective pulses or :instant otherwise.
 - `flip_angle`: size of the flip due to the RF pulse in degrees (default: 90).
 - `phase`: angle of the RF pulse in the x-y plane in degrees (default: 0).
 - `frequency`: frequency of the RF pulse relative to the Larmor frequency in kHz (default: 0).
@@ -51,11 +51,15 @@ For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `
 - `rotate_grad`: name of the parameter with which the slice selection gradient will be rotated after sequence optimisation (default: `:FOV`).
 - `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
 """
-function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, rephase=true, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, scanner=nothing, optimise=false, other_kwargs...)
+function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=nothing, slice_thickness=Inf, rephase=true, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, scanner=nothing, optimise=false, other_kwargs...)
     bad_keys = [key for (key, value) in pairs(other_kwargs) if !isnothing(value)]
     if length(bad_keys) > 0
         error("Unrecognised keyword arguments in call of `excitation_pulse`: $bad_keys")
     end
+    if isnothing(shape)
+        shape = isinf(slice_thickness) ? :instant : :sinc
+    end
+
     build_sequence(scanner; optimise=optimise) do
         pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
         if pulse isa InstantPulse
@@ -89,7 +93,7 @@ If `slice_thickness` is not set or is set to `:min`, then either `bandwidth` or 
 
 ### Pulse parameters
 For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `phase`, and `group` will be used. All other parameters are ignored.
-- `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantPulse`](@ref)).
+- `shape`: The shape of the RF pulse. One of `:sinc` (for [`SincPulse`](@ref)), `:constant`/`:hard` (for [`ConstantPulse`](@ref)), or `:instant` (for [`InstantPulse`](@ref)). Default is :sinc for slice-selective pulses or :instant otherwise.
 - `flip_angle`: size of the flip due to the RF pulse in degrees (default: 180).
 - `phase`: angle of the RF pulse in the x-y plane in degrees (default: 0).
 - `frequency`: frequency of the RF pulse relative to the Larmor frequency in kHz (default: 0).
@@ -105,10 +109,13 @@ For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `
 - `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
 - `orientation`: vector with orientation of slice select gradient and pulses (defaults: z-direction).
 """
-function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzeros=3, group=nothing, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false, orientation=[0, 0, 1], other_kwargs...)
+function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=nothing, slice_thickness=Inf, Nzeros=3, group=nothing, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false, orientation=[0, 0, 1], other_kwargs...)
     bad_keys = [key for (key, value) in pairs(other_kwargs) if !isnothing(value)]
     if length(bad_keys) > 0
         error("Unrecognised keyword arguments in call of `refocus_pulse`: $bad_keys")
+    end
+    if isnothing(shape)
+        shape = isinf(slice_thickness) ? :instant : :sinc
     end
     build_sequence(scanner; optimise=optimise) do
         pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
