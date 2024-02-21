@@ -6,7 +6,7 @@ import ...Variables: get_free_variable, VariableType, qval, qvec, set_simple_con
 import ...Pathways: PathwayWalker, update_walker_till_time!, walk_pathway!
 
 """
-    EPIReadout(resolution; ky_lines=-resolution[2]:resolution[2], recenter=false, group=:FOV, variables...)
+    EPIReadout(; resolution, ky_lines=-resolution[2]:resolution[2], recenter=false, group=:FOV, variables...)
 
 Defines an (accelerated) EPI readout.
 
