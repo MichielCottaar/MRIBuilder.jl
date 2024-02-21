@@ -322,6 +322,7 @@ Add a single constraint or objective to the `variable`.
 - `equation`: fix variable to the result of this equation
 """
 apply_simple_constraint!(variable, ::Nothing) = nothing
+apply_simple_constraint!(variable::AbstractVector, value::Symbol) = apply_simple_constraint!(sum(variable), Val(value))
 apply_simple_constraint!(variable, value::Symbol) = apply_simple_constraint!(variable, Val(value))
 apply_simple_constraint!(variable, ::Val{:min}) = @objective global_model() Min objective_function(global_model()) + variable
 apply_simple_constraint!(variable, ::Val{:max}) = @objective global_model() Min objective_function(global_model()) - variable
