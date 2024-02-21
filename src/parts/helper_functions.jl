@@ -51,7 +51,11 @@ For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `
 - `rotate_grad`: name of the parameter with which the slice selection gradient will be rotated after sequence optimisation (default: `:FOV`).
 - `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
 """
-function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, rephase=true, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, scanner=nothing, optimise=false)
+function excitation_pulse(; flip_angle=90, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, rephase=true, Nzeros=3, group=nothing, rotate_grad=:FOV, bandwidth=nothing, duration=nothing, scanner=nothing, optimise=false, other_kwargs...)
+    bad_keys = [key for (key, value) in pairs(other_kwargs) if !isnothing(value)]
+    if length(bad_keys) > 0
+        error("Unrecognised keyword arguments in call of `excitation_pulse`: $bad_keys")
+    end
     build_sequence(scanner; optimise=optimise) do
         pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
         if pulse isa InstantPulse
@@ -101,7 +105,11 @@ For an [`InstantPulse`](@ref) (i.e., `shape=:instant`), only the `flip_angle`, `
 - `scanner`: overrides the [`global_scanner`](@ref) for this part of the sequence. Recommended to set only if not part of a larger sequence.
 - `orientation`: vector with orientation of slice select gradient and pulses (defaults: z-direction).
 """
-function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzeros=3, group=nothing, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false, orientation=[0, 0, 1])
+function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=:sinc, slice_thickness=Inf, Nzeros=3, group=nothing, bandwidth=nothing, duration=nothing, spoiler=Inf, scanner=nothing, optimise=false, orientation=[0, 0, 1], other_kwargs...)
+    bad_keys = [key for (key, value) in pairs(other_kwargs) if !isnothing(value)]
+    if length(bad_keys) > 0
+        error("Unrecognised keyword arguments in call of `refocus_pulse`: $bad_keys")
+    end
     build_sequence(scanner; optimise=optimise) do
         pulse = _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
         if pulse isa InstantPulse && !isinf(slice_thickness)
@@ -137,6 +145,7 @@ function readout_event(; type, optimise=false, scanner=nothing, variables...)
     if type == :instant
         optimise = false # there is nothing to optimise
     end
+    real_variables = Dict(key => value for (key, value) in pairs(variables) if !isnothing(variables))
     build_sequence(scanner; optimise=optimise) do 
         func_dict = Dict(
             :epi => EPIReadout,
@@ -145,7 +154,7 @@ function readout_event(; type, optimise=false, scanner=nothing, variables...)
         if !(type in keys(func_dict))
             error("Readout event type `$type` has not been implemented. Please use one of $(keys(func_dict)).")
         end
-        return func_dict[type](variables...)
+        return func_dict[type](real_variables...)
     end
 end
 
