@@ -28,7 +28,7 @@ The RF pulses cause mappings between these different states as described below.
     - `:excite`/90: Takes spin state one step along the following sequence +longitudinal -> +transverse -> -longitudinal -> -transverse -> +longitudinal
     - `:neg_excite`/270/-90: Inverse step compared with `:excite`.
 - `readout_index`: After encountering the number of pulses as defined in `pulse_effects`, continue the `PathWay` until the readout given by `index` is reached. If set to 0 the `PathWay` is terminated immediately after the last RF pulse.
-- `group`: which gradient grouping to consider for the `qvec` and `bmat`.
+- `group`: which gradient grouping to consider for the `qvec` and `bmat`. If not set, all gradients will be considered (using their current alignment).
 
 ## Attributes
 Over the pathway the following values are computed. Each can be accessed by calling the appropriate function:
@@ -257,7 +257,7 @@ end
 PathwayWalker() = PathwayWalker(
     0., false, true,
     zeros(4),
-    Dict{Any, GradientTracker}()
+    Dict{Any, GradientTracker}(nothing => GradientTracker())
 )
 
 """
@@ -475,14 +475,15 @@ function update_walker_gradient!(gradient::GradientWaveform, walker::PathwayWalk
     end
 
     # update gradient tracker till start of gradient
-    key = gradient.group
-    update_gradient_tracker_till_time!(walker, key, gradient_start_time)
+    for key in (isnothing(gradient.group) ? [nothing] : [nothing, gradient.group])
+        update_gradient_tracker_till_time!(walker, key, gradient_start_time)
 
-    # update qvec/bmat during gradient
-    tracker = walker.gradient_trackers[key]
-    tracker.bmat = tracker.bmat .+ bmat_gradient(gradient, tracker.qvec)
-    tracker.qvec = tracker.qvec .+ qval3(gradient)
-    tracker.last_gradient_time = gradient_start_time + duration(gradient)
+        # update qvec/bmat during gradient
+        tracker = walker.gradient_trackers[key]
+        tracker.bmat = tracker.bmat .+ bmat_gradient(gradient, tracker.qvec)
+        tracker.qvec = tracker.qvec .+ qval3(gradient)
+        tracker.last_gradient_time = gradient_start_time + duration(gradient)
+    end
 end
 
 """
