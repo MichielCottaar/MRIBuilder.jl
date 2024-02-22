@@ -34,7 +34,10 @@ all_variables_symbols = [
         :duration => "duration of the building block in ms.",
     ],
     :sequence => [
-        :TR => "Time on which an MRI sequence repeats itself in ms.",
+        :TR => "Time on which an MRI sequence repeats itself in ms. Defaults to the result of [`repetition_time`](@ref).",
+        :repetition_time => "Time on which an MRI sequence repeats itself in ms.",
+        :TE => "Echo time of the sequence in ms. Defaults to the result of [`echo_time`](@ref).",
+        :echo_time => "Echo time of the sequence in ms.",
         :Δ => "Diffusion time in ms (i.e., time between start of the diffusion-weighted gradients).",
         :qvec => "Net dephasing due to gradients in rad/um.",
         :area_under_curve => "Net dephasing due to gradients in rad/um (same as [`qvec`](@ref)).",
@@ -97,6 +100,9 @@ for (block_symbol, all_functions) in all_variables_symbols
     end
 end
 
+
+TE(ab::AbstractBlock) = echo_time(ab)
+TR(ab::AbstractBlock) = repetition_time(ab)
 
 """
 Dictionary with alternative versions of specific function.
@@ -228,7 +234,7 @@ end
 
 for (target_name, all_vars) in all_variables_symbols
     for (variable_func, _) in all_vars
-        if variable_func == :qval3
+        if variable_func in [:qval3, :TR, :TE]
             continue
         end
         get_func = Symbol("get_" * string(target_name))

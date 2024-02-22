@@ -10,6 +10,7 @@ include("components/components.jl")
 include("containers/containers.jl")
 include("pathways.jl")
 include("parts/parts.jl")
+include("sequences/sequences.jl")
 include("printing.jl")
 
 import .BuildSequences: build_sequence, global_model, global_scanner, fixed
@@ -18,8 +19,8 @@ export build_sequence, global_model, global_scanner, fixed
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra
 
-import .Variables: variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inverse_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, TR, Δ, get_gradient, get_pulse, get_readout
-export variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inversne_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, TR, Δ, get_gradient, get_pulse, get_readout
+import .Variables: variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inverse_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, repetition_time, TR, Δ, get_gradient, get_pulse, get_readout, TE, echo_time
+export variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inversne_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, repetition_time, TR, Δ, get_gradient, get_pulse, get_readout, TE, echo_time
 
 import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC
 export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC
@@ -32,6 +33,9 @@ export Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
 
 import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
 export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
+
+import .Sequences: GradientEcho
+export GradientEcho
 
 import JuMP: @constraint, @objective, objective_function, value, Model
 export @constraint, @objective, objective_function, value, Model

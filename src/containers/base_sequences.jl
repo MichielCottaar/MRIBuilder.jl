@@ -1,10 +1,10 @@
 """
 Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 """
-module Sequences
+module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, TR, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!
+import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR
 import ...BuildSequences: global_model
 import ...Components: EventComponent
 import ..Abstract: ContainerBlock, start_time
@@ -22,8 +22,6 @@ Main interface:
 
 Sub-types need to implement:
 - `get_index_single_TR`: return the index assuming it is between 1 and N
-- [`nrepeat`](@ref): how often the sequence should repeat (if not implemented, this will be 1).
-- [`TR`](@ref): time scale on which to repeat (if not implemented, this will be the sum of the individual block durations).
 """
 abstract type BaseSequence{N} <: ContainerBlock end
 
@@ -49,7 +47,7 @@ function start_time(bs::BaseSequence{N}, index::Integer) where {N}
     if iszero(nTR)
         return base_time
     else
-        return nTR * TR(bs) + base_time
+        return nTR * repetition_time(bs) + base_time
     end
 end
 
@@ -79,28 +77,28 @@ How often sequence should be repeated.
 """
 nrepeat(bs::BaseSequence) = 1
 
-"""
-    TR(sequence)
-
-On what timescale the sequence should repeat itself in ms (will have no effect if [`nrepeat`](@ref) is one).
-
-By default this is set to the total duration of the sequence.
-"""
-TR(bs::BaseSequence) = duration(bs)
+repetition_time(bs::BaseSequence) = duration(bs)
 
 
 duration(bs::BaseSequence{0}) = 0.
 duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
 
 """
-    Sequence(blocks; TR=:min, nrepeat=0)
-    Sequence(blocks...; TR=:min, nrepeat=0)
+    Sequence(blocks; name=:Sequence, variables...)
+    Sequence(blocks...; name=:Sequence, variables...)
 
 Defines an MRI sequence from a vector of building blocks.
 
 ## Arguments
-- [`nrepeat`](@ref): how often the sequence will repeat itself (keep at default of 0 to repeat indefinetely).
-- [`TR`](@ref): how long between repeats in ms (defaults to the duration of the sequence). Can be set to `nothing` to be a free variable.
+- `blocks`: The actual building blocks that will be played in sequence. All the building blocks must be of type [`ContainerBlock`](@ref), which means that they cannot only contain actual [`BaseBuildingBlock`](@ref) objects, but also other [`BaseSequence`](@ref) objects.
+    Objects of a different type are converted into a [`ContainerBlock`](@ref) internally:
+    - numbers/`nothing`/`:min`/`:max` : replaced with a [`Wait`](@ref) block with the appropriate constraint/objective added to its [`duration`](@ref).
+    - RF pulse or readout: will be embedded within a [`BuildingBlock`](@ref) of the appropriate length
+
+## Variables
+- [`repetition_time`](@ref)/[`TR`](@ref): how long between repeats in ms. This is always set to the total length of the sequence. If you want to add some down-time between repeats, you can simply add a [`Wait`](@ref) block of the appropriate length at the end of the sequence.
+
+Specific named sequences might define additional variables.
 """
 struct Sequence{S, N} <: BaseSequence{N}
     blocks :: SVector{N, Pair{<:Union{Symbol, Nothing}, <:ContainerBlock}}

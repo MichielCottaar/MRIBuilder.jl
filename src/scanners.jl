@@ -64,6 +64,13 @@ slew_rate(scanner::Scanner, units=:kHz) = units == :kHz ? scanner.slew_rate : sc
 
 
 """
+A default 1.5T scanner.
+
+Matches the one used in `pulseq` (https://github.com/pulseq/pulseq/blob/master/matlab/%2Bmr/opts.m).
+"""
+Default_Scanner = Scanner(B0=1.5, gradient=40, slew_rate=170, units=:Tesla)
+
+"""
 Siemens MAGNETOM 3T Prisma MRI scanner (https://www.siemens-healthineers.com/en-uk/magnetic-resonance-imaging/3t-mri-scanner/magnetom-prisma).
 """
 Siemens_Prisma = Scanner(B0=3., gradient=80, slew_rate=200, units=:Tesla)
