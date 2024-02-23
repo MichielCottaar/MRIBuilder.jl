@@ -1,7 +1,7 @@
 module SpinEchoes
 import ...Containers: Sequence
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler, refocus_pulse
-import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, delay, effective_time
+import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, delay, effective_time, TR, TR, repetition_time
 import ...Pathways: Pathway, get_pathway
 import ...BuildSequences: build_sequence
 import ...Scanners: Default_Scanner
@@ -9,7 +9,7 @@ import ...Scanners: Default_Scanner
 const SpinEcho = Sequence{:SpinEcho}
 
 """
-    SpinEcho(; echo_time, delay=0., excitation=(), refocus_pulse=(), readout=(), optim=(), resolution/fov/voxel_size/slice_thickness, scanner)
+    SpinEcho(; echo_time, delay=0., excitation=(), refocus=(), readout=(), optim=(), resolution/fov/voxel_size/slice_thickness, scanner)
 
 Defines a gradient echo sequence with a single readout event.
 
@@ -27,7 +27,7 @@ If image parameters are provided, this will switch to a sinc pulse and EPI reado
 
 ## Variables
 - [`TE`](@ref)/[`echo_time`](@ref): echo time between excitation pulse and spin echo in ms (required).
-- [`delay`](@ref): delay between the readout and the peak of the spin echo in ms (positive number indicates that readout is after the spin echo).
+- [`delay`](@ref): delay between the readout and the peak of the spin echo in ms (positive number indicates that readout is after the spin echo). Defaults to zero.
 - [`TR`](@ref)/[`repetition_time`](@ref)/[`duration`](@ref): total duration of the sequence from start of excitation pulse to end of readout or spoiler in ms.
 """
 function SpinEcho(; delay=0., excitation=(), refocus=(), readout=(), optim=(), spoiler=nothing, resolution=nothing, fov=nothing, voxel_size=nothing, slice_thickness=nothing, scanner=Default_Scanner, variables...)

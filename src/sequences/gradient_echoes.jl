@@ -1,7 +1,7 @@
 module GradientEchoes
 import ...Containers: Sequence
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler
-import ...Variables: get_pulse, get_readout, echo_time, duration_transverse
+import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, TR, TE, repetition_time
 import ...Pathways: Pathway, get_pathway
 import ...BuildSequences: build_sequence
 import ...Scanners: Default_Scanner
