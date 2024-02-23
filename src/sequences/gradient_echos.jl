@@ -21,13 +21,14 @@ If image parameters are provided, this will switch to a sinc pulse and EPI reado
 - [`readout`](@ref): properties of the readout as described in [`readout_event`](@ref).
 - [`spoiler`](@ref): if set adds a spoiler [`gradient_spoiler`](@ref) gradient after the readout (e.g., `spoiler=(spoiler_scale=1, orientation=[0, 0, 1], group=:FOV)` to add a gradient in the z-direction of the `FOV` coordinate system that fully dephases spins over 1 mm).
 - Image parameters ([`resolution`](@ref)/[`fov`](@ref)/[`voxel_size`](@ref)/[`slice_thickness`](@ref)): describe the properties of the resulting image. See [`interpret_image_size`](@ref) for details.
+- [`optim`](@ref): parameters to pass on to the Ipopt optimiser (see https://coin-or.github.io/Ipopt/OPTIONS.html).
 
 ## Variables
 - [`TE`](@ref)/[`echo_time`](@ref): echo time between excitation pulse and readout in ms (required).
 - [`TR`](@ref)/[`repetition_time`](@ref)/[`duration`](@ref): total duration of the sequence from start of excitation pulse to end of readout or spoiler in ms.
 """
-function GradientEcho(; excitation=(), readout=(), spoiler=nothing, resolution=nothing, fov=nothing, voxel_size=nothing, slice_thickness=nothing, scanner=Default_Scanner, variables...)
-    build_sequence(scanner) do
+function GradientEcho(; excitation=(), readout=(), optim=(), spoiler=nothing, resolution=nothing, fov=nothing, voxel_size=nothing, slice_thickness=nothing, scanner=Default_Scanner, variables...)
+    build_sequence(scanner; optim...) do
         (slice_thickness, _, extra_readout_params) = interpret_image_size(fov, resolution, voxel_size, slice_thickness)
         parts = Any[
             :excitation => excitation_pulse(; slice_thickness=slice_thickness, excitation...),
