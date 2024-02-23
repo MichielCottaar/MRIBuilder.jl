@@ -19,7 +19,7 @@ Main interface:
 - [`waveform_sequence`](@ref) returns just the gradient waveform as a sequence of [`GradientWaveform`](@ref) objects.
 - [`waveform`](@ref) returns just the gradient waveform as a sequence of (time, gradient_strength) tuples.
 - [`events`](@ref) returns the RF pulses and readouts.
-- [`qval3`](@ref) returns area under curve for (part of) the gradient waveform.
+- [`qval`](@ref) returns area under curve for (part of) the gradient waveform.
 
 Sub-types need to implement:
 - `Base.keys`: returns sequence of keys to all the components.
