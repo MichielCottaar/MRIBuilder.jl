@@ -1,6 +1,6 @@
 module Sequences
-include("gradient_echos.jl")
+include("gradient_echoes.jl")
 
-import .GradientEchos: GradientEcho
+import .GradientEchoes: GradientEcho
 
 end

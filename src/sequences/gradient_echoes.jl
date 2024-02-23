@@ -1,4 +1,4 @@
-module GradientEchos
+module GradientEchoes
 import ...Containers: Sequence
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler
 import ...Variables: get_pulse, get_readout, echo_time, duration_transverse
