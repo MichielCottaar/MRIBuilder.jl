@@ -283,4 +283,26 @@ function interpret_image_size(fov, resolution, voxel_size, slice_thickness)
     end
 end
 
+"""
+    spoiler_gradient(; optimise=false, orientation=[0, 0, 1], rotate=:FOV, scale=:spoiler, spoiler_scale=1., duration=:min, variables...)
+
+Returns two DWI gradients that are guaranteed to cancel each other out.
+
+## Parameters
+- `orientation`: Orientation of the gradient (default: slice-select direction).
+- `rotate`: in which coordinate system is the `orientation` defined (default: :FOV).
+- `scale`: variable controlling how the gradients should be scaled after optimsation (default: :spoiler).
+- `optimise`: Whether to optimise this readout event in isolation from the rest of the sequence. Use this with caution. It can speed up the optimisation (and for very complicated sequences make it more robust), however the resulting parameters might not represent the optimal solution of any external constraints (which are ignored if the readout is optimised in isolation).
+- `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
+
+## Variables
+- [`spoiler_scale`](@ref): maximum spoiler scale (before applying any reductions due to `scale`).
+- Any other parameters expected by [`Trapezoid`](@ref).
+"""
+function spoiler_gradient(; optimise=false, scanner=nothing, orientation=[0, 0, 1], group=:FOV, spoiler_scale=1., duration=:min, variables...)
+    build_sequence(scanner; optimise=optimise) do
+        Trapezoid(; orientation=orientation, group=group, spoiler_scale=spoiler_scale, duration=duration, variables...)
+    end
+end
+
 end
