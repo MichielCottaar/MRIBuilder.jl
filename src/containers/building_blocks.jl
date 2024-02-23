@@ -169,6 +169,7 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
     if !isnothing(last)
         error("Final index of $last not recognised.")
     end
+    push!(parts, (current_grad_key, isnothing(current_start) ? bb[current_grad_key] : split_gradient(bb[current_grad_key], current_start)[2]))
     return parts
 end
 
