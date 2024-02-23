@@ -45,6 +45,7 @@ all_variables_symbols = [
         :bval => "Size of diffusion-weighting in ms/um^2 (trace of [`bmat`](@ref)).",
         :duration_dephase => "Net T2' dephasing experienced over a sequence (in ms).",
         :duration_transverse => "Net T2 signal loss experienced over a sequence (in ms). This is the total duration spins spent in the transverse plane.",
+        :delay => "Delay between readout and spin echo in an asymmetric spin echo in ms.",
     ],
     :pulse => [
         :flip_angle => "The flip angle of the RF pulse in degrees",

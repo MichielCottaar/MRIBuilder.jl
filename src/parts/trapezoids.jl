@@ -150,7 +150,7 @@ inverse_slice_thickness(ss::SliceSelect) = 1e3 * gradient_strength(ss.trapezoid)
 
 get_pulse(ss::SliceSelect) = ss.pulse
 get_gradient(ss::SliceSelect) = ss.trapezoid
-effective_time(ss::SliceSelect) = effective_time(lr, :pulse)
+effective_time(ss::SliceSelect) = effective_time(ss, :pulse)
 
 """
     LineReadout(adc; ramp_overlap=1., orientation=nothing, group=nothing, variables...)

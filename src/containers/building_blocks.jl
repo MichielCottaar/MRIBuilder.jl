@@ -259,7 +259,9 @@ Base.keys(bb::BuildingBlock) = 1:length(bb.parts)
 Base.getindex(bb::BuildingBlock, i::Integer) = bb.parts[i]
 
 function get_pulse(bb::BuildingBlock)
-    pulses = [p for p in events(bb) if p isa RFPulseComponent]
+    @show events(bb)
+    pulses = [p for (_, p) in events(bb) if p isa RFPulseComponent]
+    @show pulses
     if length(pulses) == 0
         error("BuildingBlock does not contain any pulses.")
     end
@@ -270,7 +272,7 @@ function get_pulse(bb::BuildingBlock)
 end
 
 function get_readout(bb::BuildingBlock)
-    readouts = [r for r in events(bb) if r isa ReadoutComponent]
+    readouts = [r for (_, r) in events(bb) if r isa ReadoutComponent]
     if length(readouts) == 0
         error("BuildingBlock does not contain any readouts.")
     end
@@ -278,6 +280,17 @@ function get_readout(bb::BuildingBlock)
         return readouts[1]
     end
     error("BuildingBlock contains more than one readout. Not sure which one to return.")
+end
+
+function effective_time(bb::BuildingBlock)
+    index = [i for (i, r) in events(bb) if r isa Union{RFPulseComponent, ReadoutComponent}]
+    if length(index) == 0 
+        error("BuildingBlock does not contain any RF pulse or readout events, so `effective_time` is not defined.")
+    elseif length(index) > 1
+        error("BuildingBlock contains multiple RF pulse or readout events, so `effective_time` is not defined.")
+    end
+    index = index[1]
+    return effective_time(bb, index)
 end
 
 struct Wait <: BaseBuildingBlock

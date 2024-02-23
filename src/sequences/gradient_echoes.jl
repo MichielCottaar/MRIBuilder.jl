@@ -9,7 +9,7 @@ import ...Scanners: Default_Scanner
 const GradientEcho = Sequence{:GradientEcho}
 
 """
-    GradientEcho(; echo_time, excitation=(), readout=(), resolution/fov/voxel_size/slice_thickness)
+    GradientEcho(; echo_time, excitation=(), readout=(), optim=() resolution/fov/voxel_size/slice_thickness, scanner)
 
 Defines a gradient echo sequence with a single readout event.
 
@@ -22,6 +22,7 @@ If image parameters are provided, this will switch to a sinc pulse and EPI reado
 - [`spoiler`](@ref): if set adds a spoiler [`gradient_spoiler`](@ref) gradient after the readout (e.g., `spoiler=()` to add a gradient in the z-direction of the `FOV` coordinate system that fully dephases spins over 1 mm).
 - Image parameters ([`resolution`](@ref)/[`fov`](@ref)/[`voxel_size`](@ref)/[`slice_thickness`](@ref)): describe the properties of the resulting image. See [`interpret_image_size`](@ref) for details.
 - [`optim`](@ref): parameters to pass on to the Ipopt optimiser (see https://coin-or.github.io/Ipopt/OPTIONS.html).
+- [`scanner`](@ref): Sets the [`Scanner`](@ref) used to constraint the gradient parameters. If not set, the [`Default_Scanner`](@ref) will be used.
 
 ## Variables
 - [`TE`](@ref)/[`echo_time`](@ref): echo time between excitation pulse and readout in ms (required).
