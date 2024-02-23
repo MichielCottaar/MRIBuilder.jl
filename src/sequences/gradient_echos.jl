@@ -19,7 +19,7 @@ If image parameters are provided, this will switch to a sinc pulse and EPI reado
 ## Parameters
 - [`excitation`](@ref): properties of the excitation pulse as described in [`excitation_pulse`](@ref).
 - [`readout`](@ref): properties of the readout as described in [`readout_event`](@ref).
-- [`spoiler`](@ref): if set adds a spoiler [`gradient_spoiler`](@ref) gradient after the readout (e.g., `spoiler=(spoiler_scale=1, orientation=[0, 0, 1], group=:FOV)` to add a gradient in the z-direction of the `FOV` coordinate system that fully dephases spins over 1 mm).
+- [`spoiler`](@ref): if set adds a spoiler [`gradient_spoiler`](@ref) gradient after the readout (e.g., `spoiler=()` to add a gradient in the z-direction of the `FOV` coordinate system that fully dephases spins over 1 mm).
 - Image parameters ([`resolution`](@ref)/[`fov`](@ref)/[`voxel_size`](@ref)/[`slice_thickness`](@ref)): describe the properties of the resulting image. See [`interpret_image_size`](@ref) for details.
 - [`optim`](@ref): parameters to pass on to the Ipopt optimiser (see https://coin-or.github.io/Ipopt/OPTIONS.html).
 

@@ -284,7 +284,7 @@ function interpret_image_size(fov, resolution, voxel_size, slice_thickness)
 end
 
 """
-    spoiler_gradient(; optimise=false, orientation=[0, 0, 1], rotate=:FOV, scale=:spoiler, spoiler_scale=1., duration=:min, variables...)
+    gradient_spoiler(; optimise=false, orientation=[0, 0, 1], rotate=:FOV, scale=:spoiler, spoiler_scale=1., duration=:min, variables...)
 
 Returns two DWI gradients that are guaranteed to cancel each other out.
 
@@ -299,7 +299,7 @@ Returns two DWI gradients that are guaranteed to cancel each other out.
 - [`spoiler_scale`](@ref): maximum spoiler scale (before applying any reductions due to `scale`).
 - Any other parameters expected by [`Trapezoid`](@ref).
 """
-function spoiler_gradient(; optimise=false, scanner=nothing, orientation=[0, 0, 1], group=:FOV, spoiler_scale=1., duration=:min, variables...)
+function gradient_spoiler(; optimise=false, scanner=nothing, orientation=[0, 0, 1], group=:FOV, spoiler_scale=1., duration=:min, variables...)
     build_sequence(scanner; optimise=optimise) do
         Trapezoid(; orientation=orientation, group=group, spoiler_scale=spoiler_scale, duration=duration, variables...)
     end
