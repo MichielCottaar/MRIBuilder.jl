@@ -4,7 +4,7 @@ Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR
+import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic
 import ...BuildSequences: global_model
 import ...Components: EventComponent
 import ..Abstract: ContainerBlock, start_time
@@ -134,5 +134,23 @@ to_block(cb::ContainerBlock) = cb
 to_block(s::Symbol) = to_block(Val(s))
 to_block(s::Union{VariableType, Nothing, Val{:min}, Val{:max}}) = Wait(s)
 to_block(ec::EventComponent) = BuildingBlock([(0., 0.), (duration(ec), 0.)], [(1, ec)])
+
+
+function make_generic(seq::BaseSequence)
+    blocks = BaseBuildingBlock[]
+
+    function add_sequence!(to_add, sub_seq)
+        for block in sub_seq
+            if block isa BaseSequence
+                add_sequence!(to_add, block)
+            else
+                push!(to_add, make_generic(block))
+            end
+        end
+    end
+    add_sequence!(blocks, seq)
+
+    return Sequence(blocks)
+end
 
 end
