@@ -112,13 +112,15 @@ equal_key(i1, i2) = i1 == i2
 
 function start_time(building_block::BaseBuildingBlock, index)
     time = 0.
+    prev_time = 0.
     for key in keys(building_block)
-        if equal_key(key, index)
-            return time
-        end
         component = building_block[key]
         if component isa GradientWaveform
+            prev_time = time
             time += duration(component)
+        end
+        if equal_key(key, index)
+            return prev_time
         end
     end
     error("Building block with index '$index' not found")
@@ -219,7 +221,6 @@ function edge_times(bb::BaseBuildingBlock)
     for key in keys(bb)
         object = bb[key]
         if object isa Union{GradientWaveform, RFPulseComponent, InstantGradient}
-            @show key start_time(bb, key) end_time(bb, key)
             push!(res, start_time(bb, key))
             push!(res, end_time(bb, key))
         end
