@@ -2,7 +2,7 @@ module ConstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic
+import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable
 import ..GenericPulses: GenericPulse
 
 """
