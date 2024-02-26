@@ -37,13 +37,17 @@ SinglePlotLine(duration::Number) = SinglePlotLine([0., duration], [0., 0.])
 function SinglePlotLine(plot_lines::SinglePlotLine...)
     times = Float64[]
     amplitudes = Float64[]
+    event_times = Float64[]
+    event_amplitudes = Float64[]
     current_time = 0.
     for pl in plot_lines
         append!(times, pl.times .+ current_time)
         append!(amplitudes, pl.amplitudes)
+        append!(event_times, pl.event_times .+ current_time)
+        append!(event_amplitudes, pl.event_amplitudes)
         current_time += duration(pl)
     end
-    return SinglePlotLine(times, amplitudes)
+    return SinglePlotLine(times, amplitudes, event_times, event_amplitudes)
 end
 
 """
@@ -106,7 +110,7 @@ function SequenceDiagram(bbb::BaseBuildingBlock)
             end
             for (symbol, fn) in [(:RFx, cosd), (:RFy, sind)]
                 if event isa InstantPulse
-                    kwargs[symbol] = SinglePlotLine([0., duration(bbb)], [0., 0.], [delay], [flip_angle(event) * fn(phase(evenet))])
+                    kwargs[symbol] = SinglePlotLine([0., duration(bbb)], [0., 0.], [delay], [flip_angle(event) * fn(phase(event))])
                 else
                     points = [(t + delay, a * fn(p)) for (t, a, p) in zip(event.time, event.amplitude, event.phase)]
                     kwargs[symbol] = SinglePlotLine(points, duration(bbb))
