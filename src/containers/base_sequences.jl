@@ -7,7 +7,7 @@ import JuMP: @constraint
 import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic
 import ...BuildSequences: global_model
 import ...Components: EventComponent
-import ..Abstract: ContainerBlock, start_time
+import ..Abstract: ContainerBlock, start_time, readout_times, edge_times
 import ..BuildingBlocks: Wait, BuildingBlock, BaseBuildingBlock
 
 """
@@ -83,6 +83,22 @@ repetition_time(bs::BaseSequence) = duration(bs)
 duration(bs::BaseSequence{0}) = 0.
 duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
 
+function readout_times(seq::BaseSequence)
+    res = Float64[]
+    for (index, block) in enumerate(seq)
+        append!(res, readout_times(block) .+ start_time(seq, index))
+    end
+    return res
+end
+
+function edge_times(seq::BaseSequence)
+    res = Float64[]
+    for (index, block) in enumerate(seq)
+        append!(res, edge_times(block) .+ start_time(seq, index))
+    end
+    return unique(res)
+end
+
 """
     Sequence(blocks; name=:Sequence, variables...)
     Sequence(blocks...; name=:Sequence, variables...)
@@ -152,5 +168,7 @@ function make_generic(seq::BaseSequence)
 
     return Sequence(blocks)
 end
+
+
 
 end

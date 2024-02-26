@@ -1,5 +1,6 @@
 module Abstract
 import ...Variables: AbstractBlock, duration, effective_time
+import ...Components.Readouts: readout_times
 
 """
 Parent type for `BuildingBlock` or `BaseSequence`, i.e., any building block that contains other MRI components/blocks.
@@ -41,6 +42,26 @@ This will crash if the component does not have an [`effective_time`](@ref) (e.g.
 Also see [`duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
 """
 effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + effective_time(container[index], indices...)
+
+
+"""
+    readout_times(sequence/ADC)
+
+Return the times of all of the readout events in ms.
+"""
+function readout_times end
+
+"""
+    edge_times(container)
+
+Returns all the edge times during a sequence in ms.
+
+Edges are defined as any time, when:
+- the edge of a building block
+- the slope of the gradient profile changes suddenly
+- an RF pulse starts or ends
+"""
+function edge_times end
 
 
 

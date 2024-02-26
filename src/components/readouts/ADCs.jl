@@ -48,6 +48,7 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
     return res
 end
 
+readout_times(adc::ADC) = range(0, duration(adc), Int(nsamples(adc)))
 oversample(adc::ADC) = adc.oversample
 nsamples(adc::ADC) = resolution(adc) * oversample(adc)
 dwell_time(adc::ADC) = adc.dwell_time

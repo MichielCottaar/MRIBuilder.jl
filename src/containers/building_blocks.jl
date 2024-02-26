@@ -5,9 +5,9 @@ module BuildingBlocks
 import LinearAlgebra: norm
 import JuMP: @constraint
 import StaticArrays: SVector
-import ..Abstract: ContainerBlock, start_time
+import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_time
 import ...BuildSequences: global_model
-import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, DelayedEvent, RFPulseComponent, ReadoutComponent
+import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, DelayedEvent, RFPulseComponent, ReadoutComponent, InstantGradient
 import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!
 
@@ -112,14 +112,12 @@ equal_key(i1, i2) = i1 == i2
 
 function start_time(building_block::BaseBuildingBlock, index)
     time = 0.
-    prev_time = 0.
     for key in keys(building_block)
         if equal_key(key, index)
-            return prev_time
+            return time
         end
         component = building_block[key]
         if component isa GradientWaveform
-            prev_time = time
             time += duration(component)
         end
     end
@@ -205,6 +203,29 @@ function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
     return result
 end
 bmat_gradient(bb::BaseBuildingBlock, qstart) = bmat_gradient(bb, qstart, nothing, nothing)
+
+function readout_times(bb::BaseBuildingBlock)
+    res = Float64[]
+    for (key, event) in events(bb)
+        if event isa ReadoutComponent
+            append!(res, readout_times(event) .+ start_time(bb, key))
+        end
+    end
+    return res
+end
+
+function edge_times(bb::BaseBuildingBlock)
+    res = Float64[]
+    for key in keys(bb)
+        object = bb[key]
+        if object isa Union{GradientWaveform, RFPulseComponent, InstantGradient}
+            @show key start_time(bb, key) end_time(bb, key)
+            push!(res, start_time(bb, key))
+            push!(res, end_time(bb, key))
+        end
+    end
+    return sort(unique(res))
+end
 
 """
     BuildingBlock(waveform, events; duration=nothing, orientation=nothing, group)
