@@ -3,7 +3,7 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform, DelayedEvent
 import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
-import ..Variables: qvec, qval, qval3, bmat_gradient, VariableType, effective_time, duration, TR, bmat, bval, area_under_curve, duration_dephase, duration_transverse
+import ..Variables: qvec, qval, qval3, bmat_gradient, VariableType, effective_time, duration, TR, bmat, bval, area_under_curve, duration_dephase, duration_transverse, VariableNotAvailable
 
 
 """
@@ -170,7 +170,14 @@ function get_pathway end
 
 for fn in (:qvec, :area_under_curve, :bmat, :bval, :duration_dephase, :duration_transverse)
     @eval function $fn(seq::Sequence)
-        pathway = get_pathway(seq)
+        pathway = try
+            get_pathway(seq)
+        catch e
+            if e isa MethodError
+                throw(VariableNotAvailable(typeof(seq), $fn))
+            end
+            rethrow()
+        end
         if pathway isa Pathway
             return $fn(pathway)
         elseif pathway isa AbstractVector || pathway isa Tuple
