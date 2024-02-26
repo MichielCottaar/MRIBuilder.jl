@@ -396,9 +396,11 @@ function scanner_constraints!(bb::AbstractBlock)
         if value isa AbstractVector
             for v in value
                 @constraint global_model() v <= f(global_scanner())
+                @constraint global_model() v >= -f(global_scanner())
             end
         else
             @constraint global_model() value <= f(global_scanner())
+            @constraint global_model() value >= -f(global_scanner())
         end
     end
 end
