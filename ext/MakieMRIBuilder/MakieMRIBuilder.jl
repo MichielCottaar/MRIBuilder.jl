@@ -36,7 +36,6 @@ function Makie.plot!(scene:: Plot_Sequence)
                 end
                 current_y += (upper - lower) + 0.1
             end
-            @show current_y
         end
     end
     
