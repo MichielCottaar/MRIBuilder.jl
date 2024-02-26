@@ -130,4 +130,45 @@ function SequenceDiagram(seq::BaseSequence)
         for symbol in [:RFx, :RFy, :G, :Gx, :Gy, :Gz, :ADC]]...)
 end
 
+
+"""
+    plot(sequence; kwargs...)
+    plot!([scene,] sequence; kwargs...)
+    plot_sequence(sequence; kwargs...)
+    plot_sequence!([scene,] sequence; kwargs...)
+
+Plot the sequence diagram.
+
+This function will only work if [`Makie`](https://makie.org) is installed and imported.
+
+## Attributes
+
+### Line properties
+- `linecolor` sets the color of the lines. If you want to set the text color to the same value, you can also use `color=...`.
+- `linewidth=1.5` sets the width of the lines.
+- `instant_width=3.` sets the width of any instant gradients or pulses with respect to the `linewidth`.
+
+### Text properties
+- `textcolor` sets the color of the text. If you want to set the line color to the same value, you can also use `color=...`.
+- `font` sets whether the rendered text is :regular, :bold, or :italic.
+- `fontsize`: set the size of each character.
+
+$(Base.Docs.doc(generic_plot_attributes!))
+"""
+@recipe(Plot_Sequence, sequence) do scene
+    attr = Attributes(
+        color = theme(scene, :textcolor),
+        linecolor = automatic,
+        linewidth = 1.5,
+        instant_width = 3.,
+        textcolor = automatic,
+        font = theme(scene, :font),
+        fonts = theme(scene, :fonts),
+        fontsize = theme(scene, :fontsize),
+        fxaa = true,
+    )
+    generic_plot_attributes!(attr)
+    return attr
+end
+
 end
