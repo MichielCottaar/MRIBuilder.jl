@@ -38,6 +38,9 @@ export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid,
 import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
 export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
 
+import .Plot: plot_sequence
+export plot_sequence
+
 import JuMP: @constraint, @objective, objective_function, value, Model
 export @constraint, @objective, objective_function, value, Model
 

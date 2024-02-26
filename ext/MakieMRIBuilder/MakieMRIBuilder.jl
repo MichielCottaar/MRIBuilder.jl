@@ -1,8 +1,26 @@
 module MakieMRIBuilder
 using Makie
 import MakieCore
-import MRIBuilder.Plot: Plot_Sequence, SequenceDiagram, range_line, normalise
+import MakieCore: @recipe, theme, generic_plot_attributes!, Attributes, automatic
+import MRIBuilder.Plot: SequenceDiagram, range_line, normalise, plot_sequence
 import MRIBuilder: BaseSequence, BaseBuildingBlock, duration
+
+@recipe(Plot_Sequence, sequence) do scene
+    attr = Attributes(
+        color = theme(scene, :textcolor),
+        linecolor = automatic,
+        linewidth = 1.5,
+        instant_width = 3.,
+        textcolor = automatic,
+        font = theme(scene, :font),
+        fonts = theme(scene, :fonts),
+        fontsize = theme(scene, :fontsize),
+        fxaa = true,
+    )
+    generic_plot_attributes!(attr)
+    return attr
+end
+
 
 function Makie.plot!(scene:: Plot_Sequence)
     kwargs = Dict([
@@ -41,5 +59,16 @@ function Makie.plot!(scene:: Plot_Sequence)
 end
 
 Makie.plottype(::Union{BaseBuildingBlock, BaseSequence}) = Plot_Sequence
+
+function plot_sequence(sequence; figure=(), axis=(xgridvisible=false, ygridvisible=false), kwargs...)
+    f = Figure(; figure...)
+    ax = Axis(f[1, 1]; axis...)
+    p = plot!(ax, sequence; kwargs...)
+    ax.xlabel[] = "Time (ms)"
+    hideydecorations!(ax)
+    hidespines!(ax, :l, :r, :t)
+    return Makie.FigureAxisPlot(f, ax, p)
+end
+
 
 end

@@ -1,5 +1,5 @@
 module Plot
-import MakieCore: @recipe, theme, generic_plot_attributes!, Attributes, automatic, shading_attributes!, colormap_attributes!
+import MakieCore: generic_plot_attributes!
 import ..Containers: BaseBuildingBlock, BaseSequence, waveform, events, start_time, ndim_grad, waveform_sequence
 import ..Variables: duration, flip_angle, phase, make_generic, gradient_orientation
 import ..Components: RFPulseComponent, ADC, InstantPulse, NoGradient
@@ -159,14 +159,18 @@ function normalise(sd::SequenceDiagram)
     )
 end
 
-
 """
-    plot(sequence; kwargs...)
-    plot!([scene,] sequence; kwargs...)
-    plot_sequence(sequence; kwargs...)
-    plot_sequence!([scene,] sequence; kwargs...)
+    plot_sequence(sequence; figure=(), axis=(), attributes...)
+    plot(sequence; attributes...)
+    plot!([scene,] sequence; attributes...)
 
 Plot the sequence diagram.
+
+Calling `plot_sequence` will result in a much cleaner sequence diagram (recommended).
+However, if you want to combine this diagram with other plots you will have to use `plot` or `plot!` instead.
+
+If called as `plot_sequence` the user can also supply `Makie.Figure` (`figure=(...)`) and `Makie.Axis` (`axis=(...)`) keywords.
+If called using the `plot` or `plot!` interface, only the attributes listed below can be supplied
 
 This function will only work if [`Makie`](https://makie.org) is installed and imported.
 
@@ -184,20 +188,6 @@ This function will only work if [`Makie`](https://makie.org) is installed and im
 
 $(Base.Docs.doc(generic_plot_attributes!))
 """
-@recipe(Plot_Sequence, sequence) do scene
-    attr = Attributes(
-        color = theme(scene, :textcolor),
-        linecolor = automatic,
-        linewidth = 1.5,
-        instant_width = 3.,
-        textcolor = automatic,
-        font = theme(scene, :font),
-        fonts = theme(scene, :fonts),
-        fontsize = theme(scene, :fontsize),
-        fxaa = true,
-    )
-    generic_plot_attributes!(attr)
-    return attr
-end
+function plot_sequence end
 
 end
