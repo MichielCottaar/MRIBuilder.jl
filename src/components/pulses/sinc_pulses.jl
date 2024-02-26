@@ -88,7 +88,7 @@ effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
 
 function make_generic(block::SincPulse)
     normed_times = -N_left(block):0.1:N_right(block) + 1e-5
-    times = (normed_times .+ N_left(block)) .* lobe_duration(block)
+    times = max.(0., (normed_times .+ N_left(block))) .* lobe_duration(block)
     amplitudes = amplitude(block) .* (normalised_function.(normed_times; apodise=block.apodise))
     phases = [frequency(block) .* lobe_duration(block)] .* normed_times .* 360
     return GenericPulse(times, amplitudes, phases, effective_time(block))
