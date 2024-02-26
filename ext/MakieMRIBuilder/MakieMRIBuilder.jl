@@ -1,7 +1,7 @@
 module MakieMRIBuilder
 using Makie
 import MakieCore
-import MRIBuilder.Plot: Plot_Sequence, SequenceDiagram, range_line
+import MRIBuilder.Plot: Plot_Sequence, SequenceDiagram, range_line, normalise
 import MRIBuilder: BaseSequence, BaseBuildingBlock
 
 function Makie.plot!(scene:: Plot_Sequence)
@@ -20,19 +20,17 @@ function Makie.plot!(scene:: Plot_Sequence)
     instant_width = map((a, c) -> a * c, scene[:linewidth], scene[:instant_width])
 
     lift(scene[:sequence]) do sequence
-        sequence_diagram = SequenceDiagram(sequence)
+        sequence_diagram = normalise(SequenceDiagram(sequence))
         current_y = 0.
         for label in (:ADC, :Gz, :Gy, :Gx, :G, :RFy, :RFx)
             line = getproperty(sequence_diagram, label)
-            full_range = range_line(line)
-            norm = max(abs.(full_range)...)
-            (lower, upper) = full_range ./ norm
-            if norm > 0
+            (lower, upper) = range_line(line)
+            if !(lower ≈ upper)
                 shift = current_y - lower
                 Makie.text!(scene, string(label) * " "; position=(0., shift), align=(:right, :center), text_kwargs..., kwargs...)
-                Makie.lines!(scene, line.times, line.amplitudes ./ norm .+ shift; color=line_color, linewidth=scene[:linewidth], kwargs...)
+                Makie.lines!(scene, line.times, line.amplitudes .+ shift; color=line_color, linewidth=scene[:linewidth], kwargs...)
                 for (time, amplitude) in zip(line.event_times, line.event_amplitudes)
-                    Makie.lines!([time, time], [0., amplitude / norm] .+ shift; color=line_color, linewidth=instant_width, kwargs...)
+                    Makie.lines!([time, time], [0., amplitude] .+ shift; color=line_color, linewidth=instant_width, kwargs...)
                 end
                 current_y += (upper - lower) + 0.1
             end

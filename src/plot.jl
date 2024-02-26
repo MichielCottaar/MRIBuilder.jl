@@ -56,6 +56,8 @@ range_line(spl::SinglePlotLine) = (
     max(maximum(spl.amplitudes; init=0.), maximum(spl.event_amplitudes; init=0.)),
 )
 
+normalise(spl::SinglePlotLine, value) = iszero(value) ? spl : SinglePlotLine(spl.times, spl.amplitudes ./ value, spl.event_times, spl.event_amplitudes ./ value)
+
 """
     SequenceDiagram(; RFx, RFy, Gx, Gy, Gz, ADC)
 
@@ -136,6 +138,25 @@ function SequenceDiagram(seq::BaseSequence)
     return SequenceDiagram([
         SinglePlotLine([getproperty(line, symbol) for line in as_lines]...) 
         for symbol in [:RFx, :RFy, :G, :Gx, :Gy, :Gz, :ADC]]...)
+end
+
+function normalise(sd::SequenceDiagram)
+    rf_norm = max(abs.(range_line(sd.RFx))..., abs.(range_line(sd.RFy))...)
+    grad_norm = max(
+        abs.(range_line(sd.G))...,
+        abs.(range_line(sd.Gx))...,
+        abs.(range_line(sd.Gy))...,
+        abs.(range_line(sd.Gz))...,
+    )
+    SequenceDiagram(
+        normalise(sd.RFx, rf_norm),
+        normalise(sd.RFy, rf_norm),
+        normalise(sd.G, grad_norm),
+        normalise(sd.Gx, grad_norm),
+        normalise(sd.Gy, grad_norm),
+        normalise(sd.Gz, grad_norm),
+        sd.ADC
+    )
 end
 
 
