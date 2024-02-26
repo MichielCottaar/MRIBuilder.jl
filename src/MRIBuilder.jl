@@ -12,6 +12,7 @@ include("pathways.jl")
 include("parts/parts.jl")
 include("sequences/sequences.jl")
 include("printing.jl")
+include("plot.jl")
 
 import .BuildSequences: build_sequence, global_model, global_scanner, fixed
 export build_sequence, global_model, global_scanner, fixed

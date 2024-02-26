@@ -4,10 +4,11 @@ Defines [`BaseBuildingBlock`](@ref), [`BuildingBlock`](@ref) and [`Wait`](@ref).
 module BuildingBlocks
 import LinearAlgebra: norm
 import JuMP: @constraint
+import StaticArrays: SVector
 import ..Abstract: ContainerBlock, start_time
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, DelayedEvent, RFPulseComponent, ReadoutComponent
-import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3
+import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!
 
 """
@@ -54,8 +55,8 @@ function waveform_sequence(bb::BaseBuildingBlock)
 end
 
 function ndim_grad(bb::BaseBuildingBlock)
-    g = waveform_sequence(bb)
-    if izero(length(g))
+    g = [ws[2] for ws in waveform_sequence(bb)]
+    if iszero(length(g))
         return 0
     end
     for N in (1, 3)
@@ -80,7 +81,7 @@ function waveform(bb::BaseBuildingBlock)
     if ndim == 3
         result = Tuple{VariableType, SVector{3, VariableType}}[(0., zero(SVector{3, Float64}))]
     elseif ndim == 1
-        result = Tuple{VariableType, SVector{3, VariableType}}[(0., 0.)]
+        result = Tuple{VariableType, VariableType}[(0., 0.)]
     else
         return []
     end
@@ -100,7 +101,7 @@ function waveform(bb::BaseBuildingBlock)
             error("Unrecognised block type in BuildingBlock: $(typeof(bb)).")
         end
     end
-    @assert all(abs.(result[end][2]) <= 1e-12) "$(typeof(bb)) does not end up with a gradient of zero. This is probably caused by an improper implementation of this BuildingBlock."
+    @assert all(abs.(result[end][2]) .<= 1e-12) "$(typeof(bb)) does not end up with a gradient of zero. This is probably caused by an improper implementation of this BuildingBlock."
     return result
 end
 
@@ -260,9 +261,7 @@ Base.keys(bb::BuildingBlock) = 1:length(bb.parts)
 Base.getindex(bb::BuildingBlock, i::Integer) = bb.parts[i]
 
 function get_pulse(bb::BuildingBlock)
-    @show events(bb)
     pulses = [p for (_, p) in events(bb) if p isa RFPulseComponent]
-    @show pulses
     if length(pulses) == 0
         error("BuildingBlock does not contain any pulses.")
     end
