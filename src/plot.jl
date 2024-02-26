@@ -28,7 +28,7 @@ function SinglePlotLine(control_points::AbstractVector{<:Tuple}, duration::Numbe
     end
     if times[end] < duration
         push!(times, duration)
-        push!(amplitudes, duration)
+        push!(amplitudes, 0.)
     end
     return SinglePlotLine(times, amplitudes, [], [])
 end
