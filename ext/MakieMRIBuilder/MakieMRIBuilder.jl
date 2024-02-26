@@ -2,7 +2,7 @@ module MakieMRIBuilder
 using Makie
 import MakieCore
 import MRIBuilder.Plot: Plot_Sequence, SequenceDiagram, range_line, normalise
-import MRIBuilder: BaseSequence, BaseBuildingBlock
+import MRIBuilder: BaseSequence, BaseBuildingBlock, duration
 
 function Makie.plot!(scene:: Plot_Sequence)
     kwargs = Dict([
@@ -35,6 +35,7 @@ function Makie.plot!(scene:: Plot_Sequence)
                 current_y += (upper - lower) + 0.1
             end
         end
+        Makie.lines!(scene, [-duration(sequence) / 10., 0], [current_y/2, current_y/2], color=(:red, 0.))
     end
     
 end
