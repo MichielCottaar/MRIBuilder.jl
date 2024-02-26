@@ -1,8 +1,8 @@
 module Plot
 import MakieCore: @recipe, theme, generic_plot_attributes!, Attributes, automatic, shading_attributes!, colormap_attributes!
-import ..Containers: BaseBuildingBlock, BaseSequence, waveform, events, start_time, ndim_grad
-import ..Variables: duration, flip_angle, phase, make_generic
-import ..Components: RFPulseComponent, ADC, InstantPulse
+import ..Containers: BaseBuildingBlock, BaseSequence, waveform, events, start_time, ndim_grad, waveform_sequence
+import ..Variables: duration, flip_angle, phase, make_generic, gradient_orientation
+import ..Components: RFPulseComponent, ADC, InstantPulse, NoGradient
 
 """
     SinglePlotLine(times, amplitudes, event_times, event_amplitudes)
@@ -47,6 +47,16 @@ function SinglePlotLine(plot_lines::SinglePlotLine...)
 end
 
 """
+    range_line(single_plot_line)
+
+Returns the minimum and maximum amplitude for a [`SinglePlotLine`](@ref)
+"""
+range_line(spl::SinglePlotLine) = (
+    min(minimum(spl.amplitudes; init=0.), minimum(spl.event_amplitudes; init=0.)),
+    max(maximum(spl.amplitudes; init=0.), maximum(spl.event_amplitudes; init=0.)),
+)
+
+"""
     SequenceDiagram(; RFx, RFy, Gx, Gy, Gz, ADC)
 
 All the lines forming a sequence diagram.
@@ -64,13 +74,12 @@ struct SequenceDiagram
     ADC :: SinglePlotLine
 end
 
-function SequenceDiagram(; kwargs...)
-    @assert length(kwargs) > 0
+function SequenceDiagram(actual_duration; kwargs...)
     durations = duration.([values(kwargs)...])
-    @assert all(isapprox.(durations[1], durations, rtol=1e-3))
+    @assert all(isapprox.(actual_duration, durations, rtol=1e-3))
     res = SinglePlotLine[]
     for symbol in (:RFx, :RFy, :G, :Gx, :Gy, :Gz, :ADC)
-        push!(res, get(kwargs, symbol, SinglePlotLine(durations[1])))
+        push!(res, get(kwargs, symbol, SinglePlotLine(actual_duration)))
     end
     return SequenceDiagram(res...)
 end
@@ -79,12 +88,11 @@ end
 function SequenceDiagram(bbb::BaseBuildingBlock)
     kwargs = Dict{Symbol, SinglePlotLine}()
 
-    if ndim_grad(bbb) == 3
+    if !all([wvs isa NoGradient for (_, wvs) in waveform_sequence(bbb)])
+        orientation = ndim_grad(bbb) == 3 ? 1. : gradient_orientation(bbb)
         for (index, symbol) in enumerate((:Gx, :Gy, :Gz))
-            kwargs[symbol] = SinglePlotLine([(time, amplitude[index]) for (time, amplitude) in waveform(bbb)], duration(bbb))
+            kwargs[symbol] = SinglePlotLine([(time, (orientation .* amplitude)[index]) for (time, amplitude) in waveform(bbb)], duration(bbb))
         end
-    else
-        kwargs[:G] = SinglePlotLine([(time, amplitude) for (time, amplitude) in waveform(bbb)], duration(bbb))
     end
 
     for (name, raw_event) in events(bbb)
@@ -120,7 +128,7 @@ function SequenceDiagram(bbb::BaseBuildingBlock)
             end
         end
     end
-    return SequenceDiagram(; kwargs...)
+    return SequenceDiagram(duration(bbb); kwargs...)
 end
 
 function SequenceDiagram(seq::BaseSequence)
