@@ -1,9 +1,10 @@
 module SincPulses
 import JuMP: @constraint
 import QuadGK: quadgk
+import LinA
 import ....BuildSequences: global_model
 import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable
-import ...AbstractTypes: RFPulseComponent
+import ...AbstractTypes: RFPulseComponent, split_times
 import ..GenericPulses: GenericPulse
 
 """
@@ -59,19 +60,23 @@ function SincPulse(;
     return res
 end
 
-function normalised_function(x; apodise=false)
+function normalised_function(x, Nleft, Nright; apodise=false)
     if iszero(x)
         return 1.
     end
     if apodise
-        return (0.54 + 0.46 * cos(π * x)) * sin(π * x) / (π * x)
+        if x < 0
+            return (0.54 + 0.46 * cos(π * x / Nleft)) * sin(π * x) / (π * x)
+        else
+            return (0.54 + 0.46 * cos(π * x / Nright)) * sin(π * x) / (π * x)
+        end
     else
         return sin(π * x) / (π * x)
     end
 end
 
 function integral_nzero(Nzeros, apodise)
-    f = x -> normalised_function(x; apodise=apodise)
+    f = x -> normalised_function(x, Nzeros, Nzeros; apodise=apodise)
     return quadgk(f, 0, Nzeros)[1]
 end
 
@@ -86,12 +91,23 @@ lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
 effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
 
+amplitude(pulse::SincPulse, time::Number) = amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse))
+phase(pulse::SincPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse))
+
 function make_generic(block::SincPulse)
     normed_times = -N_left(block):0.1:N_right(block) + 1e-5
     times = max.(0., (normed_times .+ N_left(block))) .* lobe_duration(block)
-    amplitudes = amplitude(block) .* (normalised_function.(normed_times; apodise=block.apodise))
+    amplitudes = amplitude(block) .* (normalised_function.(normed_times, N_left(block), N_right(block); apodise=block.apodise))
     phases = [frequency(block) .* lobe_duration(block)] .* normed_times .* 360
     return GenericPulse(times, amplitudes, phases, effective_time(block))
+end
+
+function split_times(block::SincPulse, t1, t2, precision)
+    real_amplitude_precision = precision * amplitude(block)
+    pwl = LinA.Linearize(t -> amplitude(block, t), t1, t2, LinA.Absolute(real_amplitude_precision))
+    times = [part.xMin for part in pwl]
+    push!(times, t2)
+    return times
 end
 
 end
