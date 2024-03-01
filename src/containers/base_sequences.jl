@@ -4,7 +4,7 @@ Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic
+import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic, gradient_strength, amplitude, phase, gradient_strength3
 import ...BuildSequences: global_model
 import ...Components: EventComponent
 import ..Abstract: ContainerBlock, start_time, readout_times, edge_times
@@ -97,6 +97,17 @@ function edge_times(seq::BaseSequence)
         append!(res, edge_times(block) .+ start_time(seq, index))
     end
     return unique(res)
+end
+
+for fn in (:gradient_strength, :amplitude, :phase, :gradient_strength3)
+    @eval function $fn(sequence::BaseSequence, time::Number)
+        for block in sequence
+            time -= duration(block)
+            if time < 0
+                return $fn(block, time + duration(block))
+            end
+        end
+    end
 end
 
 """

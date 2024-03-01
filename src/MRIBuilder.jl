@@ -20,14 +20,14 @@ export build_sequence, global_model, global_scanner, fixed
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra, Default_Scanner
 export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra, Default_Scanner
 
-import .Variables: variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inverse_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, repetition_time, TR, Δ, get_gradient, get_pulse, get_readout, TE, echo_time, diffusion_time, make_generic
-export variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inversne_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, repetition_time, TR, Δ, get_gradient, get_pulse, get_readout, TE, echo_time, diffusion_time, make_generic
+import .Variables: variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inverse_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, repetition_time, TR, Δ, get_gradient, get_pulse, get_readout, TE, echo_time, diffusion_time, make_generic, slew_rate3, gradient_strength3
+export variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inversne_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, repetition_time, TR, Δ, get_gradient, get_pulse, get_readout, TE, echo_time, diffusion_time, make_generic, slew_rate3, gradient_strength3
 
 import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC
 export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC
 
-import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, readout_times, edge_times
-export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, readout_times, edge_times
+import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, readout_times, edge_times, linearise
+export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, readout_times, edge_times, linearise
 
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
 export Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway

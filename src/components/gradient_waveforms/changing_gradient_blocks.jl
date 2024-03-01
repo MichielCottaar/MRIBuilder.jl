@@ -41,6 +41,8 @@ grad_end(cgb::ChangingGradient) = grad_start(cgb) .+ slew_rate(cgb) .* duration(
 gradient_strength(cgb::ChangingGradient) = max.(grad_start(cgb), grad_end(cgb))
 qval(cgb::ChangingGradient) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cgb) * π)
 
+gradient_strength(cgb::ChangingGradient, time::Number) = slew_rate(cgb) .* time .+ grad_start(cgb)
+
 _mult(g1::VariableType, g2::VariableType) = g1 * g2
 _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
 

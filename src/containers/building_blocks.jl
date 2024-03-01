@@ -8,7 +8,7 @@ import StaticArrays: SVector
 import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_time
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, DelayedEvent, RFPulseComponent, ReadoutComponent, InstantGradient
-import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength
+import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!
 
 """
@@ -226,6 +226,26 @@ function edge_times(bb::BaseBuildingBlock)
         end
     end
     return sort(unique(res))
+end
+
+for (fn, default_value) in ((:amplitude, 0.), (:phase, NaN))
+    @eval function $fn(bb::BaseBuildingBlock, time::Number)
+        for (key, block) in events(bb)
+            if block isa RFPulseComponent && start_time(bb, key) >= time >= end_time(bb, key)
+                return $fn(block, time - start_time(bb, key))
+            end
+        end
+        return $default_value
+    end
+end
+
+function gradient_strength(bb::BaseBuildingBlock, time::Number)
+    for (key, block) in waveform_sequence(bb)
+        if start_time(bb, key) <= time <= end_time(bb, key)
+            return gradient_strength(block, time - start_time(bb, key))
+        end
+    end
+    error("$bb with duration $(duration(bb)) does not define a gradient strength at time $time.")
 end
 
 """

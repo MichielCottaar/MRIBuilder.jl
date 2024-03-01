@@ -29,6 +29,8 @@ for func in (:qval, :gradient_strength, :slew_rate)
     @eval $func(::NoGradient{3}) = zero(SVector{3, Float64})
 end
 
+gradient_strength(cgb::NoGradient, time::Number) = gradient_strength(cgb)
+
 NoGradient(duration) = NoGradient{1}(duration)
 
 bmat_gradient(::NoGradient{1}) = 0.

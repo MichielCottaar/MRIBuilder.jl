@@ -1,6 +1,6 @@
 module ConstantPulses
 import JuMP: @constraint
-import ...AbstractTypes: RFPulseComponent
+import ...AbstractTypes: RFPulseComponent, split_times
 import ....BuildSequences: global_model
 import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable
 import ..GenericPulses: GenericPulse
@@ -46,6 +46,9 @@ flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
 inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
 effective_time(pulse::ConstantPulse) = duration(pulse) / 2
 
+amplitude(pulse::ConstantPulse, time::Number) = amplitude(pulse)
+phase(pulse::ConstantPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse))
+
 function make_generic(block::ConstantPulse)
     d = duration(block)
     final_phase = phase(block) + d * frequency(block) * 360
@@ -56,6 +59,9 @@ function make_generic(block::ConstantPulse)
         effective_time(block)
     )
 end
+
+
+split_times(pulse::ConstantPulse, t1, t2, precision) = [t1, t2]
 
 
 end

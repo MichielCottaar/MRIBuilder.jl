@@ -285,14 +285,17 @@ for (target_name, all_vars) in all_variables_symbols
 end
 
 
-function qval3(bb::AbstractBlock, args...; kwargs...)
-    value = qval(bb, args...; kwargs...)
-    if value isa Number && iszero(value)
-        return value
-    elseif value isa AbstractVector
-        return value
-    else
-        return gradient_orientation(bb) .* value
+for base_fn in [:qval, :gradient_strength, :slew_rate]
+    fn3 = Symbol(String(base_fn) * "3")
+    @eval function $fn3(bb::AbstractBlock, args...; kwargs...)
+        value = $base_fn(bb, args...; kwargs...)
+        if value isa Number && iszero(value)
+            return value
+        elseif value isa AbstractVector
+            return value
+        else
+            return gradient_orientation(bb) .* value
+        end
     end
 end
 

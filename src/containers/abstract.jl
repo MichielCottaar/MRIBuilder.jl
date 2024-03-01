@@ -1,5 +1,5 @@
 module Abstract
-import ...Variables: AbstractBlock, duration, effective_time
+import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase
 import ...Components.Readouts: readout_times
 
 """
@@ -63,6 +63,28 @@ Edges are defined as any time, when:
 """
 function edge_times end
 
+"""
+    gradient_strength(sequence, time)
 
+Returns the gradient strength at a particular time within the sequence.
+"""
+function gradient_strength end
+
+
+"""
+    amplitude(sequence, time)
+
+Returns the RF amplitude at a particular time within the sequence.
+"""
+function amplitude end
+
+
+"""
+    phase(sequence, time)
+
+Returns the RF phase at a particular time within the sequence.
+NaN if the ampltiude is zero.
+"""
+function phase end
 
 end

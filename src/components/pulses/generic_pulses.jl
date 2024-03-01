@@ -1,7 +1,7 @@
 module GenericPulses
 
-import ...AbstractTypes: RFPulseComponent
-import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic
+import ...AbstractTypes: RFPulseComponent, split_times
+import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic, phase
 
 
 """
@@ -42,13 +42,32 @@ end
 
 duration(fp::GenericPulse) = maximum(fp.time)
 amplitude(fp::GenericPulse) = maximum(abs.(fp.amplitude))
-effective_time(pulse::GenericPulse) = pulse.time[argmax(abs.(pulse.amplitude))]
+effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]
+phase(fp::GenericPulse) = pulse.phase[findmax(abs.(pulse.amplitude))]
 flip_angle(pulse::GenericPulse) = sum(get_weights(pulse) .* pulse.amplitude) * 360
 function time_halfway_flip(pulse::GenericPulse)
     w = get_weights(pulse)
     flip_so_far = cumsum(w .* pulse.amplitude)
     return pulse.times[findfirst(f -> f >= flip_so_far[end] / 2, flip_so_far)]
 end
+
+for fn in (:amplitude, :phase)
+    @eval function $fn(fp::GenericPulse, time::Number)
+        i2 = find(t > time, fp.time)
+        if isnothing(i2)
+            @assert time ≈ fp.time[end]
+            return fp.$(fn)[end]
+        end
+        i1 = i2 - 1
+        if time ≈ fp.time[i1]
+            return fp.$(fn)[i1]
+        end
+        w2 = (time - fp.time[i1]) / (fp.time[i2] - fp.time[i1])
+        w1 = (fp.time[i2] - time) / (fp.time[i2] - fp.time[i1])
+        return w1 * fp.$(fn)[i1] + w2 * fp.$(fn)[i2]
+    end
+end
+
 
 function get_weights(pulse::GenericPulse)
     weights_double = pulse.time[2:end] - pulse.time[1:end-1]
@@ -58,6 +77,40 @@ end
 
 
 make_generic(gp::GenericPulse) = gp
+
+function split_times(gp::GenericPulse, t1, t2, precision)
+    real_amplitude_precision = precision * amplitude(gp)
+    real_phase_precision = 180 * precision
+
+    current_index = find(t -> t >= t1, gp.time)
+    final_index = find(t -> t > t2, gp.time)
+    if isnothing(final_index)
+        final_index = length(gp.time)
+    end
+    times = [t1]
+    while gp.time[current_index] < t2
+        current_time = gp.time[current_index]
+        current_amplitude = gp.amplitude[current_index]
+        current_phase = gp.phase(current_index)
+        slope_amplitude = (gp.amplitude[current_index + 1] - current_amplitude) / (gp.time[current_index + 1] - current_time)
+        slope_phase = (gp.phase[current_index + 1] - current_phase) / (gp.time[current_index + 1] - current_time)
+
+        next_index = current_index
+        for next_index in current_index+2:final_index
+            if (
+                abs(slope_amplitude * (gp.time[next_index] - current_time) - gp.amplitude[next_index]) > real_amplitude_precision ||
+                abs(slope_phase * (gp.time[next_index] - current_time) - gp.phase[next_index]) > real_phase_precision
+            )
+                next_index -= 1
+                push!(times, gp.time[next_index])
+                break
+            end
+        end
+        current_index = next_index
+    end
+    push!(times, t2)
+    return times
+end
 
 
 end

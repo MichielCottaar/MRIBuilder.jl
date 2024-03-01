@@ -35,4 +35,14 @@ Super type for all readout events.
 """
 abstract type ReadoutComponent <: EventComponent end
 
+
+"""
+    split_times(component, t1, t2, precision)
+
+Indicates at what timepoints a given [`BaseComponent`](@ref) should be split during linearisation to achieve the given precision.
+
+For non-linear components this will use [`LinA.jl`](https://github.com/LICO-labs/LinA.jl) under the hood.
+"""
+function split_times end
+
 end
