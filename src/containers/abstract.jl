@@ -1,5 +1,5 @@
 module Abstract
-import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase
+import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase, VariableType
 import ...Components.Readouts: readout_times
 
 """
@@ -31,6 +31,7 @@ Also see [`duration`](@ref), [`start_time`](@ref), and [`effective_time`](@ref)
 """
 end_time(container::ContainerBlock, index, indices...) = start_time(container, index) + end_time(container[index], indices...)
 end_time(block::AbstractBlock) = duration(block)
+end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + end_time(block[2])
 
 """
     effective_time(container, indices...)
@@ -42,6 +43,7 @@ This will crash if the component does not have an [`effective_time`](@ref) (e.g.
 Also see [`duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
 """
 effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + effective_time(container[index], indices...)
+effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effective_time(block[2])
 
 
 """

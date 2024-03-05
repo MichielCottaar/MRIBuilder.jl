@@ -7,7 +7,7 @@ import JuMP: @constraint
 import StaticArrays: SVector
 import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_time
 import ...BuildSequences: global_model
-import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, DelayedEvent, RFPulseComponent, ReadoutComponent, InstantGradient
+import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient
 import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!
 
@@ -120,7 +120,8 @@ function start_time(building_block::BaseBuildingBlock, index)
             time += duration(component)
         end
         if equal_key(key, index)
-            return prev_time
+            delay = component isa Tuple ? component[1] : 0.
+            return prev_time + delay
         end
     end
     error("Building block with index '$index' not found")
@@ -258,7 +259,7 @@ Scanner constraints are automatically applied.
 
 ## Arguments
 - `waveform`: Sequence of 2-element tuples with (time, (Gx, Gy, Gz)). If `orientation` is set then the tuple is expected to look like (time, G). This cannot contain any free variables.
-- `events`: Sequence of 2-element tuples with (index, pulse/readout). The start time of the pulse/readout at the start of the gradient waveform element with index `index` (use [`DelayedEvent`](@ref) to make this earlier or later).
+- `events`: Sequence of 2-element tuples with (index, pulse/readout). The start time of the pulse/readout at the start of the gradient waveform element with index `index`. A tuple with a delay and the pulse/readout event can be used to change that.
 - `duration`: duration of this `BuildingBlock`. If not set then it will be assumed to be the time of the last element in `waveform`.
 - `orientation`: orientation of the gradients in the waveform. If not set, then the full gradient vector should be given explicitly.
 - `group`: group of the gradient waveform

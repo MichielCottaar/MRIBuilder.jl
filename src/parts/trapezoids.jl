@@ -188,8 +188,8 @@ function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=
     return res
 end
 
-Base.keys(::LineReadout) = (Val(:rise), Val(:flat), Val(:adc), Val(:fall))
-Base.getindex(lr::LineReadout, ::Val{:adc}) = lr.adc
+Base.keys(::LineReadout) = (Val(:rise), Val(:adc), Val(:flat), Val(:fall))
+Base.getindex(lr::LineReadout, ::Val{:adc}) = (ramp_overlap(lr) * rise_time(lr), lr.adc)
 
 ramp_overlap(lr::LineReadout) = lr.ramp_overlap
 inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid) * lr.adc.oversample

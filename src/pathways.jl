@@ -1,7 +1,7 @@
 module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
-import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform, DelayedEvent
+import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
 import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
 import ..Variables: qvec, qval, qval3, bmat_gradient, VariableType, effective_time, duration, TR, bmat, bval, area_under_curve, duration_dephase, duration_transverse, VariableNotAvailable
 
@@ -311,8 +311,8 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
     current_time = block_start_time
     for (index_inter, interruption) in events(block)
 
-        if interruption isa DelayedEvent
-            interruption = interruption.event
+        if interruption isa Tuple
+            interruption = interruption[2]
         end
 
         # determine if action should be taken
