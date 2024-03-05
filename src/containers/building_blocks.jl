@@ -24,7 +24,7 @@ Main interface:
 
 Sub-types need to implement:
 - `Base.keys`: returns sequence of keys to all the components.
-- `Base.getindex`: returns the actual component for each key.
+- `Base.getindex`: returns the actual component for each key. For `events` (readout/pulses) this should return a tuple with `(time delay till start, event)`.
 """
 abstract type BaseBuildingBlock <: ContainerBlock end
 
@@ -42,7 +42,7 @@ Base.getindex(bb::BaseBuildingBlock, s::Symbol) = bb[Val(s)]
 Returns just the non-gradient (i.e., RF pulses/readouts) events as a sequence of [`EventComponent`](@ref) objects (with their keys).
 """
 function events(bb::BaseBuildingBlock)
-    return [(key, bb[key]) for key in keys(bb) if bb[key] isa EventComponent]
+    return [(key, bb[key][2]) for key in keys(bb) if bb[key] isa Tuple{<:Number, <:EventComponent}]
 end
 
 """

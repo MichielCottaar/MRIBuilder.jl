@@ -144,7 +144,7 @@ function SliceSelect(pulse::RFPulseComponent; orientation=nothing, rise_time=not
 end
 
 Base.keys(::SliceSelect) = (Val(:rise), Val(:flat), Val(:pulse), Val(:fall))
-Base.getindex(pg::SliceSelect, ::Val{:pulse}) = pg.pulse
+Base.getindex(pg::SliceSelect, ::Val{:pulse}) = (0., pg.pulse)
 
 inverse_slice_thickness(ss::SliceSelect) = 1e3 * gradient_strength(ss.trapezoid) .* inverse_bandwidth(ss.pulse)
 
@@ -189,7 +189,7 @@ function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=
 end
 
 Base.keys(::LineReadout) = (Val(:rise), Val(:adc), Val(:flat), Val(:fall))
-Base.getindex(lr::LineReadout, ::Val{:adc}) = (ramp_overlap(lr) * rise_time(lr), lr.adc)
+Base.getindex(lr::LineReadout, ::Val{:adc}) = ((1 - ramp_overlap(lr)) * rise_time(lr), lr.adc)
 
 ramp_overlap(lr::LineReadout) = lr.ramp_overlap
 inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid) * lr.adc.oversample
