@@ -147,8 +147,8 @@ function SequenceDiagram(bbb::BaseBuildingBlock)
                 )
             else
                 kwargs[:ADC] = SinglePlotLine(
-                    [0., delay, delay + duration(event), duration(bbb)],
-                    [0., 1., 1., 0.],
+                    [0., delay, delay, delay + duration(event), delay + duration(event), duration(bbb)],
+                    [0., 0., 1., 1., 0., 0.],
                 )
             end
         end
