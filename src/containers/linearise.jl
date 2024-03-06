@@ -82,8 +82,10 @@ Continuous gradient waveforms or RF pulses might be split up further to ensure t
 """
 function split_times(sequence::BaseSequence; precision=0.01)
     splits = Float64[]
+    start_time = 0.
     for block in sequence
-        append!(splits, split_times(block; precision=precision))
+        append!(splits, start_time .+ split_times(block; precision=precision))
+        start_time += duration(block)
     end
     return sort(unique(splits))
 end
