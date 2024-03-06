@@ -13,6 +13,7 @@ In addition this defines:
 """
 module Variables
 import JuMP: @constraint, @variable, Model, @objective, objective_function, AbstractJuMPScalar
+import StaticArrays: SVector
 import ..Scanners: gradient_strength, slew_rate, Scanner
 import ..BuildSequences: global_model, global_scanner, fixed
 
@@ -290,7 +291,7 @@ for base_fn in [:qval, :gradient_strength, :slew_rate]
     @eval function $fn3(bb::AbstractBlock, args...; kwargs...)
         value = $base_fn(bb, args...; kwargs...)
         if value isa Number && iszero(value)
-            return value
+            return zero(SVector{3, Float64})
         elseif value isa AbstractVector
             return value
         else

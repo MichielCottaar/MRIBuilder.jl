@@ -9,6 +9,6 @@ import .Abstract: ContainerBlock, start_time, end_time, effective_time, readout_
 import .BuildingBlocks: BaseBuildingBlock, BuildingBlock, Wait, waveform, waveform_sequence, events, ndim_grad
 import .BaseSequences: BaseSequence, Sequence, nrepeat, get_index_single_TR
 import .Alternatives: AlternativeBlocks, match_blocks!
-import .Linearise: linearise
+import .Linearise: SequencePart, split_times, split_timestep, linearise
 
 end

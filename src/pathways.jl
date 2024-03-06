@@ -311,10 +311,6 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
     current_time = block_start_time
     for (index_inter, interruption) in events(block)
 
-        if interruption isa Tuple
-            interruption = interruption[2]
-        end
-
         # determine if action should be taken
         if interruption isa RFPulseComponent
             if iszero(length(pulse_effects))
