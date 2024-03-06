@@ -1,6 +1,7 @@
 module GenericPulses
 
-import ...AbstractTypes: RFPulseComponent, split_times
+import Polynomials: fit
+import ...AbstractTypes: RFPulseComponent, split_timestep
 import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic, phase
 
 
@@ -78,38 +79,26 @@ end
 
 make_generic(gp::GenericPulse) = gp
 
-function split_times(gp::GenericPulse, t1, t2, precision)
-    real_amplitude_precision = precision * amplitude(gp)
-    real_phase_precision = 180 * precision
-
-    current_index = find(t -> t >= t1, gp.time)
-    final_index = find(t -> t > t2, gp.time)
-    if isnothing(final_index)
-        final_index = length(gp.time)
-    end
-    times = [t1]
-    while gp.time[current_index] < t2
-        current_time = gp.time[current_index]
-        current_amplitude = gp.amplitude[current_index]
-        current_phase = gp.phase(current_index)
-        slope_amplitude = (gp.amplitude[current_index + 1] - current_amplitude) / (gp.time[current_index + 1] - current_time)
-        slope_phase = (gp.phase[current_index + 1] - current_phase) / (gp.time[current_index + 1] - current_time)
-
-        next_index = current_index
-        for next_index in current_index+2:final_index
-            if (
-                abs(slope_amplitude * (gp.time[next_index] - current_time) - gp.amplitude[next_index]) > real_amplitude_precision ||
-                abs(slope_phase * (gp.time[next_index] - current_time) - gp.phase[next_index]) > real_phase_precision
-            )
-                next_index -= 1
-                push!(times, gp.time[next_index])
-                break
+function split_timestep(gp::GenericPulse, precision)
+    function second_derivative(arr)
+        max_second_der = 0.
+        for index in 2:length(arr)-1
+            poly = fit(gp.times[index-1:index+1], arr[index-1:index+1])
+            second_der = abs(poly.coeffs[end])
+            if second_der > max_second_der
+                max_second_der = second_der
             end
         end
-        current_index = next_index
+        return max_second_der
     end
-    push!(times, t2)
-    return times
+    max_second_der = max(
+        second_derivative(gp.amplitude ./ maximum(gp.amplitude)),
+        second_derivative(gp.phase ./ 360),
+    )
+    if iszero(max_second_der)
+        return Inf
+    end
+    return sqrt(2 * precision / max_second_der)
 end
 
 

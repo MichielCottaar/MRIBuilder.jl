@@ -1,6 +1,6 @@
 module Linearise
 import StaticArrays: SVector
-import ...Components: GradientWaveform, split_times
+import ...Components: GradientWaveform, split_timestep
 import ...Variables: amplitude, phase, gradient_strength3, duration
 import ..Abstract: edge_times, start_time, end_time
 import ..BaseSequences: BaseSequence, Sequence
@@ -45,15 +45,18 @@ function linearise(bb::BaseBuildingBlock; precision=0.01)
         tmean = (t1 + t2) / 2
 
         # determine where to split this domain
-        possible_splits = Any[[t1, t2], ]
+        timestep = Inf
         for key in keys(bb)
             if !(start_time(bb, key) < tmean < end_time(bb, key))
                 continue
             end
-            block = bb[key]
-            append!(possible_splits, start_time(bb, key) .+ split_times(block, t1 - start_time(bb, key), t2 - start_time(bb, key), precision))
+            new_timestep = split_timestep(block, precision)
+            if new_timestep < timestep
+                timestep = new_timestep
+            end
         end
-        tsplits = argmax(length, possible_splits)
+        nsteps = div(t2 - t1, timestep, RoundUp)
+        tsplits = range(t1, t2, length=nsteps)
 
         for (t1b, t2b) in zip(tsplits[1:end-1], tsplits[2:end])
             tmeanb = (t1b + t2b) / 2

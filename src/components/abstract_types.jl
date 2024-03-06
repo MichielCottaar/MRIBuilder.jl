@@ -37,10 +37,16 @@ abstract type ReadoutComponent <: EventComponent end
 
 
 """
-    split_times(component, t1, t2, precision)
+    split_timestep(component, precision)
 
-Indicates at what timepoints a given [`BaseComponent`](@ref) should be split during linearisation to achieve the given precision.
+Indicates the maximum timestep that a component can be linearised with and still achieve the required `precision`.
+
+Typically, this will be determined by the maximum second derivative:
+
+``\\sqrt{\\frac{2 \\epsilon}{max(|d^2y/dx^2|)}}``
+
+It should be infinite if the component is linear.
 """
-function split_times end
+function split_timestep end
 
 end

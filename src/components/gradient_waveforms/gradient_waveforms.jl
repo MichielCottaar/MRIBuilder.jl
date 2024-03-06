@@ -21,11 +21,11 @@ include("constant_gradient_blocks.jl")
 include("no_gradient_blocks.jl")
 
 
-import ..AbstractTypes: GradientWaveform, split_times
+import ..AbstractTypes: GradientWaveform, split_timestep
 import .NoGradientBlocks: NoGradient
 import .ChangingGradientBlocks: ChangingGradient, split_gradient
 import .ConstantGradientBlocks: ConstantGradient
 
-split_times(wv::GradientWaveform, t1, t2, precision) = [t1, t2]
+split_timestep(wv::GradientWaveform, precision) = Inf
 
 end

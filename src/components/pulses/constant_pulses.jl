@@ -1,6 +1,6 @@
 module ConstantPulses
 import JuMP: @constraint
-import ...AbstractTypes: RFPulseComponent, split_times
+import ...AbstractTypes: RFPulseComponent, split_timestep
 import ....BuildSequences: global_model
 import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable
 import ..GenericPulses: GenericPulse
@@ -61,7 +61,7 @@ function make_generic(block::ConstantPulse)
 end
 
 
-split_times(pulse::ConstantPulse, t1, t2, precision) = [t1, t2]
+split_timestep(pulse::ConstantPulse, precision) = Inf
 
 
 end

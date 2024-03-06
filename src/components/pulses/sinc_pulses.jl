@@ -3,7 +3,7 @@ import JuMP: @constraint
 import QuadGK: quadgk
 import ....BuildSequences: global_model
 import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable
-import ...AbstractTypes: RFPulseComponent, split_times
+import ...AbstractTypes: RFPulseComponent, split_timestep
 import ..GenericPulses: GenericPulse
 
 """
@@ -101,11 +101,9 @@ function make_generic(block::SincPulse)
     return GenericPulse(times, amplitudes, phases, effective_time(block))
 end
 
-function split_times(block::SincPulse, t1, t2, precision)
+function split_timestep(block::SincPulse, precision)
     max_second_derivative = π^2/3 * (amplitude(block) / lobe_duration(block))^2
-    step_size = sqrt(2 * precision / max_second_derivative)
-    npoints = Int(div(t2 - t1, step_size, RoundUp))
-    return range(t1, t2, length=npoints)
+    return sqrt(2 * precision / max_second_derivative)
 end
 
 end
