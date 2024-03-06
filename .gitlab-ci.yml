@@ -1,0 +1,12 @@
+pages:
+  script:
+    - mkdir .public
+    - mv * .public/
+    - mv .public public
+  artifacts:
+    paths:
+      - public
+  tags:
+    - docker
+  only:
+    - pages
