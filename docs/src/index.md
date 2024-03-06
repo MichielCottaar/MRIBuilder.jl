@@ -4,7 +4,7 @@ CurrentModule = MRIBuilder
 
 # MRIBuilder
 
-Documentation for [MRIBuilder](https://git.fmrib.ox.ac.uk/MichielCottaar/MRIBuilder.jl).
+Documentation for [MRIBuilder](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl).
 
 ```@index
 ```
