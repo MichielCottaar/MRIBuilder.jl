@@ -1,3 +1,6 @@
+variables:
+  CI: "true"
+
 default:
   image: julia:latest
   tags:
