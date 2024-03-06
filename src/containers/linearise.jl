@@ -1,5 +1,4 @@
 module Linearise
-import LinA
 import StaticArrays: SVector
 import ...Components: GradientWaveform, split_times
 import ...Variables: amplitude, phase, gradient_strength3, duration

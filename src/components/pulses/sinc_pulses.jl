@@ -1,7 +1,6 @@
 module SincPulses
 import JuMP: @constraint
 import QuadGK: quadgk
-import LinA
 import ....BuildSequences: global_model
 import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable
 import ...AbstractTypes: RFPulseComponent, split_times
@@ -103,11 +102,10 @@ function make_generic(block::SincPulse)
 end
 
 function split_times(block::SincPulse, t1, t2, precision)
-    real_amplitude_precision = precision * amplitude(block)
-    pwl = LinA.Linearize(t -> amplitude(block, t), t1, t2, LinA.Absolute(real_amplitude_precision))
-    times = [part.xMin for part in pwl]
-    push!(times, t2)
-    return times
+    max_second_derivative = π^2/3 * (amplitude(block) / lobe_duration(block))^2
+    step_size = sqrt(2 * precision / max_second_derivative)
+    npoints = Int(div(t2 - t1, step_size, RoundUp))
+    return range(t1, t2, length=npoints)
 end
 
 end
