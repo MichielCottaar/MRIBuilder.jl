@@ -10,7 +10,6 @@ makedocs(;
     sitename="MRIBuilder.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://MichielCottaar.gitlab.io/MRIBuilder.jl",
         edit_link="main",
         description="Documentation for MRIBuilder.jl: an MRI sequence builder in Julia",
         footer=nothing,
