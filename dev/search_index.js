@@ -1,0 +1,3 @@
+var documenterSearchIndex = {"docs":
+[{"location":"","page":"Home","title":"Home","text":"CurrentModule = MRIBuilder","category":"page"},{"location":"#MRIBuilder","page":"Home","title":"MRIBuilder","text":"","category":"section"},{"location":"","page":"Home","title":"Home","text":"Documentation for MRIBuilder.","category":"page"},{"location":"","page":"Home","title":"Home","text":"","category":"page"},{"location":"","page":"Home","title":"Home","text":"Modules = [MRIBuilder]","category":"page"},{"location":"#MRIBuilder.MRIBuilder","page":"Home","title":"MRIBuilder.MRIBuilder","text":"Builds and optimises NMR/MRI sequences.\n\n\n\n\n\n","category":"module"}]
+}
