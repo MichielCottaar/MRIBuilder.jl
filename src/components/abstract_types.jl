@@ -47,6 +47,6 @@ Typically, this will be determined by the maximum second derivative:
 
 It should be infinite if the component is linear.
 """
-function split_timestep end
+split_timestep(comp_tuple::Tuple{<:Number, <:EventComponent}, precision::Number) = split_timestep(comp_tuple[2], precision)
 
 end

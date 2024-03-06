@@ -6,5 +6,5 @@ import ..AbstractTypes: ReadoutComponent, split_timestep
 import .ADCs: ADC, readout_times
 import .SingleReadouts: SingleReadout
 
-split_times(rc::ReadoutComponent, precision) = Inf
+split_timestep(rc::ReadoutComponent, precision) = Inf
 end
