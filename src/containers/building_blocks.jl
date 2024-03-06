@@ -242,7 +242,7 @@ end
 
 function gradient_strength(bb::BaseBuildingBlock, time::Number)
     for (key, block) in waveform_sequence(bb)
-        if start_time(bb, key) <= time <= end_time(bb, key)
+        if (start_time(bb, key) <= time <= end_time(bb, key)) || (time ≈ end_time(bb, key))
             return gradient_strength(block, time - start_time(bb, key))
         end
     end

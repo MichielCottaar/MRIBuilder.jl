@@ -32,18 +32,32 @@ end
 
 
 function SequencePart(sequence::BaseSequence{N}, time1::Number, time2::Number) where {N}
+    if -1e-9 < time1 < 0.
+        time1 = 0.
+    end
+    if time2 > duration(sequence) && time2 ≈ duration(sequence)
+        time2 = duration(sequence)
+    end
     if !(0 <= time1 <= time2 <= duration(sequence))
         error("Sequence timings are out of bound")
     end
+    tmean = (time1 + time2) / 2
     for key in 1:N
-        if (end_time(sequence, key) > time1)
+        if (end_time(sequence, key) > tmean)
             return SequencePart(sequence[key], time1 - start_time(sequence, key), time2 - start_time(sequence, key))
         end
     end
 end
 
 function SequencePart(bb::BaseBuildingBlock, time1::Number, time2::Number)
+    if -1e-9 < time1 < 0.
+        time1 = 0.
+    end
+    if time2 > duration(bb) && time2 ≈ duration(bb)
+        time2 = duration(bb)
+    end
     if !(0 <= time1 <= time2 <= duration(bb))
+        @show bb time1 time2 duration(bb)
         error("Sequence timings are out of bound")
     end
 
@@ -80,12 +94,10 @@ The split times will include any time when:
 
 Continuous gradient waveforms or RF pulses might be split up further to ensure the linear approximations meet the required `precision` (see [`split_timestep`](@ref)).
 """
-function split_times(sequence::BaseSequence; precision=0.01)
+function split_times(sequence::BaseSequence{N}; precision=0.01) where {N}
     splits = Float64[]
-    start_time = 0.
-    for block in sequence
-        append!(splits, start_time .+ split_times(block; precision=precision))
-        start_time += duration(block)
+    for key in 1:N
+        append!(splits, start_time(sequence, key) .+ split_times(sequence[key]; precision=precision))
     end
     return sort(unique(splits))
 end
