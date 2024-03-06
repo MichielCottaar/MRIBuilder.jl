@@ -265,7 +265,7 @@ Scanner constraints are automatically applied.
 - `group`: group of the gradient waveform
 """
 struct BuildingBlock <: BaseBuildingBlock
-    parts :: Vector{<:BaseComponent}
+    parts :: Vector{Union{GradientWaveform, Tuple{Number, EventComponent}}}
 end
 
 function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orientation=nothing, group=nothing)
@@ -278,7 +278,7 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
         events = [(i+1, e) for (i, e) in events]
     end
 
-    components = BaseComponent[]
+    components = Union{GradientWaveform, Tuple{Number, EventComponent}}[]
     for (index_grad, ((prev_time, prev_grad), (time, grad))) in enumerate(zip(waveform[1:end-1], waveform[2:end]))
         duration = time - prev_time
         if norm(prev_grad) <= 1e-12 && norm(grad) <= 1e-12
