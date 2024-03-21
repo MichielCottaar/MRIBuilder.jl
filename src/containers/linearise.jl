@@ -42,7 +42,7 @@ function SequencePart(sequence::BaseSequence{N}, time1::Number, time2::Number) w
         time2 = duration(sequence)
     end
     if !(0 <= time1 <= time2 <= duration(sequence))
-        error("Sequence timings are out of bound")
+        error("Initial time ($time1) and final time ($time2) are not part of the same TR.")
     end
     for key in 1:N
         if (end_time(sequence, key) > tmean)
@@ -59,7 +59,6 @@ function SequencePart(bb::BaseBuildingBlock, time1::Number, time2::Number)
         time2 = duration(bb)
     end
     if !(0 <= time1 <= time2 <= duration(bb))
-        @show bb time1 time2 duration(bb)
         error("Sequence timings are out of bound")
     end
 
