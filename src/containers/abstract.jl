@@ -115,7 +115,7 @@ iter_blocks(container::ContainerBlock) = iter(container, Val(:block))
 Returns all the [`InstantPulse`](@ref) within the sequence with their timings
 """
 iter_instant_pulses(container::ContainerBlock) = iter(container, Val(:instantpulse))
-iter(component::Tuple{<:Number, <:InstantPulse}, ::Val{:instantpulse}) = [(0., component)]
+iter(component::Tuple{<:Number, <:InstantPulse}, ::Val{:instantpulse}) = [component]
 
 """
     iter_instant_gradients(sequence)
@@ -123,6 +123,6 @@ iter(component::Tuple{<:Number, <:InstantPulse}, ::Val{:instantpulse}) = [(0., c
 Returns all the [`InstantGradient`](@ref) within the sequence with their timings
 """
 iter_instant_gradients(container::ContainerBlock) = iter(container, Val(:instantgradient))
-iter(component::Tuple{<:Number, <:InstantPulse}, ::Val{:instantgradient}) = [(0., component)]
+iter(component::Tuple{<:Number, <:InstantGradient}, ::Val{:instantgradient}) = [component]
 
 end
