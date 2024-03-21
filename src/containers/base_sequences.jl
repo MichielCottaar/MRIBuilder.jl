@@ -32,6 +32,20 @@ function Base.getindex(bs::BaseSequence{N}, index::Integer) where {N}
     base_index = ((index - 1) % N) + 1
     return get_index_single_TR(bs, base_index)
 end
+function Base.getindex(sequence::BaseSequence{N}, time::AbstractFloat) where {N}
+    time_orig = time
+    for block in sequence
+        time -= duration(block)
+        if time < 0
+            return (time + duration(block), block)
+        end
+    end
+    if abs(time) <= 1e-6
+        return (duration(sequence[N]) + time, sequence[N])
+    end
+    error("Requested time $time_orig is more than the sequence TR ($(TR(sequence)))")
+end
+
 Base.iterate(bs::BaseSequence) = Base.iterate(bs, 1)
 Base.iterate(bs::BaseSequence{N}, index::Integer) where {N} = index > length(bs) ? nothing : (bs[index], index + 1)
 Base.length(bs::BaseSequence{N}) where {N} = iszero(nrepeat(bs)) ? N : (nrepeat(bs) * N)
@@ -100,13 +114,9 @@ function edge_times(seq::BaseSequence)
 end
 
 for fn in (:gradient_strength, :amplitude, :phase, :gradient_strength3)
-    @eval function $fn(sequence::BaseSequence, time::Number)
-        for block in sequence
-            time -= duration(block)
-            if time < 0
-                return $fn(block, time + duration(block))
-            end
-        end
+    @eval function $fn(sequence::BaseSequence, time::AbstractFloat)
+        (block_time, block) = sequence[time]
+        return $fn(block, block_time)
     end
 end
 
