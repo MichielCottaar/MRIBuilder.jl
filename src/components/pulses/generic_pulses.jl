@@ -49,7 +49,7 @@ flip_angle(pulse::GenericPulse) = sum(get_weights(pulse) .* pulse.amplitude) * 3
 function time_halfway_flip(pulse::GenericPulse)
     w = get_weights(pulse)
     flip_so_far = cumsum(w .* pulse.amplitude)
-    return pulse.times[findfirst(f -> f >= flip_so_far[end] / 2, flip_so_far)]
+    return pulse.time[findfirst(f -> f >= flip_so_far[end] / 2, flip_so_far)]
 end
 
 for fn in (:amplitude, :phase)

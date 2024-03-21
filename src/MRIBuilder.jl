@@ -12,6 +12,7 @@ include("pathways.jl")
 include("parts/parts.jl")
 include("sequences/sequences.jl")
 include("printing.jl")
+include("pulseq.jl")
 include("plot.jl")
 
 import .BuildSequences: build_sequence, global_model, global_scanner, fixed
@@ -37,6 +38,9 @@ export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid,
 
 import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
 export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
+
+import .Pulseq: read_pulseq
+export read_pulseq
 
 import .Plot: plot_sequence
 export plot_sequence

@@ -137,9 +137,9 @@ struct Sequence{S, N} <: BaseSequence{N}
     scanner :: Scanner
 end
 
-function Sequence(blocks::AbstractVector; name=:Sequence, variables...)
+function Sequence(blocks::AbstractVector; name=:Sequence, scanner=nothing, variables...)
     blocks = to_block_pair.(blocks)
-    res = Sequence{name, length(blocks)}(SVector{length(blocks)}(blocks), global_scanner())
+    res = Sequence{name, length(blocks)}(SVector{length(blocks)}(blocks), isnothing(scanner) ? global_scanner() : scanner)
     set_simple_constraints!(res, variables)
     return res
 end
