@@ -83,60 +83,71 @@ end
 duration(sp::SequencePart) = sp.duration
 
 """
-    split_times(sequence; precision=0.01)
+    split_times(sequence(s); precision=0.01, max_timestep=Inf)
 
-Suggests at what times to split a sequence into linear parts (see [`linearise`](@ref)).
+Suggests at what times to split one or more sequence into linear parts (see [`linearise`](@ref)).
 
-The split times will include any time when:
+The split times will include any time when (for any of the provided sequences):
 - the starting/end points of building blocks, gradients, RF pulses, or ADC readouts.
 - a gradient or RF pulse is discontinuous in the first derivative
 - the time of any instantaneous gradients, RF pulses, or readouts.
 
 Continuous gradient waveforms or RF pulses might be split up further to ensure the linear approximations meet the required `precision` (see [`split_timestep`](@ref)).
 """
-function split_times(sequence::BaseSequence{N}; precision=0.01) where {N}
-    splits = Float64[]
-    for key in 1:N
-        append!(splits, start_time(sequence, key) .+ split_times(sequence[key]; precision=precision))
+split_times(sequence::BaseSequence; kwargs...) = split_times([sequence]; kwargs...)
+split_times(sequences::AbstractVector{<:BaseSequence}; kwargs...) = split_times(sequences, 0., maximum(duration.(sequences)); kwargs...)
+
+function split_times(sequences::AbstractVector{<:BaseSequence}, tstart::Number, tfinal::Number; precision=0.01, max_timestep=Inf)
+    edges = [tstart, tfinal]
+    for sequence in sequences
+        raw_edges = edge_times(sequence)
+        nTR_start = Int(div(tstart, duration(sequence), RoundDown))
+        nTR_final = Int(div(tfinal, duration(sequence), RoundUp))
+        for nTR in nTR_start:nTR_final
+            for time in raw_edges .+ (nTR * duration(sequence))
+                if tstart < time < tfinal
+                    push!(edges, time)
+                end
+            end
+        end
     end
-    return sort(unique(splits))
-end
-
-
-function split_times(bb::BaseBuildingBlock; precision=0.01)
+    edges = sort(unique(edges))
     splits = Float64[]
-    edges = edge_times(bb)
+
     for (t1, t2) in zip(edges[1:end-1], edges[2:end])
         tmean = (t1 + t2) / 2
 
-        # determine where to split this domain
-        timestep = Inf
-        for key in keys(bb)
-            if !(start_time(bb, key) < tmean < end_time(bb, key))
-                continue
-            end
-            new_timestep = split_timestep(bb[key], precision)
-            if new_timestep < timestep
-                timestep = new_timestep
+        timestep = Float64(max_timestep)
+        for sequence in sequences
+            (block_time, block) = sequence[mod(tmean, duration(sequence))]
+            for key in keys(block)
+                if !(start_time(block, key) < block_time < end_time(block, key))
+                    continue
+                end
+                new_timestep = split_timestep(block[key], precision)
+                if new_timestep < timestep
+                    timestep = new_timestep
+                end
             end
         end
-        nsteps = (isinf(timestep) ? 1 : Int(div(t2 - t1, timestep, RoundUp))) + 1
-        append!(splits, range(t1, t2, length=nsteps))
+        nsteps = isinf(timestep) ? 1 : Int(div(t2 - t1, timestep, RoundUp))
+        append!(splits, range(t1, t2, length=nsteps+1))
     end
-    return sort(unique(splits))
+    return unique(splits)
 end
 
 
-
 """
-    linearise(sequence[, times])
+    linearise(sequence(s), times)
+    linearise(sequence(s), tstart, tfinal; max_timestep=Inf, precision=0.01)
 
-Splits any [`BaseSequence`](@ref) or [`BaseBuildingBlock`](@ref) into a series of [`SequencePart`](@ref) objects where the gradients/pulses are approximated to be linear.
+Splits any [`Sequence`](@ref) into a series of [`SequencePart`](@ref) objects where the gradients/pulses are approximated to be linear.
 
-If the `times` are not explicitly set they will be obtained from [`split_times`](@ref).
+If the `times` are not explicitly set they will be obtained from [`split_times`](@ref) (using the values of `max_timestep` and `precision`).
 """
-linearise(container::ContainerBlock) = linearise(container, split_times(container))
-linearise(container::ContainerBlock, times::AbstractVector{<:Number}) = [SequencePart(container, t1, t2) for (t1, t2) in zip(times[1:end-1], times[2:end])]
+linearise(container::Union{BaseSequence, AbstractVector{<:BaseSequence}}, tstart::Number, tfinal::Number; kwargs...) = linearise(container, split_times(container, tstart, tfinal; kwargs...))
+linearise(containers::AbstractVector{<:BaseSequence}, times::AbstractVector{<:Number}) = [linearise(c, times) for c in containers]
+linearise(container::BaseSequence, times::AbstractVector{<:Number}) = [SequencePart(container, t1, t2) for (t1, t2) in zip(times[1:end-1], times[2:end])]
 
 
 end
