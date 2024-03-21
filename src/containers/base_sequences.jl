@@ -100,14 +100,6 @@ repetition_time(bs::BaseSequence) = duration(bs)
 duration(bs::BaseSequence{0}) = 0.
 duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
 
-function readout_times(seq::BaseSequence)
-    res = Float64[]
-    for (index, block) in enumerate(seq)
-        append!(res, readout_times(block) .+ start_time(seq, index))
-    end
-    return res
-end
-
 function edge_times(seq::BaseSequence)
     res = Float64[]
     for (index, block) in enumerate(seq)

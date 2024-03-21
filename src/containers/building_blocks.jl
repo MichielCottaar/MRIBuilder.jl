@@ -208,16 +208,6 @@ function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
 end
 bmat_gradient(bb::BaseBuildingBlock, qstart) = bmat_gradient(bb, qstart, nothing, nothing)
 
-function readout_times(bb::BaseBuildingBlock)
-    res = Float64[]
-    for (key, event) in events(bb)
-        if event isa ReadoutComponent
-            append!(res, readout_times(event) .+ start_time(bb, key))
-        end
-    end
-    return res
-end
-
 function edge_times(bb::BaseBuildingBlock)
     res = Float64[]
     for key in keys(bb)

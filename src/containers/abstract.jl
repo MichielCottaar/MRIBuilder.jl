@@ -1,7 +1,7 @@
 module Abstract
 import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase, VariableType
 import ...Components.Readouts: readout_times
-import ...Components: BaseComponent, InstantPulse, InstantGradient
+import ...Components: BaseComponent, InstantPulse, InstantGradient, ReadoutComponent
 
 """
 Parent type for `BuildingBlock` or `BaseSequence`, i.e., any building block that contains other MRI components/blocks.
@@ -46,13 +46,6 @@ Also see [`duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
 effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + effective_time(container[index], indices...)
 effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effective_time(block[2])
 
-
-"""
-    readout_times(sequence/ADC)
-
-Return the times of all of the readout events in ms.
-"""
-function readout_times end
 
 """
     edge_times(container)
@@ -124,5 +117,13 @@ Returns all the [`InstantGradient`](@ref) within the sequence with their timings
 """
 iter_instant_gradients(container::ContainerBlock) = iter(container, Val(:instantgradient))
 iter(component::Tuple{<:Number, <:InstantGradient}, ::Val{:instantgradient}) = [component]
+
+"""
+    readout_times(sequence)
+
+Returns all the times that the sequence will readout.
+"""
+readout_times(container::ContainerBlock) = [time for (time, _) in iter(container, Val(:readout))]
+iter(component::Tuple{<:Number, <:ReadoutComponent}, ::Val{:readout}) = [(time, nothing) for time in readout_times(component[2])]
 
 end
