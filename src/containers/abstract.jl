@@ -1,6 +1,7 @@
 module Abstract
 import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase, VariableType
 import ...Components.Readouts: readout_times
+import ...Components: BaseComponent, InstantPulse, InstantGradient
 
 """
 Parent type for `BuildingBlock` or `BaseSequence`, i.e., any building block that contains other MRI components/blocks.
@@ -88,5 +89,40 @@ Returns the RF phase at a particular time within the sequence.
 NaN if the ampltiude is zero.
 """
 function phase end
+
+"""
+    iter(sequence, get_type)
+
+Helper functions for any `iter_*` functions.
+"""
+function iter(container::ContainerBlock, get_type::Val) 
+    [(start_time(container, key) + t, component) for key in keys(container) for (t, component) in iter(container[key], get_type)]
+end
+iter(container::ContainerBlock, get_type::Symbol) = iter(container, Val(get_type))
+iter(component::BaseComponent, get_type::Val) = []
+iter(component::Tuple{<:Number, <:BaseComponent}, get_type::Val) = []
+
+"""
+    iter_blocks(sequence)
+
+Returns all the building blocks in the sequence with the time they will start
+"""
+iter_blocks(container::ContainerBlock) = iter(container, Val(:block))
+
+"""
+    iter_instant_pulses(sequence)
+
+Returns all the [`InstantPulse`](@ref) within the sequence with their timings
+"""
+iter_instant_pulses(container::ContainerBlock) = iter(container, Val(:instantpulse))
+iter(component::Tuple{<:Number, <:InstantPulse}, ::Val{:instantpulse}) = [(0., component)]
+
+"""
+    iter_instant_gradients(sequence)
+
+Returns all the [`InstantGradient`](@ref) within the sequence with their timings
+"""
+iter_instant_gradients(container::ContainerBlock) = iter(container, Val(:instantgradient))
+iter(component::Tuple{<:Number, <:InstantPulse}, ::Val{:instantgradient}) = [(0., component)]
 
 end

@@ -5,7 +5,7 @@ module BuildingBlocks
 import LinearAlgebra: norm
 import JuMP: @constraint
 import StaticArrays: SVector
-import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_time
+import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_time, iter
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient
 import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase
@@ -34,6 +34,7 @@ Base.eltype(::Type{<:BaseBuildingBlock}) = BaseComponent
 Base.iterate(c::BaseBuildingBlock) = Base.iterate(c, 1)
 Base.iterate(c::BaseBuildingBlock, index::Integer) = length(c) < index ? nothing : (c[keys(c)[index]], index + 1)
 Base.getindex(bb::BaseBuildingBlock, s::Symbol) = bb[Val(s)]
+iter(bb::BaseBuildingBlock, ::Val{:block}) = [(0., bb)]
 
 
 """

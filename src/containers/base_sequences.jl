@@ -50,6 +50,7 @@ Base.iterate(bs::BaseSequence) = Base.iterate(bs, 1)
 Base.iterate(bs::BaseSequence{N}, index::Integer) where {N} = index > length(bs) ? nothing : (bs[index], index + 1)
 Base.length(bs::BaseSequence{N}) where {N} = iszero(nrepeat(bs)) ? N : (nrepeat(bs) * N)
 Base.eltype(::Type{<:BaseSequence}) = ContainerBlock
+Base.keys(seq::BaseSequence{N}) where {N} = 1:N
 
 function start_time(bs::BaseSequence{N}, index::Integer) where {N}
     nTR = div(index-1, N, RoundDown)
