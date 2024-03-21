@@ -123,7 +123,7 @@ function split_times(sequences::AbstractVector{<:BaseSequence}, tstart::Number, 
 
         timestep = Float64(max_timestep)
         for sequence in sequences
-            (block_time, block) = sequence[mod(tmean, duration(sequence))]
+            (block_time, block) = sequence(mod(tmean, duration(sequence)))
             for key in keys(block)
                 if !(start_time(block, key) < block_time < end_time(block, key))
                     continue
@@ -156,8 +156,8 @@ If multiple sequences are provided a vector of `LinearSequence` objects are retu
 """
 struct LinearSequence
     finite_parts :: Vector{SequencePart}
-    instant_pulses :: Vector{Tuple{Int, InstantPulse}}
-    instant_gradient :: Vector{Tuple{Int, InstantGradient3D}}
+    instant_pulses :: Vector{Union{Nothing, InstantPulse}}
+    instant_gradient :: Vector{Union{Nothing, InstantGradient3D}}
 end
 
 LinearSequence(sequence::BaseSequence; kwargs...) = LinearSequence(sequence, 0., duration(sequence); kwargs...)
@@ -169,8 +169,8 @@ function LinearSequence(container::BaseSequence, times::AbstractVector{<:Number}
     tstart = times[1]
     tfinal = times[end]
 
-    pulses = Tuple{Int, InstantPulse}[]
-    gradients = Tuple{Int, InstantGradient3D}[]
+    pulses = Union{Nothing, InstantPulse}[nothing for _ in 1:length(times)]
+    gradients = Union{Nothing, InstantGradient3D}[nothing for _ in 1:length(times)]
     for nTR in div(tstart, duration(container), RoundDown):div(tfinal, duration(container), RoundUp)
         for (to_store, func) in [
             (pulses, iter_instant_pulses),
@@ -181,8 +181,8 @@ function LinearSequence(container::BaseSequence, times::AbstractVector{<:Number}
                 if !(tstart <= real_time < tfinal)
                     continue
                 end
-                index = findmin(t -> abs(t - real_time), times)[2]-1 
-                push!(to_store, (index, pulse))
+                index = findmin(t -> abs(t - real_time), times)[2] 
+                to_store[index] = pulse
             end
         end
     end
