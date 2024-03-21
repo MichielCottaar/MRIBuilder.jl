@@ -54,7 +54,7 @@ Return the times of all of the readout events in ms.
 function readout_times end
 
 """
-    edge_times(container)
+    edge_times(container(s))
 
 Returns all the edge times during a sequence in ms.
 
@@ -62,8 +62,10 @@ Edges are defined as any time, when:
 - the edge of a building block
 - the slope of the gradient profile changes suddenly
 - an RF pulse starts or ends
+
+Multiple sequences can be passed on. In that case the edges in all sequences are returned (in a sorted vector).
 """
-function edge_times end
+edge_times(containers::AbstractVector{<:ContainerBlock}) = sort(unique(vcat(edge_times.(containers))))
 
 """
     gradient_strength(sequence, time)
