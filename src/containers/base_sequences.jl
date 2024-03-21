@@ -5,8 +5,9 @@ module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
 import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic, gradient_strength, amplitude, phase, gradient_strength3
-import ...BuildSequences: global_model
+import ...BuildSequences: global_model, global_scanner
 import ...Components: EventComponent
+import ...Scanners: Scanner, B0
 import ..Abstract: ContainerBlock, start_time, readout_times, edge_times
 import ..BuildingBlocks: Wait, BuildingBlock, BaseBuildingBlock
 
@@ -140,16 +141,18 @@ Specific named sequences might define additional variables.
 """
 struct Sequence{S, N} <: BaseSequence{N}
     blocks :: SVector{N, Pair{<:Union{Symbol, Nothing}, <:ContainerBlock}}
+    scanner :: Scanner
 end
 
 function Sequence(blocks::AbstractVector; name=:Sequence, variables...)
     blocks = to_block_pair.(blocks)
-    res = Sequence{name, length(blocks)}(SVector{length(blocks)}(blocks))
+    res = Sequence{name, length(blocks)}(SVector{length(blocks)}(blocks), global_scanner())
     set_simple_constraints!(res, variables)
     return res
 end
 
 Base.show(io::IO, ::Type{<:Sequence{S, N}}) where {S, N} = print(io, S, "{$N}")
+B0(sequence::Sequence) = B0(sequence.scanner)
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 
