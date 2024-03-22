@@ -245,7 +245,7 @@ function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, versi
         end
         if !iszero(block.adc)
             proc = adc[block.adc]
-            push!(events, (proc.delay, ADC(proc.num, proc.dwell * 1e-6, proc.dwell * proc.num * 1e-6 / 2, 0.)))
+            push!(events, (proc.delay, ADC(proc.num, proc.dwell * 1e-6, proc.dwell * proc.num * 1e-6 / 2, 1.)))
             block_duration = max(proc.delay * 1e-3 + proc.dwell * proc.num * 1e-6, block_duration)
         end
         grad_shapes = []
@@ -299,6 +299,7 @@ function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, versi
                 push!(amplitudes, 0.)
             end
         end
+        @show events
         extend_grad!.(grad_shapes)
         arrs = align_in_time(grad_shapes...)
         waveform = [(t, SVector{3, Float64}(gx, gy, gz)) for (t, gx, gy, gz) in zip(arrs...)]
