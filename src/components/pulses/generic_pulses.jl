@@ -44,7 +44,7 @@ end
 duration(fp::GenericPulse) = maximum(fp.time)
 amplitude(fp::GenericPulse) = maximum(abs.(fp.amplitude))
 effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]
-phase(fp::GenericPulse) = pulse.phase[findmax(abs.(pulse.amplitude))]
+phase(pulse::GenericPulse) = pulse.phase[findmax(abs.(pulse.amplitude))[2]]
 flip_angle(pulse::GenericPulse) = sum(get_weights(pulse) .* pulse.amplitude) * 360
 function time_halfway_flip(pulse::GenericPulse)
     w = get_weights(pulse)
