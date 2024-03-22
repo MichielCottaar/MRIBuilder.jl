@@ -299,7 +299,6 @@ function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, versi
                 push!(amplitudes, 0.)
             end
         end
-        @show events
         extend_grad!.(grad_shapes)
         arrs = align_in_time(grad_shapes...)
         waveform = [(t, SVector{3, Float64}(gx, gy, gz)) for (t, gx, gy, gz) in zip(arrs...)]

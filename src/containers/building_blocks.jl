@@ -250,7 +250,7 @@ Scanner constraints are automatically applied.
 
 ## Arguments
 - `waveform`: Sequence of 2-element tuples with (time, (Gx, Gy, Gz)). If `orientation` is set then the tuple is expected to look like (time, G). This cannot contain any free variables.
-- `events`: Sequence of 2-element tuples with (index, pulse/readout). The start time of the pulse/readout at the start of the gradient waveform element with index `index`. A tuple with a delay and the pulse/readout event can be used to change that.
+- `events`: Sequence of 2-element tuples with (time, pulse/readout). The `time` is the start time of the pulse/readout.
 - `duration`: duration of this `BuildingBlock`. If not set then it will be assumed to be the time of the last element in `waveform`.
 - `orientation`: orientation of the gradients in the waveform. If not set, then the full gradient vector should be given explicitly.
 - `group`: group of the gradient waveform
@@ -279,9 +279,10 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
         else
             push!(components, ChangingGradient(prev_grad, (grad .- prev_grad) ./ duration, orientation, duration, group))
         end
-        while length(events) > 0 && index_grad == events[1][1]
-            (_, event) = popfirst!(events)
-            push!(components, event)
+        for (t_event, event) in events
+            if prev_time <= t_event < time
+                push!(components, (t_event - prev_time, event))
+            end
         end
     end
     #for comp in components
