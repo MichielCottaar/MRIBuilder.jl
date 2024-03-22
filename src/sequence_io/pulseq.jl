@@ -1,8 +1,8 @@
 module Pulseq
-import ..Variables: duration
-import ..Scanners: Scanner
-import ..Components: GenericPulse, GradientWaveform, ADC
-import ..Containers: BuildingBlock, Sequence, Wait
+import ...Variables: duration
+import ...Scanners: Scanner
+import ...Components: GenericPulse, GradientWaveform, ADC
+import ...Containers: BuildingBlock, Sequence, Wait
 import DataStructures: OrderedDict
 import Interpolations: linear_interpolation, Flat
 import StaticArrays: SVector
