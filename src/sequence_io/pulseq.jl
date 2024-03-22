@@ -267,13 +267,13 @@ function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, versi
                     times = grad_shape.times .* (num * gradient_raster) .+ start_time
                 end
                 push!(grad_shapes, (times, grad_shape.amplitudes .* (proc.amp * 1e-9)))
-                block_duration = max(proc.delay * 1e-3 + num * gradient_raster, block_duration)
+                block_duration = max(start_time + num * gradient_raster, block_duration)
             elseif !isnothing(trap) && grad_id in keys(trap)
                 proc = trap[grad_id]
                 start_time = proc.delay * 1e-3
                 times = (cumsum([0, proc.rise, proc.flat, proc.fall]) .* 1e-3) .+ start_time
                 push!(grad_shapes, (times, [0, proc.amp * 1e-9, proc.amp * 1e-9, 0]))
-                block_duration = max((proc.delay + proc.rise + proc.flat + proc.fall) * 1e-3, block_duration)
+                block_duration = max((start_time + proc.rise + proc.flat + proc.fall) * 1e-3, block_duration)
             else
                 error("Gradient ID $grad_id not found in either of [GRADIENTS] or [TRAP] sections")
             end
