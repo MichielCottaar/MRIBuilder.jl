@@ -245,7 +245,7 @@ function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, versi
         end
         if !iszero(block.adc)
             proc = adc[block.adc]
-            push!(events, (proc.delay, ADC(proc.num, proc.dwell * 1e-6, proc.dwell * proc.num * 1e-6 / 2, 1.)))
+            push!(events, (proc.delay * 1e-3, ADC(proc.num, proc.dwell * 1e-6, proc.dwell * proc.num * 1e-6 / 2, 1.)))
             block_duration = max(proc.delay * 1e-3 + proc.dwell * proc.num * 1e-6, block_duration)
         end
         grad_shapes = []
