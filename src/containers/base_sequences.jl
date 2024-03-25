@@ -6,7 +6,7 @@ import StaticArrays: SVector
 import JuMP: @constraint
 import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic, gradient_strength, amplitude, phase, gradient_strength3
 import ...BuildSequences: global_model, global_scanner
-import ...Components: EventComponent
+import ...Components: EventComponent, NoGradient
 import ...Scanners: Scanner, B0
 import ..Abstract: ContainerBlock, start_time, readout_times, edge_times
 import ..BuildingBlocks: Wait, BuildingBlock, BaseBuildingBlock
@@ -167,7 +167,7 @@ Converst object into something that can be included in the sequence:
 to_block(cb::ContainerBlock) = cb
 to_block(s::Symbol) = to_block(Val(s))
 to_block(s::Union{VariableType, Nothing, Val{:min}, Val{:max}}) = Wait(s)
-to_block(ec::EventComponent) = BuildingBlock([(0., 0.), (duration(ec), 0.)], [(1, (0., ec))])
+to_block(ec::EventComponent) = BuildingBlock([NoGradient{3}(duration(ec)), (0., ec)])
 
 
 function make_generic(seq::BaseSequence)
