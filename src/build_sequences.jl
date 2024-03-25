@@ -2,7 +2,7 @@ module BuildSequences
 import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED
 import Ipopt
 import Juniper
-import ..Scanners: Scanner, gradient_strength
+import ..Scanners: Scanner, gradient_strength, Default_Scanner
 
 const GLOBAL_MODEL = Ref(Model())
 const IGNORE_MODEL = GLOBAL_MODEL[]
@@ -93,9 +93,11 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser
     build_sequence(f, scanner, model, optimise, n_attempts)
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}; print_level=2, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=2, kwargs...)
     build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, kwargs...)
 end
+
+build_sequence(f::Function, optimiser_constructor; kwargs...) = build_sequence(f, Default_Scanner, optimiser_constructor; kwargs...)
 
 
 function global_model()
