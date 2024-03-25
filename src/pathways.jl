@@ -288,7 +288,8 @@ function walk_pathway!(seq::Sequence, walker::PathwayWalker, pulse_effects::Vect
     while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * TR(seq)))
         new_nwait = length(pulse_effects) + nreadout[]
         if nwait == new_nwait
-            error("Pathway iterated through the whole sequence without seeing a valid pulse or readout. Terminating...")
+            not_seen = iszero(length(pulse_effects)) ? "readout" : "pulse"
+            error("Pathway iterated through the whole sequence without seeing a valid $not_seen. Terminating...")
         end
         nwait = new_nwait
 
