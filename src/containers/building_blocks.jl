@@ -266,7 +266,6 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
     zero_grad = isnothing(orientation) ? zeros(3) : 0.
     if length(waveform) == 0 || waveform[1][1] > 0.
         pushfirst!(waveform, (0., zero_grad))
-        events = [(i+1, e) for (i, e) in events]
     end
 
     components = Union{GradientWaveform, Tuple{Number, EventComponent}}[]
