@@ -1,6 +1,8 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
+import JuMP: @constraint
 import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic
+import ...BuildSequences: global_model
 import ..AbstractTypes: EventComponent, GradientWaveform
 
 """
@@ -23,6 +25,9 @@ function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=no
         res = InstantGradient3D(get_free_variable.(qval), group)
     else
         res = InstantGradient1D(get_free_variable(qval), orientation, group)
+        if res.qval isa Number
+            @constraint global_model() res.qval >= 0
+        end
     end
     set_simple_constraints!(res, variables)
     return res
