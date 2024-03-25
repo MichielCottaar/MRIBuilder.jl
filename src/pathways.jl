@@ -285,6 +285,7 @@ The function should return `true` if the `Pathway` has reached its end (i.e., th
 function walk_pathway!(seq::Sequence, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}) 
     current_TR = 0
     nwait = length(pulse_effects) + nreadout[]
+    println("processing")
     while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * TR(seq)))
         new_nwait = length(pulse_effects) + nreadout[]
         if nwait == new_nwait
