@@ -285,7 +285,6 @@ The function should return `true` if the `Pathway` has reached its end (i.e., th
 function walk_pathway!(seq::Sequence, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}) 
     current_TR = 0
     nwait = length(pulse_effects) + nreadout[]
-    println("processing")
     while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * TR(seq)))
         new_nwait = length(pulse_effects) + nreadout[]
         if nwait == new_nwait
@@ -341,6 +340,8 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
         # apply interrupt
         if interruption isa RFPulseComponent
             update_walker_pulse!(walker, pulse_effects, current_time)
+        elseif interruption isa InstantGradient
+            update_walker_instant_gradient!(interruption, walker, current_time)
         end
         current_index = index_inter
         if length(pulse_effects) == 0 && nreadout[] == 0
@@ -488,6 +489,22 @@ function update_walker_gradient!(gradient::GradientWaveform, walker::PathwayWalk
         tracker.bmat = tracker.bmat .+ bmat_gradient(gradient, tracker.qvec)
         tracker.qvec = tracker.qvec .+ qval3(gradient)
         tracker.last_gradient_time = gradient_start_time + duration(gradient)
+    end
+end
+
+"""
+    update_walker_instant_gradient!(gradient, walker)
+"""
+function update_walker_instant_gradient!(gradient::InstantGradient{N}, walker::PathwayWalker, gradient_start_time::VariableType) where {N}
+    if N == 1
+        qvec3 = qval(gradient) .* gradient.orientation
+    else
+        qvec3 = qval(gradient)
+    end
+    for key in (isnothing(gradient.group) ? [nothing] : [nothing, gradient.group])
+        update_gradient_tracker_till_time!(walker, key, gradient_start_time)
+        tracker = walker.gradient_trackers[key]
+        tracker.qvec = tracker.qvec  .+ qvec3
     end
 end
 

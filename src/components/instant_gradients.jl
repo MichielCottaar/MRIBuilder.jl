@@ -4,7 +4,7 @@ import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_varia
 import ..AbstractTypes: EventComponent, GradientWaveform
 
 """
-    InstantGradient1D(; orientation=nothing, group=nothing, variables...)
+    InstantGradient(; orientation=nothing, group=nothing, variables...)
 
 If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwise an [`InstantGradient3D`](@ref).
 
@@ -16,7 +16,7 @@ If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwis
 - [`qval`](@ref): Spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um (scalar if `orientation` is set and vector otherwise).
 - [`spoiler_scale`](@ref): Length-scale on which spins will be dephased by exactly 2π in mm.
 """
-abstract type InstantGradient <: EventComponent end
+abstract type InstantGradient{N} <: EventComponent end
 
 function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=nothing, variables...)
     if isnothing(orientation)
@@ -31,7 +31,7 @@ end
 """
 An [`InstantGradient`](@ref) with a fixed orientation.
 """
-struct InstantGradient1D <: InstantGradient
+struct InstantGradient1D <: InstantGradient{1}
     qval :: VariableType
     orientation :: SVector{3, Number}
     group :: Union{Nothing, Symbol}
@@ -42,7 +42,7 @@ qval(ig::InstantGradient1D) = ig.qval
 """
 An [`InstantGradient`](@ref) with a variable orientation.
 """
-struct InstantGradient3D <: InstantGradient
+struct InstantGradient3D <: InstantGradient{3}
     qvec :: SVector{3, VariableType}
     group :: Union{Nothing, Symbol}
 end
