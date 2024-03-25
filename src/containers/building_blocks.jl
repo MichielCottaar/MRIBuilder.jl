@@ -189,7 +189,7 @@ function qval(bb::BaseBuildingBlock, index1, index2)
     if (!isnothing(index1)) && (index1 == index2)
         return 0.
     end
-    sum([qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)]; init=0.)
+    sum([qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
 end
 qval(bb::BaseBuildingBlock) = qval(bb, nothing, nothing)
 
