@@ -1,7 +1,7 @@
 module Linearise
 import StaticArrays: SVector
-import ...Components: GradientWaveform, split_timestep, InstantPulse, InstantGradient3D
-import ...Variables: amplitude, phase, gradient_strength3, duration
+import ...Components: GradientWaveform, split_timestep, InstantPulse, InstantGradient3D, InstantGradient1D
+import ...Variables: amplitude, phase, gradient_strength3, duration, qval
 import ..Abstract: edge_times, start_time, end_time, ContainerBlock, iter_instant_gradients, iter_instant_pulses
 import ..BaseSequences: BaseSequence, Sequence
 import ..BuildingBlocks: BaseBuildingBlock
@@ -180,6 +180,9 @@ function LinearSequence(container::BaseSequence, times::AbstractVector{<:Number}
                 real_time = time + nTR * duration(container)
                 if !(tstart <= real_time < tfinal)
                     continue
+                end
+                if pulse isa InstantGradient1D
+                    pulse = InstantGradient3D(qval(pulse) .* pulse.orientation, pulse.group)
                 end
                 index = findmin(t -> abs(t - real_time), times)[2] 
                 to_store[index] = pulse
