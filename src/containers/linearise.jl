@@ -14,7 +14,7 @@ end
 
 Base.iszero(lp::LinearPart) = iszero(lp.start_value) && iszero(lp.end_value)
 Base.iszero(lp::LinearPart{<:AbstractVector}) = all(iszero.(lp.start_value)) && all(iszero.(lp.end_value))
-(lp::LinearPart)(time::Float64) = @. (1 - time) * lp.start_value + time * lp.end_value
+(lp::LinearPart)(time::Number) = @. (1 - time) * lp.start_value + time * lp.end_value
 
 """
     SequencePart(sequence, time1, time2)
