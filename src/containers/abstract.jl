@@ -32,7 +32,7 @@ Also see [`duration`](@ref), [`start_time`](@ref), and [`effective_time`](@ref)
 """
 end_time(container::ContainerBlock, index, indices...) = start_time(container, index) + end_time(container[index], indices...)
 end_time(block::AbstractBlock) = duration(block)
-end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + end_time(block[2])
+end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = duration(block[2])
 
 """
     effective_time(container, indices...)
