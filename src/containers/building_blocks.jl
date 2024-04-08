@@ -223,7 +223,7 @@ end
 for (fn, default_value) in ((:amplitude, 0.), (:phase, NaN))
     @eval function $fn(bb::BaseBuildingBlock, time::Number)
         for (key, block) in events(bb)
-            if block isa RFPulseComponent && start_time(bb, key) >= time >= end_time(bb, key)
+            if block isa RFPulseComponent && start_time(bb, key) <= time <= end_time(bb, key)
                 return $fn(block, time - start_time(bb, key))
             end
         end
