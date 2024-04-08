@@ -234,10 +234,12 @@ function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, versi
                 phase_size = rad2deg.(phase_shape) .+ phase_times .* (proc.freq * 1e-3 * 360) .+ rad2deg(proc.phase)
             end
             if version != v"1.3.1" && !iszero(proc.time_id)
-                (num, time_shape) = shapes[proc.time_id]
-                times = time_shape.amplitudes .* rf_raster
+                @show shapes
+                (num, _, time_shape) = shapes[proc.time_id]
+                times = time_shape .* rf_raster
                 ampl = ampl_size
                 phase = phase_size
+                @assert length(times) == length(ampl) == length(phase)
             else
                 (times, ampl, phase) = align_in_time((ampl_times, ampl_size), (phase_times, phase_size))
             end
