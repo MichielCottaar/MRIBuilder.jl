@@ -54,7 +54,7 @@ end
 
 for fn in (:amplitude, :phase)
     @eval function $fn(fp::GenericPulse, time::Number)
-        i2 = find(t > time, fp.time)
+        i2 = findfirst(t->t > time, fp.time)
         if isnothing(i2)
             @assert time ≈ fp.time[end]
             return fp.$(fn)[end]
