@@ -234,7 +234,6 @@ function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, versi
                 phase_size = rad2deg.(phase_shape) .+ phase_times .* (proc.freq * 1e-3 * 360) .+ rad2deg(proc.phase)
             end
             if version != v"1.3.1" && !iszero(proc.time_id)
-                @show shapes
                 (num, _, time_shape) = shapes[proc.time_id]
                 times = time_shape .* rf_raster
                 ampl = ampl_size
@@ -260,15 +259,16 @@ function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, versi
             if !isnothing(gradients) && grad_id in keys(gradients)
                 proc = gradients[grad_id]
                 start_time = proc.delay * 1e-3
-                (num, grad_shape) = shapes[proc.shape_id]
+                (num, grad_time, grad_shape) = shapes[proc.shape_id]
 
                 if version != v"1.3.1" && !iszero(proc.time_id)
-                    (num, time_shape) = shapes[proc.time_id]
-                    times = time_shape.amplitudes .* gradient_raster .+ start_time
+                    (num, _, time_shape) = shapes[proc.time_id]
+                    times = time_shape .* gradient_raster .+ start_time
+                    @assert length(times) == length(grad_shape)
                 else
-                    times = grad_shape.times .* (num * gradient_raster) .+ start_time
+                    times = grad_time .* (num * gradient_raster) .+ start_time
                 end
-                push!(grad_shapes, (times, grad_shape.amplitudes .* (proc.amp * 1e-9)))
+                push!(grad_shapes, (times, grad_shape .* (proc.amp * 1e-9)))
                 block_duration = max(start_time + num * gradient_raster, block_duration)
             elseif !isnothing(trap) && grad_id in keys(trap)
                 proc = trap[grad_id]
