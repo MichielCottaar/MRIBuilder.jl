@@ -56,7 +56,7 @@ function waveform_sequence(bb::BaseBuildingBlock)
 end
 
 function ndim_grad(bb::BaseBuildingBlock)
-    g = [ws[2] for ws in waveform_sequence(bb)]
+    g = [ws for (_, ws) in waveform_sequence(bb) if !(ws isa NoGradient)]
     if iszero(length(g))
         return 0
     end
@@ -86,17 +86,18 @@ function waveform(bb::BaseBuildingBlock)
     else
         return []
     end
+    tol = sqrt(eps(Float64))
     for (_, block) in waveform_sequence(bb)
         new_time = result[end][1] + max(duration(block), 0)
         prev_grad = result[end][2]
         if block isa NoGradient
-            @assert all(abs.(prev_grad) <= 1e-12) "$(typeof(bb)) inserts NoGradient before the gradient is zero. This is probably caused by an improper implementation of this BuildingBlock."
+            @assert all(abs.(prev_grad) .<= 1e-12) "$(typeof(bb)) inserts NoGradient before the gradient is zero. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad))
         elseif block isa ConstantGradient
-            @assert all(gradient_strength(block) .≈ prev_grad) "$(typeof(bb)) inserts ConstantGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
+            @assert all(isapprox.(gradient_strength(block), prev_grad, atol=tol, rtol=tol)) "$(typeof(bb)) inserts ConstantGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad))
         elseif block isa ChangingGradient
-            @assert all(block.gradient_strength_start .≈ prev_grad) "$(typeof(bb)) inserts ChangingGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
+            @assert all(isapprox.(block.gradient_strength_start, prev_grad, atol=tol, rtol=tol)) "$(typeof(bb)) inserts ChangingGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad .+ slew_rate(block) .* duration(block)))
         else
             error("Unrecognised block type in BuildingBlock: $(typeof(bb)).")
