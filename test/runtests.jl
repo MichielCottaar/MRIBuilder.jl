@@ -2,5 +2,6 @@ using MRIBuilder
 using Test
 
 @testset "MRIBuilder.jl" begin
-    # Write your tests here.
+    include("test_IO.jl")
+    include("test_plot.jl")
 end
