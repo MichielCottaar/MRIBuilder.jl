@@ -2,7 +2,7 @@ module Plot
 import MakieCore: generic_plot_attributes!
 import ..Containers: BaseBuildingBlock, BaseSequence, waveform, events, start_time, ndim_grad, waveform_sequence
 import ..Variables: duration, flip_angle, phase, make_generic, gradient_orientation
-import ..Components: RFPulseComponent, ADC, InstantPulse, NoGradient
+import ..Components: RFPulseComponent, ADC, InstantPulse, NoGradient, InstantGradient1D, InstantGradient3D
 
 """
     SinglePlotLine(times, amplitudes, event_times, event_amplitudes)
@@ -150,6 +150,12 @@ function SequenceDiagram(bbb::BaseBuildingBlock)
                     [0., delay, delay, delay + duration(event), delay + duration(event), duration(bbb)],
                     [0., 0., 1., 1., 0., 0.],
                 )
+            end
+        elseif event isa InstantGradient1D
+            kwargs[:G] = SinglePlotLine([0., duration(bbb)], [0., 0.], [delay], [event.qval])
+        elseif event isa InstantGradient3D
+            for (index, symbol) in enumerate([:Gx, :Gy, :Gz])
+                kwargs[symbol] = SinglePlotLine([0., duration(bbb)], [0., 0.], [delay], [event.qval[index]])
             end
         end
     end
