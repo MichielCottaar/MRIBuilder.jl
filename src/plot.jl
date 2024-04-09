@@ -70,6 +70,15 @@ range_event(spl::SinglePlotLine) = (
     maximum(spl.event_amplitudes; init=0.),
 )
 
+function range_full(spl::SinglePlotLine)
+    (l1, u1) = range_line(spl)
+    (l2, u2) = range_event(spl)
+    return (
+        min(l1, l2),
+        max(u1, u2),
+    )
+end
+
 normalise(spl::SinglePlotLine, line_value, event_value) = SinglePlotLine(
     spl.times, iszero(line_value) ? spl.amplitudes : (spl.amplitudes ./ line_value), 
     spl.event_times, iszero(event_value) ? spl.event_amplitudes : (spl.event_amplitudes ./ event_value)

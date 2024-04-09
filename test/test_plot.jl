@@ -39,9 +39,7 @@ using Gtk
                     InstantPulse(flip_angle=120., phase=0.),
                 ) 
             end
-            f = Figure()
-            Axis(f[1, 1])
-            plot_sequence(sequence)
+            f = plot_sequence(sequence)
             CairoMakie.save(fname, f)
         end
     
@@ -50,15 +48,12 @@ using Gtk
     
     @testset "Finite gradients" begin
         function plot_finite_dwi(fname, single_gradient=false)
-            sequence = DWI(bval=2., TE=80, TR=100, orientation=[0, -1, 1], scanner=Siemens_Prisma)
-            f = Figure()
-            Axis(f[1, 1])
-            plot!(sequence; single_gradient=single_gradient)
+            sequence = DWI(bval=2., TE=:min, TR=100, slice_thickness=2., scanner=Siemens_Prisma)
+            f = plot_sequence(sequence)
             CairoMakie.save(fname, f)
         end
     
-        @visualtest fn->plot_finite_dwi(fn, true) "$dir/single_grad_dwi.png" !isCI
-        @visualtest fn->plot_finite_dwi(fn, false) "$dir/multi_grad_dwi.png" !isCI
+        @visualtest fn->plot_finite_dwi(fn, true) "$dir/plots/grad_dwi.png" !isCI
     end
     
         

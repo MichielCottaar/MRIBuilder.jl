@@ -2,7 +2,7 @@ module MakieMRIBuilder
 using Makie
 import MakieCore
 import MakieCore: @recipe, theme, generic_plot_attributes!, Attributes, automatic
-import MRIBuilder.Plot: SequenceDiagram, range_line, normalise, plot_sequence
+import MRIBuilder.Plot: SequenceDiagram, range_full, normalise, plot_sequence
 import MRIBuilder: BaseSequence, BaseBuildingBlock, duration
 
 @recipe(Plot_Sequence, sequence) do scene
@@ -42,7 +42,7 @@ function Makie.plot!(scene:: Plot_Sequence)
         current_y = 0.
         for label in (:ADC, :Gz, :Gy, :Gx, :G, :RFy, :RFx)
             line = getproperty(sequence_diagram, label)
-            (lower, upper) = range_line(line)
+            (lower, upper) = range_full(line)
             if !(lower ≈ upper)
                 shift = current_y - lower
                 Makie.text!(scene, string(label) * " "; position=(0., shift), align=(:right, :center), text_kwargs..., kwargs...)
