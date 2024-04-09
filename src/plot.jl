@@ -56,11 +56,24 @@ end
 Returns the minimum and maximum amplitude for a [`SinglePlotLine`](@ref)
 """
 range_line(spl::SinglePlotLine) = (
-    min(minimum(spl.amplitudes; init=0.), minimum(spl.event_amplitudes; init=0.)),
-    max(maximum(spl.amplitudes; init=0.), maximum(spl.event_amplitudes; init=0.)),
+    minimum(spl.amplitudes; init=0.),
+    maximum(spl.amplitudes; init=0.),
 )
 
-normalise(spl::SinglePlotLine, value) = iszero(value) ? spl : SinglePlotLine(spl.times, spl.amplitudes ./ value, spl.event_times, spl.event_amplitudes ./ value)
+"""
+    range_event(single_plot_line)
+
+Returns the minimum and maximum amplitude for the events in [`SinglePlotLine`](@ref)
+"""
+range_event(spl::SinglePlotLine) = (
+    minimum(spl.event_amplitudes; init=0.),
+    maximum(spl.event_amplitudes; init=0.),
+)
+
+normalise(spl::SinglePlotLine, line_value, event_value) = SinglePlotLine(
+    spl.times, iszero(line_value) ? spl.amplitudes : (spl.amplitudes ./ line_value), 
+    spl.event_times, iszero(event_value) ? spl.event_amplitudes : (spl.event_amplitudes ./ event_value)
+)
 
 """
     SequenceDiagram(; RFx, RFy, Gx, Gy, Gz, ADC)
@@ -170,20 +183,27 @@ function SequenceDiagram(seq::BaseSequence)
 end
 
 function normalise(sd::SequenceDiagram)
-    rf_norm = max(abs.(range_line(sd.RFx))..., abs.(range_line(sd.RFy))...)
-    grad_norm = max(
+    rf_line_norm = max(abs.(range_line(sd.RFx))..., abs.(range_line(sd.RFy))...)
+    rf_event_norm = max(abs.(range_event(sd.RFx))..., abs.(range_event(sd.RFy))...)
+    grad_line_norm = max(
         abs.(range_line(sd.G))...,
         abs.(range_line(sd.Gx))...,
         abs.(range_line(sd.Gy))...,
         abs.(range_line(sd.Gz))...,
     )
+    grad_event_norm = max(
+        abs.(range_event(sd.G))...,
+        abs.(range_event(sd.Gx))...,
+        abs.(range_event(sd.Gy))...,
+        abs.(range_event(sd.Gz))...,
+    )
     SequenceDiagram(
-        normalise(sd.RFx, rf_norm),
-        normalise(sd.RFy, rf_norm),
-        normalise(sd.G, grad_norm),
-        normalise(sd.Gx, grad_norm),
-        normalise(sd.Gy, grad_norm),
-        normalise(sd.Gz, grad_norm),
+        normalise(sd.RFx, rf_line_norm, rf_event_norm),
+        normalise(sd.RFy, rf_line_norm, rf_event_norm),
+        normalise(sd.G, grad_line_norm, grad_event_norm),
+        normalise(sd.Gx, grad_line_norm, grad_event_norm),
+        normalise(sd.Gy, grad_line_norm, grad_event_norm),
+        normalise(sd.Gz, grad_line_norm, grad_event_norm),
         sd.ADC
     )
 end
