@@ -211,6 +211,8 @@ function gradient_orientation(bb::AbstractBlock)
     end
 end
 
+gradient_orientation(nt::NamedTuple) = map(gradient_orientation, nt)
+
 
 function effective_time end
 
@@ -289,15 +291,20 @@ end
 for base_fn in [:qval, :gradient_strength, :slew_rate]
     fn3 = Symbol(String(base_fn) * "3")
     @eval function $fn3(bb::AbstractBlock, args...; kwargs...)
-        value = $base_fn(bb, args...; kwargs...)
-        if value isa Number && iszero(value)
-            return zero(SVector{3, Float64})
-        elseif value isa AbstractVector
-            return value
+        if hasproperty(bb, :orientation)
+            value = $base_fn(bb, args...; kwargs...)
+            if value isa Number && iszero(value)
+                return zero(SVector{3, Float64})
+            elseif value isa AbstractVector
+                return value
+            else
+                return value .* bb.orientation
+            end
         else
-            return gradient_orientation(bb) .* value
+            return $fn3(get_gradient(bb), args...; kwargs...)
         end
     end
+    @eval $fn3(nt::NamedTuple, args...; kwargs...) = map(v -> $fn3(v, args...; kwargs...), nt)
 end
 
 
@@ -346,15 +353,20 @@ Add a single constraint or objective to the `variable`.
 - `number`: fix variable to this value
 - `equation`: fix variable to the result of this equation
 """
-apply_simple_constraint!(variable, ::Nothing) = nothing
+apply_simple_constraint!(variable::VariableType, ::Nothing) = nothing
 apply_simple_constraint!(variable::AbstractVector, value::Symbol) = apply_simple_constraint!(sum(variable), Val(value))
-apply_simple_constraint!(variable, value::Symbol) = apply_simple_constraint!(variable, Val(value))
-apply_simple_constraint!(variable, ::Val{:min}) = @objective global_model() Min objective_function(global_model()) + variable
-apply_simple_constraint!(variable, ::Val{:max}) = @objective global_model() Min objective_function(global_model()) - variable
-apply_simple_constraint!(variable, value::VariableType) = @constraint global_model() variable == value
+apply_simple_constraint!(variable::VariableType, value::Symbol) = apply_simple_constraint!(variable, Val(value))
+apply_simple_constraint!(variable::VariableType, ::Val{:min}) = @objective global_model() Min objective_function(global_model()) + variable
+apply_simple_constraint!(variable::VariableType, ::Val{:max}) = @objective global_model() Min objective_function(global_model()) - variable
+apply_simple_constraint!(variable::VariableType, value::VariableType) = @constraint global_model() variable == value
 apply_simple_constraint!(variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(v1, v2) for (v1, v2) in zip(variable, value)]
 apply_simple_constraint!(variable::AbstractVector, value::VariableType) = [apply_simple_constraint!(v1, value) for v1 in variable]
 apply_simple_constraint!(variable::Number, value::Number) = @assert variable ≈ value "Variable set to multiple incompatible values."
+function apply_simple_constraint!(variable::NamedTuple, value)
+    for sub_var in variable
+        apply_simple_constraint!(sub_var, value)
+    end
+end
 function apply_simple_constraint!(variable::NamedTuple, value::NamedTuple)
     for key in keys(value)
         apply_simple_constraint!(variable[key], value[key])
