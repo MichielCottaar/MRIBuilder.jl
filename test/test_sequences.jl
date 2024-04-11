@@ -1,6 +1,7 @@
 @testset "test_sequences.jl" begin
     
     @testset "DW-SE" begin
+        min_rise_time = Default_Scanner.gradient / Default_Scanner.slew_rate
         @testset "Instant pulse & readout" begin
             @testset "Minimise TE" begin
                 seq = DiffusionSpinEcho(TE=:min, bval=1.)
@@ -12,6 +13,7 @@
                 @test bval(seq) ≈ 1.
                 @test 40. < TE(seq) < 50.
                 @test TR(seq) ≈ TE(seq)
+                @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
             end
             @testset "Maximise b-value" begin
                 seq = DiffusionSpinEcho(TE=80., bval=:max)
@@ -22,6 +24,7 @@
                 @test TE(seq) ≈ 80.
                 @test TR(seq) ≈ 80.
                 @test 4.8 < bval(seq) < 4.9
+                @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
 
                 # can also maximise q-value
                 seq2 = DiffusionSpinEcho(TE=80., qval=:max)
@@ -37,15 +40,17 @@
                 @test TR(seq) ≈ 80.
                 @test 0.72 < bval(seq) < 0.73
                 @test readout_times(seq)[1] ≈ TE(seq)
+                @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
             end
             @testset "Set gradient duration" begin
                 seq = DiffusionSpinEcho(TE=80., gradient=(duration=10., ), bval=:max)
                 @test all(isapprox.(duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0.], atol=1e-4, rtol=1e-4))
-                @test Δ(seq) ≈ 70.
+                @test Δ(seq) ≈ 70. rtol=1e-4
                 @test TE(seq) ≈ 80.
                 @test TR(seq) ≈ 80.
                 @test 0.72 < bval(seq) < 0.73
                 @test readout_times(seq)[1] ≈ TE(seq)
+                @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
             end
         end
         @testset "DW-SE with finite RF pulses" begin
