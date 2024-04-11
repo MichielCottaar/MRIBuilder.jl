@@ -36,6 +36,7 @@
                 @test TE(seq) ≈ 80.
                 @test TR(seq) ≈ 80.
                 @test 0.72 < bval(seq) < 0.73
+                @test readout_times(seq)[1] ≈ TE(seq)
             end
             @testset "Set gradient duration" begin
                 seq = DiffusionSpinEcho(TE=80., gradient=(duration=10., ), bval=:max)
@@ -44,6 +45,42 @@
                 @test TE(seq) ≈ 80.
                 @test TR(seq) ≈ 80.
                 @test 0.72 < bval(seq) < 0.73
+                @test readout_times(seq)[1] ≈ TE(seq)
+            end
+        end
+        @testset "DW-SE with finite RF pulses" begin
+            @testset "slice-select DW-SE" begin
+                seq = DiffusionSpinEcho(TR=:min, bval=2., slice_thickness=2.)
+                @test length(seq) == 9
+                @test duration(seq[1]) > 1.
+                for index in 1:9
+                    if index in [2, 4, 8, 9]
+                        @test abs(duration(seq[index])) < 1e-6
+                    else
+                        @test abs(duration(seq[index])) > 1
+                    end
+                end
+                @test duration(seq[:gradient]) ≈ duration(seq[:gradient2])
+                @test bval(seq) ≈ 2.
+                @test length(readout_times(seq)) == 1
+                @test readout_times(seq)[1] > TE(seq)
+            end
+            @testset "voxel-wise DW-SE" begin
+                seq = DiffusionSpinEcho(TR=:min, bval=2., voxel_size=2., fov=(20, 20, 20))
+                @test length(seq) == 9
+                @test duration(seq[1]) > 1.
+                for index in 1:9
+                    if index in [2, 6, 8]
+                        @test abs(duration(seq[index])) < 1e-6
+                    else
+                        @test abs(duration(seq[index])) > 1
+                    end
+                end
+                @test duration(seq[:gradient]) ≈ duration(seq[:gradient2])
+                @test bval(seq) ≈ 2.
+                @test length(readout_times(seq)) > 50
+                @test 67 < TE(seq) < 68
+                @test 72 < TR(seq) < 73
             end
         end
 
