@@ -2,7 +2,7 @@ module DiffusionSpinEchoes
 import ...Containers: Sequence
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler, refocus_pulse, dwi_gradients
 import ...Containers: start_time
-import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, delay, effective_time, diffusion_time, Δ, TR, TE, repetition_time
+import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, delay, effective_time, diffusion_time, Δ, TR, TE, repetition_time, get_gradient
 import ...Pathways: Pathway, get_pathway
 import ...BuildSequences: build_sequence
 import ...Scanners: Default_Scanner
@@ -14,7 +14,7 @@ const DWI = DiffusionSpinEcho
 """
     DiffusionSpinEcho(; echo_time, delay=0., excitation=(), gradient=(), refocus=(), readout=(), optim=(), resolution/fov/voxel_size/slice_thickness, scanner)
 
-Defines a gradient echo sequence with a single readout event.
+Defines a diffusion-weighted spin echo (Stejskal-Tanner) sequence.
 
 `DWI`, `DW_SE`, and `DiffusionSpinEcho` are all synonyms.
 
@@ -61,6 +61,7 @@ end
 
 
 get_pulse(ge::DiffusionSpinEcho) = (excitation=ge.excitation, refocus=ge.refocus)
+get_gradient(ge::DiffusionSpinEcho) = (gradient=ge.gradient, gradient2=ge.gradient2)
 get_readout(ge::DiffusionSpinEcho) = ge.readout
 get_pathway(ge::DiffusionSpinEcho) = Pathway(ge, [90, 180], 1, group=:DWI)
 echo_time(ge::DiffusionSpinEcho) = 2 * (effective_time(ge, :refocus) - effective_time(ge, :excitation))
