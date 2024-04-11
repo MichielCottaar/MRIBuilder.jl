@@ -105,7 +105,13 @@ function edge_times(seq::BaseSequence)
     for (index, block) in enumerate(seq)
         append!(res, edge_times(block) .+ start_time(seq, index))
     end
-    return unique(res)
+    unique_res = Float64[res[1]]
+    for edge in res
+        if !isapprox(edge, unique_res[end], rtol=1e-6, atol=1e-6)
+            push!(unique_res, edge)
+        end
+    end
+    return unique_res
 end
 
 for fn in (:gradient_strength, :amplitude, :phase, :gradient_strength3)
