@@ -1,5 +1,5 @@
 module BuildSequences
-import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED
+import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED, objective_value
 import Ipopt
 import Juniper
 import ..Scanners: Scanner, gradient_strength, Default_Scanner
@@ -54,6 +54,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
         sequence = f()
         if optimise
             if !iszero(num_variables(model))
+                min_objective = Inf
                 for attempt in 1:n_attempts
                     if attempt != 1
                         old_values = value.(all_variables(model))
@@ -65,8 +66,12 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
                     end
                     optimize!(model)
                     if termination_status(model) in (LOCALLY_SOLVED, OPTIMAL)
-                        println("Optimisation succeeded after $(attempt-1) restarts.")
-                        break
+                        if objective_value(model) < min_objective
+                            min_objective = objective_value(model)
+                        elseif isapprox(min_objective, objective_value(model), rtol=1e-6)
+                            println("Optimisation succeeded after $(attempt-1) restarts.")
+                            break
+                        end
                     end
                 end
                 if !(termination_status(model) in (LOCALLY_SOLVED, OPTIMAL))
@@ -84,7 +89,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
     end
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=100, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=1000, kwargs...)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
         model = Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...))
     else
@@ -93,7 +98,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser
     build_sequence(f, scanner, model, optimise, n_attempts)
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=2, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=0, kwargs...)
     build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, kwargs...)
 end
 
