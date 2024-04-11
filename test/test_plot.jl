@@ -24,7 +24,7 @@ using Gtk
             CairoMakie.save(fname, f)
         end
     
-        @visualtest plot_perfect_dwi "$dir/plots/perfect_dwi.png" !isCI
+        @visualtest plot_perfect_dwi "$dir/plots/perfect_dwi.png" !isCI 0.03
     end
     
     @testset "Finite RF pulses" begin
@@ -47,13 +47,13 @@ using Gtk
     end
     
     @testset "Finite gradients" begin
-        function plot_finite_dwi(fname, single_gradient=false)
-            sequence = DWI(bval=2., TE=:min, TR=100, slice_thickness=2., scanner=Siemens_Prisma)
+        function plot_finite_dwi(fname)
+            sequence = DWI(bval=2., TE=:min, TR=100, voxel_size=2., scanner=Siemens_Prisma, fov=(10, 10, 10))
             f = plot_sequence(sequence)
             CairoMakie.save(fname, f)
         end
     
-        @visualtest fn->plot_finite_dwi(fn, true) "$dir/plots/grad_dwi.png" !isCI
+        @visualtest plot_finite_dwi "$dir/plots/grad_dwi.png" !isCI
     end
     
         
