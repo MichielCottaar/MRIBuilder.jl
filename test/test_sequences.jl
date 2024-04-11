@@ -25,6 +25,7 @@
                 @test TR(seq) ≈ 80.
                 @test 4.8 < bval(seq) < 4.9
                 @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
+                @test all(isapprox.(edge_times(seq, tol=1e-3), [0., min_rise_time, 40. - min_rise_time, 40, 40 + min_rise_time, 80 - min_rise_time, 80.], atol=1e-4))
 
                 # can also maximise q-value
                 seq2 = DiffusionSpinEcho(TE=80., qval=:max)
@@ -41,6 +42,7 @@
                 @test 0.72 < bval(seq) < 0.73
                 @test readout_times(seq)[1] ≈ TE(seq)
                 @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
+                @test all(isapprox.(edge_times(seq), [0., min_rise_time, 10. - min_rise_time, 10., 40, 70, 70 + min_rise_time, 80 - min_rise_time, 80.], atol=1e-4))
             end
             @testset "Set gradient duration" begin
                 seq = DiffusionSpinEcho(TE=80., gradient=(duration=10., ), bval=:max)

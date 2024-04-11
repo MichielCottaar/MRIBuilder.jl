@@ -100,14 +100,14 @@ repetition_time(bs::BaseSequence) = duration(bs)
 duration(bs::BaseSequence{0}) = 0.
 duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
 
-function edge_times(seq::BaseSequence)
+function edge_times(seq::BaseSequence; tol=1e-6)
     res = Float64[]
     for (index, block) in enumerate(seq)
         append!(res, edge_times(block) .+ start_time(seq, index))
     end
     unique_res = Float64[res[1]]
     for edge in res
-        if !isapprox(edge, unique_res[end], atol=1e-6)
+        if !isapprox(edge, unique_res[end], atol=tol)
             push!(unique_res, edge)
         end
     end
