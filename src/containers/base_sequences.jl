@@ -107,7 +107,7 @@ function edge_times(seq::BaseSequence)
     end
     unique_res = Float64[res[1]]
     for edge in res
-        if !isapprox(edge, unique_res[end], rtol=1e-6, atol=1e-6)
+        if !isapprox(edge, unique_res[end], atol=1e-6)
             push!(unique_res, edge)
         end
     end
