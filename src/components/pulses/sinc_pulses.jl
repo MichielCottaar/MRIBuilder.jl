@@ -90,7 +90,7 @@ lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
 effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
 
-amplitude(pulse::SincPulse, time::Number) = amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse))
+amplitude(pulse::SincPulse, time::Number) = amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
 phase(pulse::SincPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse))
 
 function make_generic(block::SincPulse)
