@@ -48,7 +48,7 @@ effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effec
 
 
 """
-    edge_times(container)
+    edge_times(container; tol=1e-6)
 
 Returns all the edge times during a sequence in ms.
 
@@ -56,6 +56,8 @@ Edges are defined as any time, when:
 - the edge of a building block
 - the slope of the gradient profile changes suddenly
 - an RF pulse starts or ends
+
+Edges that are within `tol` ms of each other are considered to be one edge (default: 1 ns).
 """
 function edge_times end
 
