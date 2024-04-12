@@ -1,7 +1,7 @@
 module Abstract
-import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase, VariableType
+import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase, VariableType, get_pulse, get_gradient
 import ...Components.Readouts: readout_times
-import ...Components: BaseComponent, InstantPulse, InstantGradient, ReadoutComponent
+import ...Components: BaseComponent, InstantPulse, InstantGradient, ReadoutComponent, NoGradient, RFPulseComponent, GradientWaveform
 
 """
 Parent type for `BuildingBlock` or `BaseSequence`, i.e., any building block that contains other MRI components/blocks.
@@ -119,6 +119,29 @@ Returns all the [`InstantGradient`](@ref) within the sequence with their timings
 """
 iter_instant_gradients(container::ContainerBlock) = iter(container, Val(:instantgradient))
 iter(component::Tuple{<:Number, <:InstantGradient}, ::Val{:instantgradient}) = [component]
+
+"""
+    get_pulse(container, time)
+
+Gets the pulse running at a particular `time` (in ms) during a sequence of building block.
+
+If there is a RF pulse, this function will return a tuple with 2 elements:
+1. The [`RFPulseComponent`](@ref) itself
+2. The time since the start of the pulse
+If there is no active RF pulse, `nothing` is returned.
+"""
+function get_pulse end
+
+"""
+    get_gradient(container, time)
+
+Gets the gradient running at a particular `time` (in ms) during a sequence of building block.
+
+This function will return a tuple with 2 elements:
+1. The [`GradientWaveform`](@ref) itself (which could be a [`NoGradient`](@ref) object).
+2. The time since the start of the gradient
+"""
+function get_gradient end
 
 """
     readout_times(sequence)

@@ -88,6 +88,17 @@
                 @test length(readout_times(seq)) > 50
                 @test 67 < TE(seq) < 68
                 @test 72 < TR(seq) < 73
+
+                (pulse, t_pulse) = get_pulse(seq, 1.)
+                @test 1. - t_pulse ≈ min_rise_time rtol=1e-4
+                @test flip_angle(pulse) ≈ 90.
+                @test iszero(phase(pulse))
+                @test isnothing(get_pulse(seq, 10.))
+
+                (pulse, t_pulse) = get_pulse(seq, 35.)
+                @test 1.1 < t_pulse < 1.2
+                @test flip_angle(pulse) ≈ 180.
+                @test iszero(phase(pulse))
             end
         end
 

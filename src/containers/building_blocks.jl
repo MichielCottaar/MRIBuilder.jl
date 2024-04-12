@@ -9,7 +9,7 @@ import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_ti
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient
 import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase
-import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!
+import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient
 
 """
 Basic BuildingBlock, which can consist of a gradient waveforms with any number of RF pulses/readouts overlaid
@@ -221,24 +221,38 @@ function edge_times(bb::BaseBuildingBlock)
     return sort(unique(res))
 end
 
+function get_pulse(bb::BaseBuildingBlock, time::Number)
+    for (key, component) in events(bb)
+        if component isa RFPulseComponent && (start_time(bb, key) <= time <= end_time(bb, key))
+            return (component, time - start_time(bb, key))
+        end
+    end
+    return nothing
+end
+
 for (fn, default_value) in ((:amplitude, 0.), (:phase, NaN))
     @eval function $fn(bb::BaseBuildingBlock, time::Number)
-        for (key, block) in events(bb)
-            if block isa RFPulseComponent && start_time(bb, key) <= time <= end_time(bb, key)
-                return $fn(block, time - start_time(bb, key))
-            end
+        pulse = get_pulse(bb, time)
+        if isnothing(pulse)
+            return $default_value
         end
-        return $default_value
+        return $fn(pulse[1], pulse[2])
     end
 end
 
-function gradient_strength(bb::BaseBuildingBlock, time::Number)
+
+function get_gradient(bb::BaseBuildingBlock, time::Number)
     for (key, block) in waveform_sequence(bb)
         if (start_time(bb, key) <= time <= end_time(bb, key)) || (time ≈ end_time(bb, key))
-            return gradient_strength(block, time - start_time(bb, key))
+            return (block, time - start_time(bb, key))
         end
     end
-    error("$bb with duration $(duration(bb)) does not define a gradient strength at time $time.")
+    error("$bb with duration $(duration(bb)) does not define a gradient at time $time.")
+end
+
+function gradient_strength(bb::BaseBuildingBlock, time::Number)
+    (grad, time) = get_gradient(bb, time)
+    return gradient_strength(grad, time)
 end
 
 """
