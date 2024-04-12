@@ -41,6 +41,35 @@ function GenericPulse(time::AbstractVector{<:Number}, amplitude::AbstractVector{
     return GenericPulse(time, amplitude, (time .- time[1]) .* (frequency * 360) .+ phase, effective_time)
 end
 
+"""
+    GenericPulse(pulse, t1, t2)
+
+Creates a new [`GenericPulse`](@ref) by slicing another pulse between `t1` and `t2`
+"""
+function GenericPulse(pulse::GenericPulse, t1::Number, t2::Number)
+    if t1 < pulse.time[1] || t2 > pulse.time[end]
+        error("Cannot extrapolate GenericPulse")
+    end
+    use = t1 .<= pulse.time .<= t2
+    tnew = pulse.time[use]
+    anew = pulse.amplitude[use]
+    pnew = pulse.phase[use]
+    @show tnew[end], anew[end]
+    if !(t1 ≈ tnew[1])
+        pushfirst!(tnew, t1)
+        pushfirst!(anew, amplitude(pulse, t1))
+        pushfirst!(pnew, phase(pulse, t1))
+    elseif !(t2 ≈ tnew[end])
+        push!(tnew, t2)
+        push!(anew, amplitude(pulse, t2))
+        push!(pnew, phase(pulse, t2))
+    end
+    @show tnew[end], anew[end]
+    return GenericPulse(tnew .- t1, anew, pnew, pulse.effective_time - t1)
+end
+
+GenericPulse(pulse::RFPulseComponent, t1::Number, t2::Number) = GenericPulse(make_generic(pulse), t1, t2)
+
 duration(fp::GenericPulse) = maximum(fp.time)
 amplitude(fp::GenericPulse) = maximum(abs.(fp.amplitude))
 effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]

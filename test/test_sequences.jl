@@ -114,6 +114,10 @@
                 @test flip_angle(pulse) ≈ 90.
                 @test iszero(phase(pulse))
                 @test isnothing(get_pulse(seq, 10.))
+                gp = GenericPulse(pulse, 0., 1.)
+                @test gp.amplitude[1] ≈ 0. atol=1e-8
+                @test gp.amplitude[end] ≈ amplitude(pulse, 1.) rtol=1e-2
+                @test all(iszero.(gp.phase))
 
                 (pulse, t_pulse) = get_pulse(seq, 35.)
                 @test 1.1 < t_pulse < 1.2
