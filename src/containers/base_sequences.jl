@@ -111,7 +111,7 @@ function edge_times(seq::BaseSequence; tol=1e-6)
             push!(unique_res, edge)
         end
     end
-    return unique_res
+    return sort(unique_res)
 end
 
 for fn in (:gradient_strength, :amplitude, :phase, :gradient_strength3)
