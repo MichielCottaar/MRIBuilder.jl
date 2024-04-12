@@ -1,4 +1,20 @@
 @testset "test_sequences.jl" begin
+    @testset "GradientEcho" begin
+        seq = GradientEcho(TE=40)
+        @test length(seq) == 3
+        @test duration(seq) == 40
+        @test all(isapprox.(duration.(seq), [0., 40., 0.], atol=1e-6))
+        @test length(collect(iter_instant_pulses(seq))) == 1
+        @test length(collect(iter_instant_gradients(seq))) == 0.
+    end
+    @testset "SpinEcho" begin
+        seq = SpinEcho(TE=40)
+        @test length(seq) == 5
+        @test duration(seq) == 40
+        @test all(isapprox.(duration.(seq), [0., 20., 0., 20., 0.], atol=1e-6))
+        @test length(collect(iter_instant_pulses(seq))) == 2
+        @test length(collect(iter_instant_gradients(seq))) == 0.
+    end
     
     @testset "DW-SE" begin
         min_rise_time = Default_Scanner.gradient / Default_Scanner.slew_rate
