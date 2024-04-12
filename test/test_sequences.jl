@@ -6,6 +6,8 @@
         @test all(isapprox.(duration.(seq), [0., 40., 0.], atol=1e-6))
         @test length(collect(iter_instant_pulses(seq))) == 1
         @test length(collect(iter_instant_gradients(seq))) == 0.
+        @test duration_dephase(seq) ≈ 40.
+        @test duration_transverse(seq) ≈ 40.
     end
     @testset "SpinEcho" begin
         seq = SpinEcho(TE=40)
@@ -14,6 +16,8 @@
         @test all(isapprox.(duration.(seq), [0., 20., 0., 20., 0.], atol=1e-6))
         @test length(collect(iter_instant_pulses(seq))) == 2
         @test length(collect(iter_instant_gradients(seq))) == 0.
+        @test duration_dephase(seq) ≈ 0. atol=1e-4
+        @test duration_transverse(seq) ≈ 40.
     end
     
     @testset "DW-SE" begin
