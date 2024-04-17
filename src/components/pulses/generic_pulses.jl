@@ -112,7 +112,7 @@ function split_timestep(gp::GenericPulse, precision)
     function second_derivative(arr)
         max_second_der = 0.
         for index in 2:length(arr)-1
-            poly = fit(gp.times[index-1:index+1], arr[index-1:index+1])
+            poly = fit(gp.time[index-1:index+1], arr[index-1:index+1])
             second_der = abs(poly.coeffs[end])
             if second_der > max_second_der
                 max_second_der = second_der
