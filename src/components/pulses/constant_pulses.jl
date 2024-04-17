@@ -47,7 +47,7 @@ inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
 effective_time(pulse::ConstantPulse) = duration(pulse) / 2
 
 amplitude(pulse::ConstantPulse, time::Number) = amplitude(pulse)
-phase(pulse::ConstantPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse))
+phase(pulse::ConstantPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse)) * 360.
 frequency(pulse::ConstantPulse, time::Number) = frequency(pulse)
 
 function make_generic(block::ConstantPulse)
