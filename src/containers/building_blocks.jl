@@ -8,7 +8,7 @@ import StaticArrays: SVector
 import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_time, iter
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient
-import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase
+import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase, frequency
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient
 
 """
@@ -230,7 +230,7 @@ function get_pulse(bb::BaseBuildingBlock, time::Number)
     return nothing
 end
 
-for (fn, default_value) in ((:amplitude, 0.), (:phase, NaN))
+for (fn, default_value) in ((:amplitude, 0.), (:phase, NaN), (:frequency, NaN))
     @eval function $fn(bb::BaseBuildingBlock, time::Number)
         pulse = get_pulse(bb, time)
         if isnothing(pulse)

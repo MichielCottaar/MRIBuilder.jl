@@ -72,7 +72,7 @@ function gradient_strength end
 """
     amplitude(sequence, time)
 
-Returns the RF amplitude at a particular time within the sequence.
+Returns the RF amplitude at a particular time within the sequence in kHz.
 """
 function amplitude end
 
@@ -80,10 +80,20 @@ function amplitude end
 """
     phase(sequence, time)
 
-Returns the RF phase at a particular time within the sequence.
-NaN if the ampltiude is zero.
+Returns the RF phase at a particular time within the sequence in degrees.
+
+NaN is returned if there is no pulse activate at that `time`.
 """
 function phase end
+
+"""
+    frequency(sequence, time)
+
+Returns the RF frequency at a particular time within the sequence in kHz.
+
+NaN is returned if there is no pulse activate at that `time`.
+"""
+function frequency end
 
 """
     iter(sequence, get_type)

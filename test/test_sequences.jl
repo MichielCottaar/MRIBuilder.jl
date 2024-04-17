@@ -117,6 +117,10 @@
                 gp = GenericPulse(pulse, 0., 1.)
                 @test gp.amplitude[1] ≈ 0. atol=1e-8
                 @test gp.amplitude[end] ≈ amplitude(pulse, 1.) rtol=1e-2
+                @test iszero(phase(pulse, 1.)) rtol=1e-2
+                @test iszero(frequency(pulse, 1.)) rtol=1e-2
+                @test isnan(phase(pulse, 1.)) rtol=1e-2
+                @test isnan(frequency(pulse, 1.)) rtol=1e-2
                 @test all(iszero.(gp.phase))
 
                 (pulse, t_pulse) = get_pulse(seq, 35.)

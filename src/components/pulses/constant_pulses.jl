@@ -48,6 +48,7 @@ effective_time(pulse::ConstantPulse) = duration(pulse) / 2
 
 amplitude(pulse::ConstantPulse, time::Number) = amplitude(pulse)
 phase(pulse::ConstantPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse))
+frequency(pulse::ConstantPulse, time::Number) = frequency(pulse)
 
 function make_generic(block::ConstantPulse)
     d = duration(block)

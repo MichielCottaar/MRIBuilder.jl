@@ -2,7 +2,7 @@ module GenericPulses
 
 import Polynomials: fit
 import ...AbstractTypes: RFPulseComponent, split_timestep
-import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic, phase
+import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic, phase, frequency
 
 
 """
@@ -96,6 +96,28 @@ for fn in (:amplitude, :phase)
         w1 = (fp.time[i2] - time) / (fp.time[i2] - fp.time[i1])
         return w1 * fp.$(fn)[i1] + w2 * fp.$(fn)[i2]
     end
+end
+
+
+function frequency(gp::GenericPulse, time::Number)
+    i2 = findfirst(t -> t > time, gp.time)
+    if isnothing(i2)
+        @assert time ≈ fp.time[end]
+        i2 = length(time)
+    end
+    if i2 != length(time) && time ≈ fp.time[i2 + 1]
+        i2 += 1
+    end
+    if time ≈ fp.time[i2]
+        if i2 == 1
+            return (gp.phase[2] - gp.phase[1]) / (gp.time[2] - gp.time[1]) / 360
+        elseif i2 == length(time)
+            return (gp.phase[end] - gp.phase[end-1]) / (gp.time[end] - gp.time[end-1]) / 360
+        end
+        return (gp.phase[i2 + 1] - gp.phase[i2 - 1]) / (gp.time[i2 + 1] - gp.time[i2 - 1]) / 360
+    end
+    @assert !isone(i2)
+    return (gp.phase[i2] - gp.phase[i2 - 1]) / (gp.time[i2] - gp.time[i2 - 1]) / 360
 end
 
 
