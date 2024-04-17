@@ -54,7 +54,6 @@ function GenericPulse(pulse::GenericPulse, t1::Number, t2::Number)
     tnew = pulse.time[use]
     anew = pulse.amplitude[use]
     pnew = pulse.phase[use]
-    @show tnew[end], anew[end]
     if !(t1 ≈ tnew[1])
         pushfirst!(tnew, t1)
         pushfirst!(anew, amplitude(pulse, t1))
@@ -64,7 +63,6 @@ function GenericPulse(pulse::GenericPulse, t1::Number, t2::Number)
         push!(anew, amplitude(pulse, t2))
         push!(pnew, phase(pulse, t2))
     end
-    @show tnew[end], anew[end]
     return GenericPulse(tnew .- t1, anew, pnew, pulse.effective_time - t1)
 end
 
