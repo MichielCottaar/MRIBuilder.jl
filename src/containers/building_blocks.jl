@@ -212,11 +212,8 @@ bmat_gradient(bb::BaseBuildingBlock, qstart) = bmat_gradient(bb, qstart, nothing
 function edge_times(bb::BaseBuildingBlock)
     res = Float64[]
     for key in keys(bb)
-        object = bb[key]
-        if object isa Union{GradientWaveform, RFPulseComponent, InstantGradient}
-            push!(res, start_time(bb, key))
-            push!(res, end_time(bb, key))
-        end
+        push!(res, start_time(bb, key))
+        push!(res, end_time(bb, key))
     end
     return sort(unique(res))
 end
