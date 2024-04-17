@@ -113,14 +113,16 @@
                 @test 1. - t_pulse ≈ min_rise_time rtol=1e-4
                 @test flip_angle(pulse) ≈ 90.
                 @test iszero(phase(pulse))
+                @test iszero(phase(seq, 1.))
+                @test iszero(frequency(seq, 1.))
+
                 @test isnothing(get_pulse(seq, 10.))
+                @test isnan(phase(seq, 10.))
+                @test isnan(frequency(seq, 10.))
+    
                 gp = GenericPulse(pulse, 0., 1.)
                 @test gp.amplitude[1] ≈ 0. atol=1e-8
                 @test gp.amplitude[end] ≈ amplitude(pulse, 1.) rtol=1e-2
-                @test iszero(phase(pulse, 1.)) rtol=1e-2
-                @test iszero(frequency(pulse, 1.)) rtol=1e-2
-                @test isnan(phase(pulse, 1.)) rtol=1e-2
-                @test isnan(frequency(pulse, 1.)) rtol=1e-2
                 @test all(iszero.(gp.phase))
 
                 (pulse, t_pulse) = get_pulse(seq, 35.)
