@@ -67,18 +67,14 @@ function control_points(pulseq::CompressedPulseqShape)
 end
 
 """
-    read_pulseq(filename; scanner=Scanner(B0=B0), B0=3., TR=<sequence duration>)
+    read_pulseq(IO; scanner=Scanner(B0=B0), B0=3., TR=<sequence duration>)
 
 Reads a sequence from a pulseq file (http://pulseq.github.io/).
 Pulseq files can be produced using matlab (http://pulseq.github.io/) or python (https://pypulseq.readthedocs.io/en/master/).
 """
-function read_pulseq(filename; kwargs...)
-    keywords = open(read_pulseq_sections, filename)
-    name = basename(filename)
-    if endswith(name, ".seq")
-        name = name[1:end-4]
-    end
-    build_sequence(; name=Symbol(name), kwargs..., keywords...)
+function read_pulseq(io::IO; kwargs...)
+    keywords = read_pulseq_sections(io)
+    return build_sequence(; kwargs..., keywords...)
 end
 
 function read_pulseq_sections(io::IO)

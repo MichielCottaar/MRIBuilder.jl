@@ -14,6 +14,7 @@ MakieCore = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
 Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
+Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [weakdeps]
@@ -26,9 +27,9 @@ MakieMRIBuilder = "Makie"
 julia = "1.9"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Gtk = "4c0ca9eb-093a-5379-98c5-f87ac0bbbf44"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 VisualRegressionTests = "34922c18-7c2a-561c-bac1-01e79b2c4c92"
 
 [targets]

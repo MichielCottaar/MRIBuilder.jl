@@ -39,8 +39,8 @@ export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid,
 import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
 export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
 
-import .SequenceIO: read_sequence
-export read_sequence
+import .SequenceIO: read_sequence, write_sequence
+export read_sequence, write_sequence
 
 import .Plot: plot_sequence
 export plot_sequence

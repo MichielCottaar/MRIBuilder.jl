@@ -84,82 +84,47 @@
             @test phase(p, 1.5) ≈ 90 rtol=1e-5
         end
     end
-    if false
-        # JSON encoding has not been implemented yet
-        @testset "check that JSON encoding works for all v1.4.0 files in 01_from_FID_to_PRESS" begin
-            path = joinpath(directory, "01_from_FID_to_PRESS_v140")
-            for fn in readdir(path)
-                @testset "checking $fn" begin
-                    if !endswith(fn, ".seq")
-                        continue
-                    end
-                    full_filename = joinpath(path, fn)
-                    seq_orig = read_sequence(full_filename)
-
-                    
-                    io = IOBuffer()
-                    write_sequence(io, seq_orig)
-                    s = String(io.data)
-                    seq_json = read_sequence(s)
-                    @test seq_orig.TR == seq_json.TR
-                    @test length(seq_orig.gradients) == length(seq_json.gradients)
-                    for (g1, g2) in zip(seq_orig.gradients, seq_json.gradients)
-                        @test all(g1.origin .== g2.origin)
-                        @test all(g1.shape.times .== g2.shape.times)
-                        @test all(g1.shape.amplitudes .== g2.shape.amplitudes)
-                    end
-                    @test length(seq_orig.pulses) == length(seq_json.pulses)
-                    for (p1, p2) in zip(seq_orig.pulses, seq_json.pulses)
-                        @test p1.max_amplitude == p2.max_amplitude
-                        @test all(p1.amplitude.times .== p2.amplitude.times)
-                        @test all(p1.amplitude.amplitudes .== p2.amplitude.amplitudes)
-                        @test all(p1.phase.times .== p2.phase.times)
-                        @test all(p1.phase.amplitudes .== p2.phase.amplitudes)
-                    end
-                    @test iszero(length(seq_json.instants))
-                    @test length(seq_json.readout_times) > 0
-                    @test all(seq_json.readout_times .== seq_orig.readout_times)
+    # JSON encoding has not been implemented yet
+    @testset "check that serialisation works for all v1.4.0 files in 01_from_FID_to_PRESS" begin
+        path = joinpath(directory, "01_from_FID_to_PRESS_v140")
+        for fn in readdir(path)
+            @testset "checking $fn" begin
+                if !endswith(fn, ".seq")
+                    continue
                 end
+                full_filename = joinpath(path, fn)
+                seq_orig = read_sequence(full_filename)
+
+                
+                io = IOBuffer()
+                write_sequence(io, seq_orig, format=:serialize)
+                seek(io, 0)
+                seq_json = read_sequence(io, format=:serialize)
+                @test TR(seq_orig) == TR(seq_json)
+                @test length(seq_orig) == length(seq_json)
+                @test all(duration.(seq_orig) .== duration.(seq_json))
+                @test iszero(length(iter_instant_gradients(seq_json)))
+                @test iszero(length(iter_instant_pulses(seq_json)))
+                @test all(readout_times(seq_json) .== readout_times(seq_orig))
             end
         end
-        @testset "check that JSON encoding works for some sequences with instant pulses/gradients" begin
-            for seq_orig in [
-                DWI(TE=80., bval=2., TR=100., scanner=Siemens_Connectom),
-                DWI(TE=80., bval=2., gradient_duration=0., TR=100, scanner=Siemens_Terra),
-                SpinEcho(TE=30., TR=100., scanner=Scanner(B0=1.5)),
-            ]
-                io = IOBuffer()
-                write_sequence(io, seq_orig)
-                s = String(io.data)
-                seq_json = read_sequence(s)
-                @test seq_json.TR == 100.
-                @test seq_json.scanner.B0 == seq_orig.scanner.B0
-                @test seq_json.scanner.gradient == seq_orig.scanner.gradient
-                @test seq_json.scanner.slew_rate == seq_orig.scanner.slew_rate
-                @test length(seq_orig.gradients) == length(seq_json.gradients)
-                for (g1, g2) in zip(seq_orig.gradients, seq_json.gradients)
-                    @test all(g1.origin .== g2.origin)
-                    @test all(g1.shape.times .== g2.shape.times)
-                    @test all(g1.shape.amplitudes .== g2.shape.amplitudes)
-                end
-                @test iszero(length(seq_json.pulses))
-                @test length(seq_json.instants) == length(seq_orig.instants)
-                for (i1, i2) in zip(seq_orig.instants, seq_json.instants)
-                    @test i1.time == i2.time
-                    if i1 isa mr.InstantRFPulse
-                        @test i2 isa mr.InstantRFPulse
-                        @test i1.flip_angle == i2.flip_angle
-                        @test i1.phase == i2.phase
-                    else
-                        @test i1 isa mr.InstantGradient
-                        @test i2 isa mr.InstantGradient
-                        @test all(i1.origin .== i2.origin)
-                        @test all(i1.qvec .== i2.qvec)
-                    end
-                end
-                @test length(seq_json.readout_times) > 0
-                @test all(seq_json.readout_times .== seq_orig.readout_times)
-            end
+    end
+    @testset "check that serialisation works for some sequences with instant pulses/gradients" begin
+        for seq_orig in [
+            DWI(TE=80., bval=2., scanner=Siemens_Connectom),
+            DWI(TE=80., bval=2., scanner=Siemens_Terra, gradient=(type=:instant, )),
+            SpinEcho(TE=30.),
+        ]
+            io = IOBuffer()
+            write_sequence(io, seq_orig; format=:serialize)
+            seek(io, 0)
+            seq_json = read_sequence(io; format=:serialize)
+            @test TR(seq_orig) == TR(seq_json)
+            @test length(seq_orig) == length(seq_json)
+            @test all(duration.(seq_orig) .== duration.(seq_json))
+            @test length(iter_instant_gradients(seq_json)) == length(iter_instant_gradients(seq_json))
+            @test length(iter_instant_pulses(seq_json)) == length(iter_instant_pulses(seq_json))
+            @test all(readout_times(seq_json) .== readout_times(seq_orig))
         end
     end
 end
