@@ -240,7 +240,7 @@ end
 
 function get_gradient(bb::BaseBuildingBlock, time::Number)
     for (key, block) in waveform_sequence(bb)
-        if (start_time(bb, key) <= time <= end_time(bb, key)) || (time ≈ end_time(bb, key))
+        if (start_time(bb, key) <= time <= end_time(bb, key)) || isapprox(time, end_time(bb, key), atol=1e-6)
             return (block, time - start_time(bb, key))
         end
     end
