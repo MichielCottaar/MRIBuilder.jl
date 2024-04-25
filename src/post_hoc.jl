@@ -3,7 +3,7 @@ Define post-fitting adjustments of the sequences
 """
 module PostHoc
 
-import ..Variables: AbstractBlock, adjust_internal
+import ..Variables: AbstractBlock, adjust_internal, adjustable
 import ..Components: GradientWaveform, RFPulseComponent, BaseComponent, NoGradient
 import ..Containers: ContainerBlock
 
@@ -40,12 +40,26 @@ function adjust(block::AbstractBlock; kwargs...)
     res
 end
 
-function adjust_helper(container::ContainerBlock, used_names::Set{Symbol}; kwargs...)
+function adjust_helper(block::AbstractBlock, used_names::Set{Symbol}; gradient=(), pulse=(), kwargs...)
     params = []
-    for prop_name in propertynames(container)
-        push!(params, adjust_helper(getproperty(container, prop_name), used_names; kwargs...))
+    adjust_type = adjustable(block)
+    if adjust_type == :false
+        for prop_name in propertynames(block)
+            push!(params, adjust_helper(getproperty(block, prop_name), used_names; gradient=gradient, pulse=pulse, kwargs...))
+        end
+        return typeof(block)(params...)
+    else
+        if !isnothing(block.group) && (block.group in keys(kwargs))
+            push!(used_names, block.group)
+            return adjust_internal(block; kwargs[block.group]...)
+        elseif adjust_type == :gradient
+            push!(used_names, :gradient)
+            return adjust_internal(block; gradient...)
+        elseif adjust_type == :pulse
+            push!(used_names, :pulse)
+            return adjust_internal(block; pulse...)
+        end
     end
-    return typeof(container)(params...)
 end
 
 adjust_helper(some_value, used_names::Set{Symbol}; kwargs...) = some_value
@@ -53,30 +67,5 @@ adjust_helper(array_variable::AbstractArray, used_names::Set{Symbol}; kwargs...)
 adjust_helper(dict_variable::AbstractDict, used_names::Set{Symbol}; kwargs...) = typeof(dict_variable)(k => adjust_helper(v, used_names; kwargs...) for (k, v) in pairs(dict_variable))
 adjust_helper(tuple_variable::Tuple, used_names::Set{Symbol}; kwargs...) = map(tuple_variable) do v adjust_helper(v, used_names; kwargs...) end
 adjust_helper(pair:: Pair, used_names::Set{Symbol}; kwargs...) = adjust_helper(pair[1], used_names; kwargs...) => adjust_helper(pair[2], used_names; kwargs...)
-
-adjust_helper(block::NoGradient, used_names::Set{Symbol}; kwargs...) = block
-
-function adjust_helper(block::GradientWaveform, used_names::Set{Symbol}; gradient=(), kwargs...)
-    if !isnothing(block.group) && (block.group in keys(kwargs))
-        push!(used_names, block.group)
-        return adjust_internal(block; kwargs[block.group]...)
-    else
-        push!(used_names, :gradient)
-        return adjust_internal(block; gradient...)
-    end
-    return new_block
-end
-
-function adjust_helper(block::RFPulseComponent, used_names::Set{Symbol}; pulse=(), kwargs...)
-    if !isnothing(block.group) && (block.group in keys(kwargs))
-        push!(used_names, block.group)
-        return adjust_internal(block; kwargs[block.group]...)
-    else
-        push!(used_names, :pulse)
-        return adjust_internal(block; pulse...)
-    end
-end
-
-adjust_helper(block::BaseComponent) = block
 
 end

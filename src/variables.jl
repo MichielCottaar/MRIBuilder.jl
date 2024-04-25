@@ -40,6 +40,18 @@ This is a helper function used by [`adjust`](@ref).
 """
 function adjust_internal end
 
+"""
+    adjustable(block)
+
+Returns whether a sequence, building block, or component can be adjusted
+
+Can return one of:
+- `:false`: not adjustable
+- `:gradient`: expects gradient adjustment parameters
+- `:pulse`: expects RF pulse adjustment parameters
+"""
+adjustable(::AbstractBlock) = :false
+
 
 
 all_variables_symbols = [

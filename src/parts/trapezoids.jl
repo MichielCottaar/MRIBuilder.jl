@@ -7,7 +7,7 @@ import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
 import ...Variables: qval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, qval_square, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
-import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout, gradient_orientation, ramp_overlap
+import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout, gradient_orientation, ramp_overlap, adjustable, adjust_internal
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ...Containers: BaseBuildingBlock
@@ -115,6 +115,36 @@ slew_rate(g::Trapezoid) = g.slew_rate
 duration(g::BaseTrapezoid) = 2 * rise_time(g) + flat_time(g)
 
 qval(g::BaseTrapezoid, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
+
+adjustable(::BaseTrapezoid) = :gradient
+
+function adjust_internal(trap::Trapezoid1D; orientation=nothing, scale=1., rotation=nothing)
+    if !isnothing(orientation) && !isnothing(rotation)
+        error("Cannot set both the gradient orientation and rotation.")
+    end
+    new_orientation = isnothing(orientation) ? (isnothing(rotation) ? trap.orientation : rotation * trap.orientation) : orientation
+    return Trapezoid1D(
+        trap.rise_time,
+        trap.flat_time,
+        trap.slew_rate * scale,
+        new_orientation,
+        trap.group
+    )
+end
+
+function adjust_internal(trap::Trapezoid3D; scale=1., rotation=nothing)
+    return Trapezoid3D(
+        trap.rise_time,
+        trap.flat_time,
+        (
+            isnothing(rotation) ? 
+            (trap.slew_rate .* scale) : 
+            (rotation * (trap.slew_rate .* scale))
+        ),
+        trap.group
+    )
+end
+
 
 """
     SliceSelect(pulse; orientation=nothing, group=nothing, variables...)

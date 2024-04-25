@@ -1,6 +1,6 @@
 module NoGradientBlocks
 import StaticArrays: SVector, SMatrix
-import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable
+import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable, adjustable
 import ...AbstractTypes: GradientWaveform
 import ..ChangingGradientBlocks: split_gradient
 
@@ -42,5 +42,7 @@ function split_gradient(ngb::NoGradient, times::VariableType...)
     durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(ngb) - times[end]]
     return [NoGradient(d) for d in durations]
 end
+
+adjustable(::NoGradient) = :false
 
 end
