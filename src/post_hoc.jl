@@ -70,15 +70,15 @@ adjust_helper(pair:: Pair, used_names::Set{Symbol}; kwargs...) = adjust_helper(p
 
 
 """
-    merge(sequences...; wait_time=0.)
+    merge_sequences(sequences...; wait_time=0.)
 
 Merge multiple sequences together.
 
 Sequences will be run one after each other with `wait_time` in between.
 """
-merge(sequences::Sequence{S}...; kwargs...) where {S} = merge_internal(sequences...; name=S, kwargs...)
+merge_sequences(sequences::Sequence{S}...; kwargs...) where {S} = merge_internal(sequences...; name=S, kwargs...)
 
-merge(sequences::Sequence...; kwargs...) = merge_internal(sequences...; kwargs...)
+merge_sequences(sequences::Sequence...; kwargs...) = merge_internal(sequences...; kwargs...)
 
 function merge_internal(sequences...; name=:Sequence, wait_time=0.)
     wb = Wait(wait_time)
