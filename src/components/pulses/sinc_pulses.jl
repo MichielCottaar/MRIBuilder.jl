@@ -2,7 +2,7 @@ module SincPulses
 import JuMP: @constraint
 import QuadGK: quadgk
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable
+import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal
 import ...AbstractTypes: RFPulseComponent, split_timestep
 import ..GenericPulses: GenericPulse
 
@@ -105,6 +105,19 @@ end
 function split_timestep(block::SincPulse, precision)
     max_second_derivative = π^2/3 * (amplitude(block) / lobe_duration(block))^2
     return sqrt(2 * precision / max_second_derivative)
+end
+
+function adjust_internal(block::SincPulse; scale=1., frequency=0.)
+    SincPulse(
+        block.apodise,
+        block.Nzeros,
+        block.norm_flip_angle,
+        block.amplitude * scale,
+        block.phase,
+        block.frequency + frequency,
+        block.lobe_duration,
+        block.group
+    )
 end
 
 end

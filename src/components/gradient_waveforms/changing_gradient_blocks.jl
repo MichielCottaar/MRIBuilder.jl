@@ -1,6 +1,8 @@
 module ChangingGradientBlocks
 import StaticArrays: SVector
-import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable
+import Rotations: RotMatrix3
+import LinearAlgebra: I
+import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable, adjust_internal
 import ...AbstractTypes: GradientWaveform
 
 
@@ -99,5 +101,27 @@ function split_gradient(cgb::ChangingGradient, times::VariableType...)
     end
 end
 
+function adjust_internal(cgb::ChangingGradient1D; orientation=nothing, scale=1., rotation=nothing)
+    if !isnothing(orientation) && !isnothing(rotation)
+        error("Cannot set both the gradient orientation and rotation.")
+    end
+    new_orientation = isnothing(orientation) ? (isnothing(rotation) ? cgb.orientation : rotation * cgb.orientation) : orientation
+    return ChangingGradient1D(
+        cgb.gradient_strength_start * scale,
+        cgb.slew_rate * scale,
+        new_orientation,
+        cgb.duration,
+        cgb.group
+    )
+end
+
+function adjust_internal(cgb::ChangingGradient3D; scale=1., rotation=RotMatrix3(I(3)))
+    return ChangingGradient3D(
+        rotation * (cgb.gradient_strength_start .* scale),
+        rotation * (cgb.slew_rate .* scale),
+        cgb.duration,
+        cgb.group
+    )
+end
 
 end

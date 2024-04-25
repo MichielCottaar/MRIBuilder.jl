@@ -2,7 +2,7 @@ module ConstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable
+import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal
 import ..GenericPulses: GenericPulse
 
 """
@@ -64,5 +64,14 @@ end
 
 split_timestep(pulse::ConstantPulse, precision) = Inf
 
+function adjust_internal(block::ConstantPulse; scale=1., frequency=0.)
+    ConstantPulse(
+        block.amplitude * scale,
+        block.duration,
+        block.phase,
+        block.frequency + frequency,
+        block.group,
+    )
+end
 
 end

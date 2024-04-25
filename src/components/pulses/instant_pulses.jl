@@ -2,7 +2,7 @@ module InstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, make_generic, get_free_variable
+import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, make_generic, get_free_variable, adjust_internal
 
 """
     InstantPulse(; flip_angle=nothing, phase=nothing, group=nothing)
@@ -40,5 +40,9 @@ inverse_bandwidth(::InstantPulse) = 0.
 
 
 make_generic(block::InstantPulse) = block
+
+function adjust_internal(block::InstantPulse; scale=1., frequency=0.)
+    InstantPulse(block.flip_angle * scale, block.phase, block.group)
+end
 
 end

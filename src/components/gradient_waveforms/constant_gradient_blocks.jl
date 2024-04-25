@@ -1,6 +1,6 @@
 module ConstantGradientBlocks
 import StaticArrays: SVector
-import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable
+import ....Variables: VariableType, duration, qval, bmat_gradient, gradient_strength, slew_rate, get_free_variable, adjust_internal
 import ...AbstractTypes: GradientWaveform
 import ..ChangingGradientBlocks: split_gradient
 
@@ -71,5 +71,31 @@ function split_gradient(cgb::ConstantGradient, times::VariableType...)
         return [ConstantGradient3D(cgb.gradient_strength, d, cgb.group) for d in durations]
     end
 end
+
+function adjust_internal(cgb::ConstantGradient1D; orientation=nothing, scale=1., rotation=nothing)
+    if !isnothing(orientation) && !isnothing(rotation)
+        error("Cannot set both the gradient orientation and rotation.")
+    end
+    new_orientation = isnothing(orientation) ? (isnothing(rotation) ? cgb.orientation : rotation * cgb.orientation) : orientation
+    return ConstantGradient1D(
+        cgb.gradient_strength * scale,
+        new_orientation,
+        cgb.duration,
+        cgb.group
+    )
+end
+
+function adjust_internal(cgb::ConstantGradient3D; scale=1., rotation=nothing)
+    return ConstantGradient3D(
+        (
+            isnothing(rotation) ? 
+            (cgb.gradient_strength .* scale) : 
+            (rotation * (cgb.gradient_strength .* scale))
+        ),
+        cgb.duration,
+        cgb.group
+    )
+end
+
 
 end

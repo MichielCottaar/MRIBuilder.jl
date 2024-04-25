@@ -2,7 +2,7 @@ module GenericPulses
 
 import Polynomials: fit
 import ...AbstractTypes: RFPulseComponent, split_timestep
-import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic, phase, frequency
+import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic, phase, frequency, adjust_internal
 
 
 """
@@ -153,5 +153,12 @@ function split_timestep(gp::GenericPulse, precision)
     return sqrt(2 * precision / max_second_der)
 end
 
+function adjust_internal(block::GenericPulse; scale=1., frequency=0.)
+    GenericPulse(
+        block.time,
+        block.amplitude .* scale,
+        block.phase .+ (360. * frequency) .* (block.time .- effective_time(block))
+    )
+end
 
 end

@@ -10,6 +10,7 @@ include("components/components.jl")
 include("containers/containers.jl")
 include("pathways.jl")
 include("parts/parts.jl")
+include("post_hoc.jl")
 include("sequences/sequences.jl")
 include("printing.jl")
 include("sequence_io/sequence_io.jl")
@@ -35,6 +36,9 @@ export Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
 
 import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
 export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
+
+import .PostHoc: adjust
+export adjust
 
 import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
 export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI

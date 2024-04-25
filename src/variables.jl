@@ -30,6 +30,18 @@ function fixed(ab::AbstractBlock)
     return typeof(ab)(params...)
 end
 
+
+"""
+    adjust_internal(block, names_used; kwargs...)
+
+Returns the adjusted blocks and add any keywords used in the process to `names_used`.
+
+This is a helper function used by [`adjust`](@ref). 
+"""
+function adjust_internal end
+
+
+
 all_variables_symbols = [
     :block => [
         :duration => "duration of the building block in ms.",

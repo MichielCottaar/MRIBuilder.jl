@@ -1,7 +1,7 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
 import JuMP: @constraint
-import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic
+import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic, adjust_internal
 import ...BuildSequences: global_model
 import ..AbstractTypes: EventComponent, GradientWaveform
 
@@ -69,5 +69,28 @@ effective_time(::InstantGradient) = 0.
 bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
 
 make_generic(ig::InstantGradient) = ig
+
+function adjust_internal(ig::InstantGradient1D; orientation=nothing, scale=1., rotation=nothing)
+    if !isnothing(orientation) && !isnothing(rotation)
+        error("Cannot set both the gradient orientation and rotation.")
+    end
+    new_orientation = isnothing(orientation) ? (isnothing(rotation) ? ig.orientation : rotation * ig.orientation) : orientation
+    return InstantGradient1D(
+        ig.qval * scale,
+        new_orientation,
+        ig.group
+    )
+end
+
+function adjust_internal(ig::InstantGradient3D; scale=1., rotation=nothing)
+    return InstantGradient3D(
+        (
+            isnothing(rotation) ? 
+            (ig.qvec .* scale) : 
+            (rotation * (ig.qvec .* scale))
+        ),
+        ig.group
+    )
+end
 
 end
