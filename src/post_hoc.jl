@@ -5,7 +5,7 @@ module PostHoc
 
 import ..Variables: AbstractBlock, adjust_internal, adjustable
 import ..Components: GradientWaveform, RFPulseComponent, BaseComponent, NoGradient
-import ..Containers: ContainerBlock
+import ..Containers: ContainerBlock, Sequence, Wait
 
 """
     adjust(block; kwargs...)
@@ -67,5 +67,29 @@ adjust_helper(array_variable::AbstractArray, used_names::Set{Symbol}; kwargs...)
 adjust_helper(dict_variable::AbstractDict, used_names::Set{Symbol}; kwargs...) = typeof(dict_variable)(k => adjust_helper(v, used_names; kwargs...) for (k, v) in pairs(dict_variable))
 adjust_helper(tuple_variable::Tuple, used_names::Set{Symbol}; kwargs...) = map(tuple_variable) do v adjust_helper(v, used_names; kwargs...) end
 adjust_helper(pair:: Pair, used_names::Set{Symbol}; kwargs...) = adjust_helper(pair[1], used_names; kwargs...) => adjust_helper(pair[2], used_names; kwargs...)
+
+
+"""
+    merge(sequences...; wait_time=0.)
+
+Merge multiple sequences together.
+
+Sequences will be run one after each other with `wait_time` in between.
+"""
+merge(sequences::Sequence{S}...; kwargs...) where {S} = merge_internal(sequences...; name=S, kwargs...)
+
+merge(sequences::Sequence...; kwargs...) = merge_internal(sequences...; kwargs...)
+
+function merge_internal(sequences...; name=:Sequence, wait_time=0.)
+    wb = Wait(wait_time)
+    new_blocks = ContainerBlock[]
+    for seq in sequences
+        append!(new_blocks, map(b -> b[2], seq.blocks))
+        push!(new_blocks, wb)
+    end
+    new_blocks = new_blocks[1:end-1]
+
+    return Sequence(new_blocks; scanner=sequences[1].scanner, name=name)
+end
 
 end
