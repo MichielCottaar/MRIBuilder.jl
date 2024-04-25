@@ -1,7 +1,7 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
 import JuMP: @constraint
-import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic, adjust_internal
+import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic, adjust_internal, adjustable
 import ...BuildSequences: global_model
 import ..AbstractTypes: EventComponent, GradientWaveform
 
@@ -69,6 +69,8 @@ effective_time(::InstantGradient) = 0.
 bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
 
 make_generic(ig::InstantGradient) = ig
+
+adjustable(::InstantGradient) = :gradient
 
 function adjust_internal(ig::InstantGradient1D; orientation=nothing, scale=1., rotation=nothing)
     if !isnothing(orientation) && !isnothing(rotation)
