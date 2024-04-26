@@ -173,7 +173,7 @@ Converst object into something that can be included in the sequence:
 to_block(cb::ContainerBlock) = cb
 to_block(s::Symbol) = to_block(Val(s))
 to_block(s::Union{VariableType, Nothing, Val{:min}, Val{:max}}) = Wait(s)
-to_block(ec::EventComponent) = BuildingBlock([NoGradient{3}(duration(ec)), (0., ec)])
+to_block(ec::EventComponent) = BuildingBlock([NoGradient(duration(ec)), (0., ec)])
 
 
 function make_generic(seq::BaseSequence)

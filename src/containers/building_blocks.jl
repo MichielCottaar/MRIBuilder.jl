@@ -274,7 +274,6 @@ end
 function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orientation=nothing, group=nothing)
     events = Any[events...]
     waveform = Any[waveform...]
-    ndim = isnothing(orientation) ? 1 : 3
     zero_grad = isnothing(orientation) ? zeros(3) : 0.
     if length(waveform) == 0 || waveform[1][1] > 0.
         pushfirst!(waveform, (0., zero_grad))
@@ -284,7 +283,7 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
     for (index_grad, ((prev_time, prev_grad), (time, grad))) in enumerate(zip(waveform[1:end-1], waveform[2:end]))
         duration = time - prev_time
         if norm(prev_grad) <= 1e-12 && norm(grad) <= 1e-12
-            push!(components, NoGradient{ndim}(duration))
+            push!(components, NoGradient(duration))
         elseif norm(prev_grad) ≈ norm(grad)
             push!(components, ConstantGradient(prev_grad, orientation, duration, group))
         else
@@ -352,6 +351,6 @@ end
 
 duration(wb::Wait) = wb.duration
 Base.keys(::Wait) = (Val(:empty),)
-Base.getindex(wb::Wait, ::Val{:empty}) = NoGradient{1}(wb.duration)
+Base.getindex(wb::Wait, ::Val{:empty}) = NoGradient(wb.duration)
 
 end
