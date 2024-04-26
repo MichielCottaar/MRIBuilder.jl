@@ -79,6 +79,7 @@ function gradient_orientation(bb::BaseBuildingBlock)
             return gradient_orientation(e)
         end
     end
+    error("No gradient orientation found for building block $bb")
 end
 
 
