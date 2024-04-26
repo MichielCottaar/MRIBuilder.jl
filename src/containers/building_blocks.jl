@@ -9,7 +9,7 @@ import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_ti
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient
 import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase, frequency
-import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient
+import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient, gradient_orientation
 
 """
 Basic BuildingBlock, which can consist of a gradient waveforms with any number of RF pulses/readouts overlaid
@@ -66,6 +66,19 @@ function ndim_grad(bb::BaseBuildingBlock)
         end
     end
     error("$(typeof(bb)) contains both 1D and 3D gradient waveforms.")
+end
+
+function gradient_orientation(bb::BaseBuildingBlock)
+    for (_, ws) in waveform_sequence(bb)
+        if ws isa GradientWaveform{1}
+            return gradient_orientation(ws)
+        end
+    end
+    for (_, e) in events(bb)
+        if e isa InstantGradient{1}
+            return gradient_orientation(e)
+        end
+    end
 end
 
 
@@ -190,7 +203,16 @@ function qval(bb::BaseBuildingBlock, index1, index2)
     if (!isnothing(index1)) && (index1 == index2)
         return 0.
     end
-    sum([qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
+    res = sum([qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
+
+    t1 = isnothing(index1) ? 0. : start_time(bb, index1)
+    t2 = isnothing(index2) ? duration(bb) : start_time(bb, index2)
+    for (key, event) in events(bb)
+        if event isa InstantGradient && (t1 <= start_time(bb, key) <= t2)
+            res = res .+ qval(event)
+        end
+    end
+    return res
 end
 qval(bb::BaseBuildingBlock) = qval(bb, nothing, nothing)
 

@@ -227,15 +227,7 @@ function bmat_gradient end
 
 Returns the gradient orientation.
 """
-function gradient_orientation(bb::AbstractBlock)
-    if hasproperty(bb, :orientation)
-        return bb.orientation
-    else
-        return gradient_orientation(get_gradient(bb))
-    end
-end
-
-gradient_orientation(nt::NamedTuple) = map(gradient_orientation, nt)
+function gradient_orientation end
 
 
 function effective_time end
@@ -324,7 +316,7 @@ for base_fn in [:qval, :gradient_strength, :slew_rate]
             elseif value isa AbstractVector
                 return value
             else
-                return value .* bb.orientation
+                return value .* gradient_orientation(bb)
             end
         end
     end

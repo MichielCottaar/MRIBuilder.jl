@@ -4,7 +4,7 @@ Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic, gradient_strength, amplitude, phase, gradient_strength3, get_gradient, get_pulse, frequency
+import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic, gradient_strength, amplitude, phase, gradient_strength3, get_gradient, get_pulse, frequency, gradient_orientation, get_gradient
 import ...BuildSequences: global_model, global_scanner
 import ...Components: EventComponent, NoGradient
 import ...Scanners: Scanner, B0
@@ -75,6 +75,12 @@ function start_time(bs::BaseSequence{N}, s::Symbol) where {N}
     end
     return start_time(bs, index)
 end
+
+function gradient_orientation(seq::BaseSequence)
+    return gradient_orientation(get_gradient(seq))
+end
+
+gradient_orientation(nt::NamedTuple) = map(gradient_orientation, nt)
 
 
 """

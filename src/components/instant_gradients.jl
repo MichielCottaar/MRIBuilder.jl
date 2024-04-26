@@ -1,7 +1,7 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
 import JuMP: @constraint
-import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic, adjust_internal, adjustable
+import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic, adjust_internal, adjustable, gradient_orientation
 import ...BuildSequences: global_model
 import ..AbstractTypes: EventComponent, GradientWaveform
 
@@ -38,7 +38,7 @@ An [`InstantGradient`](@ref) with a fixed orientation.
 """
 struct InstantGradient1D <: InstantGradient{1}
     qval :: VariableType
-    orientation :: SVector{3, Number}
+    orientation :: SVector{3, Float64}
     group :: Union{Nothing, Symbol}
 end
 
@@ -71,6 +71,8 @@ bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3
 make_generic(ig::InstantGradient) = ig
 
 adjustable(::InstantGradient) = :gradient
+
+gradient_orientation(ig::InstantGradient{1}) = ig.orientation
 
 function adjust_internal(ig::InstantGradient1D; orientation=nothing, scale=1., rotation=nothing)
     if !isnothing(orientation) && !isnothing(rotation)
