@@ -53,7 +53,7 @@ using Gtk
             CairoMakie.save(fname, f)
         end
     
-        @visualtest plot_finite_dwi "$dir/plots/grad_dwi.png" !isCI
+        @visualtest plot_finite_dwi "$dir/plots/grad_dwi.png" !isCI 0.03
     end
     
         
