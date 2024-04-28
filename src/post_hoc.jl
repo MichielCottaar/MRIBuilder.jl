@@ -27,7 +27,7 @@ The time between these repeated sequences can be adjusted using the keywords des
 e.g., `merge=(wait_time=10, )` adds a wait time of 10 ms between each repeated sequence.
 
 Specific sequence components that can be adjusted are identified by their `group` name.
-For example, `adjust(sequence, dwi=(orientation=[0, 1, 0], ))` will set any gradient in the group `dwi` to point in the y-direction.
+For example, `adjust(sequence, diffusion=(orientation=[0, 1, 0], ))` will set any gradient in the group `:diffusion` to point in the y-direction.
 
 To affect all gradients or pulses, use `gradient=` or `pulse`, e.g.
 `adjust(sequence, pulse=(scale=0.5, ))`
