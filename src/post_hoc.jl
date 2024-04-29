@@ -133,12 +133,13 @@ merge_sequences(sequences::Sequence...; kwargs...) = merge_internal(sequences...
 
 function merge_internal(sequences...; name=:Sequence, wait_time=0.)
     wb = Wait(wait_time)
-    new_blocks = ContainerBlock[]
-    for seq in sequences
-        append!(new_blocks, map(b -> b[2], seq.blocks))
-        push!(new_blocks, wb)
+    new_blocks = ContainerBlock[sequences[1]]
+    for seq in sequences[2:end]
+        if !iszero(wait_time)
+            push!(new_blocks, wb)
+        end
+        push!(new_blocks, seq)
     end
-    new_blocks = new_blocks[1:end-1]
 
     return Sequence(new_blocks; scanner=sequences[1].scanner, name=name)
 end

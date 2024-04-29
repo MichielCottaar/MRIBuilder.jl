@@ -40,9 +40,11 @@
                     
                     new_dwi = adjust(dwi, diffusion=(scale=[0.5, 1.], orientation=[0., 1., 0.]))
                     @test duration(new_dwi) ≈ 160
+                    @test length(new_dwi) == 2
 
                     new_dwi = adjust(dwi, diffusion=(scale=[0.5, 1.], orientation=[0., 1., 0.]), merge=(wait_time=10, ))
                     @test duration(new_dwi) ≈ 170
+                    @test length(new_dwi) == 3
                 end
             end
             @testset "Rotate gradient" begin
