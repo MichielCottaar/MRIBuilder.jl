@@ -15,8 +15,9 @@ As an example, the following creates and plots a [`DiffusionSpinEcho`](@ref) tha
 using MRIBuilder
 using CairoMakie
 sequence = DiffusionSpinEcho(bval=1., TE=:min, slice_thickness=2)
-plot(sequence)
-save("dwi_1_min_2.png") # hide
+f = plot(sequence)
+f
+save("dwi_1_min_2.png", f) # hide
 nothing # hide
 ```
 ![DWI sequence diagram](dwi_1_min_2.png)
@@ -26,8 +27,9 @@ If we want a specific [`diffusion_time`](@ref), we can just add it to the constr
 using MRIBuilder # hide
 using CairoMakie # hide
 sequence = DiffusionSpinEcho(bval=1., diffusion_time=80, TE=:min, slice_thickness=2)
-plot(sequence)
-save("dwi_1_80_min_2.png") # hide
+f = plot(sequence)
+f
+save("dwi_1_80_min_2.png", f) # hide
 nothing # hide
 ```
 ![DWI sequence diagram with fixed diffusion time](dwi_1_80_min_2.png)
@@ -38,8 +40,9 @@ and the additional constraint will just be included in the [sequence optimisatio
 using MRIBuilder # hide
 using CairoMakie # hide
 sequence = DiffusionSpinEcho(bval=1., diffusion_time=80, TE=:min, slice_thickness=2, gradient=(rise_time=15, ))
-plot(sequence)
-save("dwi_1_80_min_2_15.png") # hide
+f = plot(sequence)
+f
+save("dwi_1_80_min_2_15.png", f) # hide
 nothing # hide
 ```
 ![DWI sequence diagram with fixed diffusion time and rise time](dwi_1_80_min_2_15.png)
@@ -49,9 +52,10 @@ Most sequences will only include an instant readout, unless you directly set the
 ```@example
 using MRIBuilder # hide
 using CairoMakie # hide
-sequence = DiffusionSpinEcho(bval=1., diffusion_time=80, TE=:min, voxel_size=2, resolution=(20, 20, 20), gradient=(rise_time=15, ))
-plot(sequence)
-save("dwi_1_80_min_2_15_epi.png") # hide
+sequence = DiffusionSpinEcho(bval=1., TE=:min, voxel_size=2, resolution=(20, 20, 20))
+f = plot(sequence)
+f
+save("dwi_1_80_min_2_15_epi.png", f) # hide
 nothing # hide
 ```
 ![DWI sequence diagram with EPI readout](dwi_1_80_min_2_15_epi.png)
