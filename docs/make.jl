@@ -21,7 +21,7 @@ makedocs(;
         "Optimisation" => "sequence_optimisation.md",
         "Implemented sequences" => "implemented_sequences.md",
         "Scanners" => "scanners.md",
-        "API" => "api.md",
+        "Internal API" => "api.md",
     ],
     warnonly=Documenter.except(:example_block),
 )

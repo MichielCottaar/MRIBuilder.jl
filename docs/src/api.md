@@ -2,16 +2,7 @@
 CollapsedDocStrings = true
 ```
 
-# MRIBuilder.jl API
-## Scanners
-
-## Optimisation helper functions
-```@autodocs
-Modules = [
-    MRIBuilder.BuildSequences,
-]
-```
-
+# MRIBuilder.jl internal API
 ## Sequence components
 ```@autodocs
 Modules = [
@@ -43,14 +34,8 @@ Modules = [
 ]
 ```
 
-## Pathways
-```@autodocs
-Modules = [
-    MRIBuilder.Pathways,
-]
-```
-
-## Pre-defined sequence components
+## Pre-defined sequence parts
+There are [helper functions](@ref helper_functions) available to actually add these to a sequence.
 ```@autodocs
 Modules = [
     MRIBuilder.Parts,
@@ -58,7 +43,6 @@ Modules = [
     MRIBuilder.Parts.SpoiltSliceSelects,
     MRIBuilder.Parts.SliceSelectRephases,
     MRIBuilder.Parts.EPIReadouts,
-    MRIBuilder.Parts.HelperFunctions,
 ]
 ```
 ## Post-hoc adjustments
