@@ -17,6 +17,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Implemented sequences" => "implemented_sequences.md"
         "API" => "api.md",
     ],
     warnonly=Documenter.except(:example_block),
