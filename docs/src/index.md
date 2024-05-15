@@ -25,7 +25,3 @@ Like any Julia package, Julia can be installed using the built-in [Julia package
 ```
 pkg> add https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl.git
 ```
-
-## Documentation overview
-```@index
-```
