@@ -42,8 +42,8 @@ Over the pathway the following values are computed. Each can be accessed by call
 The area under curve, q-values, and b-values are computed separately for each group of gradients (depending on the `group` keyword set during construction).
 - [`qvec`](@ref): Net displacement vector in k-space/q-space.
 - [`qval`](@ref)/[`area_under_curve`](@ref): size of the displacement in k-space/q-space. For a spoiled pathway, this should be large compared with 1/voxel size; for unspoiled pathways it should be (close to) zero.
-- [`bmat`](@ref): Net diffusion weighting due to gradients along the [`Pathway`](@ref) in matrix form.
-- [`bval`](@ref): Net diffusion weighting due to gradients along the [`Pathway`](@ref) as a single number.
+- [`bmat`](@ref): Net diffusion weighting due to gradients along the `Pathway` in matrix form.
+- [`bval`](@ref): Net diffusion weighting due to gradients along the `Pathway` as a single number.
 """
 struct Pathway
     # user provided
@@ -237,7 +237,7 @@ end
 """
 Helper structure for [`PathwayWalker`](@ref), which is itself a helper for `Pathway`.  You are deep down the rabit hole now...
     
-For documentation, see that structure and [`walk_pathway`](@ref) and [`update_walker_gradient!`](@ref).
+For documentation, see that structure and [`walk_pathway!`](@ref) and [`update_walker_gradient!`](@ref).
 """
 mutable struct GradientTracker
     last_gradient_time :: VariableType
@@ -251,7 +251,7 @@ GradientTracker() = GradientTracker(0., zeros(3), zeros(3, 3))
 """
 Helper structure for `Pathway`.
     
-For documentation, see that structure and [`walk_pathway`](@ref).
+For documentation, see that structure and [`walk_pathway!`](@ref).
 """
 mutable struct PathwayWalker
     last_pulse_time :: VariableType

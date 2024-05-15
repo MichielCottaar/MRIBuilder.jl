@@ -80,7 +80,7 @@ Here the coherence [`Pathway`](@ref) sets out what a specific set of spins might
 In this case the sequence experiences two RF pulses and is excited by the first pulse and flipped by the second (`[90, 180]`).
 It is then observed during the first readout (`1`). 
 For such a [`Pathway`](@ref) we can compute:
-- the time that the spin spends in any direction ([`duration_state`](@ref)), which is particularly useful in the transverse direction to compute the amount of T2-weighting ([`duration_transverse`](@ref)) and the amount of time spent dephasing to compute the amount of T2*-weighting ([`duration_dephase`](@ref)).
+- the time that the spin spends in each longitudinal and transverse direction, which is particularly useful in the transverse direction to compute the amount of T2-weighting ([`duration_transverse`](@ref)) and the amount of time spent dephasing to compute the amount of T2*-weighting ([`duration_dephase`](@ref)).
 - the diffusion weighting experienced ([`bval`](@ref), [`bmat`](@ref), and [`qvec`](@ref))
 By defining a default pathway for the sequence, the user can now put constraints on any or all of these variables.
 

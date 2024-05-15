@@ -6,8 +6,8 @@ In addition this defines:
 - [`VariableType`](@ref): parent type for any variables (whether number or JuMP variable).
 - [`get_free_variable`](@ref): helper function to create new JuMP variables.
 - [`VariableNotAvailable`](@ref): error raised if variable is not defined for specific [`AbstractBlock`](@ref).
-- [`set_simple_constraints`](@ref): call [`apply_simple_constraint`](@ref) for each keyword argument.
-- [`apply_simple_constraint`](@ref): set a simple equality constraint.
+- [`set_simple_constraints!`](@ref): call [`apply_simple_constraint!`](@ref) for each keyword argument.
+- [`apply_simple_constraint!`](@ref): set a simple equality constraint.
 - [`get_pulse`](@ref)/[`get_gradient`](@ref)/[`get_readout`](@ref): Used to get the pulse/gradient/readout part of a building block
 - [`gradient_orientation`](@ref): returns the gradient orientation of a waveform if fixed.
 """
@@ -36,7 +36,7 @@ end
 
 Returns the adjusted blocks and add any keywords used in the process to `names_used`.
 
-This is a helper function used by [`adjust`](@ref). 
+This is a helper function used by `adjust`. 
 """
 function adjust_internal end
 

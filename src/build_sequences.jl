@@ -105,6 +105,13 @@ end
 build_sequence(f::Function, optimiser_constructor; kwargs...) = build_sequence(f, Default_Scanner, optimiser_constructor; kwargs...)
 
 
+"""
+    global_model()
+
+Return the currently set JuMP model.
+
+The model can be set using [`build_sequence`](@ref)
+"""
 function global_model()
     if GLOBAL_MODEL[] == IGNORE_MODEL
         error("No global model has been set. Please embed any sequence creation within an `build_sequence` block.")
@@ -112,6 +119,13 @@ function global_model()
     return GLOBAL_MODEL[]
 end
 
+"""
+    global_scanner()
+
+Return the currently set [`Scanner`](@ref).
+
+The scanner can be set using [`build_sequence`](@ref)
+"""
 function global_scanner()
     if !isfinite(GLOBAL_SCANNER[].gradient)
         error("No valid scanner has been set. Please provide one when calling `build_sequence`.")
@@ -123,8 +137,9 @@ end
 """
     fixed(building_block)
 
-Returns an equiavalent [`BuildingBlock`](@ref) with all free variables replaced by numbers.
-This will only work after calling [`optimize!`](@ref)([`global_model`](@ref)()).
+Return an equiavalent `BuildingBlock` with all free variables replaced by numbers.
+
+This will only work after calling `optimize!`(@ref)([`global_model`](@ref)()).
 It is used internally by [`build_sequence`](@ref).
 """
 fixed(some_value) = some_value
