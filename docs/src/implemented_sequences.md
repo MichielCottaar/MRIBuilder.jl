@@ -12,6 +12,6 @@ When reading the help, you will notice that there are two type of expected input
 Internally whenever you call a sequence function it will run a non-linear optimisation given any constraints and/or objectives you have given to the `Variables`. It will give a single sequence that matches all of the constraints. If no solution exists, an error will be raised instead. If multiple solutions exist, a single (somewhat random) one is returned.
 
 ## Available sequences
-```@autodocs
-Modules = [MRIBuilder.Sequences]
-```
+- [`GradientEcho`](@ref)
+- [`SpinEcho`](@ref)
+- [`DWI`](@ref)/[`DW_SE`](@ref)/[`DiffusionSpinEcho`](@ref)
