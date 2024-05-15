@@ -3,6 +3,19 @@ CollapsedDocStrings = true
 ```
 
 # MRIBuilder.jl internal API
+## Type diagram
+```@eval
+import MRIBuilder.Variables: AbstractBlock
+import InteractiveUtils: subtypes
+using AbstractTrees
+import Markdown
+AbstractTrees.children(x::Type) = subtypes(x)
+io = IOBuffer()
+print_tree(io, AbstractBlock)
+seek(io, 0)
+Markdown.parse("```\n" * read(io, String) * "```")
+```
+
 ## Sequence components
 ```@autodocs
 Modules = [
