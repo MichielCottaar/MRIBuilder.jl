@@ -1,4 +1,4 @@
-# Using implemented sequences (@id implemented_sequences)
+# [Using implemented sequences](@id implemented_sequences)
 
 ## Usage
 
@@ -8,10 +8,17 @@ To get help on a specific sequence, either follow the link in the sequence list 
 
 When reading the help, you will notice that there are two type of expected inputs:
 - `Parameters`: these define the type of components that will be includes, e.g., the shape of the excitation pulse or the readout strategy. These parameters have to be set to certain fixed values. If unset, they will be determined by their default value as defined in the documentation.
-- `Variables`: These are a special type of parameters. In addition to being set to a fixed value, they can also be set to `:min` or `:max` to minimise or maximise the variable. If they are unset, they will be determined based on the other variables.
-Internally whenever you call a sequence function it will run a non-linear optimisation given any constraints and/or objectives you have given to the `Variables`. It will give a single sequence that matches all of the constraints. If no solution exists, an error will be raised instead. If multiple solutions exist, a single (somewhat random) one is returned.
+- `Variables`: These are a special type of parameters. In addition to being set to a fixed value, they can also be set to `:min` or `:max` to minimise or maximise the variable. If they are unset, they will be determined based on the other variables. For more details, see the section on [sequence optimisation](@ref sequence_optimisation).
 
 ## Available sequences
-- [`GradientEcho`](@ref)
-- [`SpinEcho`](@ref)
-- [`DWI`](@ref)/[`DW_SE`](@ref)/[`DiffusionSpinEcho`](@ref)
+```@meta
+CollapsedDocStrings = true
+```
+```@autodocs
+Modules = [
+    MRIBuilder.Sequences,
+    MRIBuilder.Sequences.GradientEchoes,
+    MRIBuilder.Sequences.SpinEchoes,
+    MRIBuilder.Sequences.DiffusionSpinEchoes,
+]
+```

@@ -3,12 +3,18 @@ CollapsedDocStrings = true
 ```
 
 # MRIBuilder.jl API
+## Scanners
+
+## Optimisation helper functions
 ```@autodocs
 Modules = [
-    MRIBuilder, 
-    MRIBuilder.Scanners,
     MRIBuilder.BuildSequences,
-    MRIBuilder.Variables,
+]
+```
+
+## Sequence components
+```@autodocs
+Modules = [
     MRIBuilder.Components,
     MRIBuilder.Components.AbstractTypes,
     MRIBuilder.Components.GradientWaveforms,
@@ -24,21 +30,55 @@ Modules = [
     MRIBuilder.Components.Readouts,
     MRIBuilder.Components.Readouts.ADCs,
     MRIBuilder.Components.Readouts.SingleReadouts,
+]
+```
+## Containers for sequence components
+```@autodocs
+Modules = [
     MRIBuilder.Containers,
     MRIBuilder.Containers.Abstract,
     MRIBuilder.Containers.BuildingBlocks,
     MRIBuilder.Containers.BaseSequences,
     MRIBuilder.Containers.Alternatives,
+]
+```
+
+## Pathways
+```@autodocs
+Modules = [
     MRIBuilder.Pathways,
+]
+```
+
+## Pre-defined sequence components
+```@autodocs
+Modules = [
     MRIBuilder.Parts,
+    MRIBuilder.Parts.Trapezoids,
+    MRIBuilder.Parts.SpoiltSliceSelects,
+    MRIBuilder.Parts.SliceSelectRephases,
+    MRIBuilder.Parts.EPIReadouts,
+    MRIBuilder.Parts.HelperFunctions,
+]
+```
+## Post-hoc adjustments
+```@autodocs
+Modules = [
     MRIBuilder.PostHoc,
-    MRIBuilder.Sequences,
-    MRIBuilder.Sequences.GradientEchoes,
-    MRIBuilder.Sequences.SpinEchoes,
-    MRIBuilder.Sequences.DiffusionSpinEchoes,
-    MRIBuilder.Printing,
+]
+```
+
+## Sequence I/O
+```@autodocs
+Modules = [
     MRIBuilder.SequenceIO,
     MRIBuilder.SequenceIO.Pulseq,
+]
+```
+
+## Plot
+```@autodocs
+Modules = [
     MRIBuilder.Plot,
 ]
 ```
