@@ -9,7 +9,7 @@ import ...Components: RFPulseComponent
 
 Creates an excitatory RF pulse with slice selection and a rephasing gradient.
 
-Parameters are the same as for [`SliceSelect`](@Ref)
+Parameters are the same as for [`SliceSelect`](@ref).
 """
 struct SliceSelectRephase{N} <: BaseSequence{2}
     slice_select :: SliceSelect{N}

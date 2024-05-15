@@ -17,12 +17,12 @@ By default, an instant excitation pulse and readout event are used.
 If image parameters are provided, this will switch to a sinc pulse and EPI readout.
 
 ## Parameters
-- [`excitation`](@ref): properties of the excitation pulse as described in [`excitation_pulse`](@ref).
-- [`readout`](@ref): properties of the readout as described in [`readout_event`](@ref).
-- [`spoiler`](@ref): if set adds a spoiler [`gradient_spoiler`](@ref) gradient after the readout (e.g., `spoiler=()` to add a gradient in the z-direction of the `FOV` coordinate system that fully dephases spins over 1 mm).
+- `excitation`: properties of the excitation pulse as described in [`excitation_pulse`](@ref).
+- `readout`: properties of the readout as described in [`readout_event`](@ref).
+- `spoiler`: if set adds a spoiler [`gradient_spoiler`](@ref) gradient after the readout (e.g., `spoiler=()` to add a gradient in the z-direction of the `FOV` coordinate system that fully dephases spins over 1 mm).
 - Image parameters ([`resolution`](@ref)/[`fov`](@ref)/[`voxel_size`](@ref)/[`slice_thickness`](@ref)): describe the properties of the resulting image. See [`interpret_image_size`](@ref) for details.
-- [`optim`](@ref): parameters to pass on to the Ipopt optimiser (see https://coin-or.github.io/Ipopt/OPTIONS.html).
-- [`scanner`](@ref): Sets the [`Scanner`](@ref) used to constraint the gradient parameters. If not set, the [`Default_Scanner`](@ref) will be used.
+- `optim`: parameters to pass on to the Ipopt optimiser (see https://coin-or.github.io/Ipopt/OPTIONS.html).
+- `scanner`: Sets the [`Scanner`](@ref) used to constraint the gradient parameters. If not set, the [`Default_Scanner`](@ref) will be used.
 
 ## Variables
 - [`TE`](@ref)/[`echo_time`](@ref): echo time between excitation pulse and readout in ms (required).

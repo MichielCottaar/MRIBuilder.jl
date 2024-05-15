@@ -14,7 +14,7 @@ import ...Containers: BaseBuildingBlock
 
 
 """
-Parent type for any [`BuildingBlock`](@ref) that has a trapezoidal gradient waveform.
+Parent type for any `BuildingBlock` that has a trapezoidal gradient waveform.
 
 Sub-types:
 - [`Trapezoid`](@ref)
@@ -151,7 +151,7 @@ end
 
 Defines a trapezoidal gradient with a pulse played out during the flat time.
 
-Parameters and variables are identical as for [`TrapezoidGradient`](@ref) with the addition of:
+Parameters and variables are identical as for [`Trapezoid`](@ref) with the addition of:
 
 ## Parameters
 - `pulse`: sub-type of [`RFPulseComponent`](@ref) that describes the RF pulse.
@@ -187,7 +187,7 @@ effective_time(ss::SliceSelect) = effective_time(ss, :pulse)
 
 Defines a trapezoidal gradient with an ADC readout overlaid.
 
-Parameters and variables are identical as for [`TrapezoidGradient`](@ref) with the addition of:
+Parameters and variables are identical as for [`Trapezoid`](@ref) with the addition of:
 
 ## Parameters
 - `adc`: [`ADC`](@ref) object that describes the readout.

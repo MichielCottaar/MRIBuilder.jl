@@ -89,7 +89,7 @@ Split a single gradient at a given times.
 All times are relative to the start of the gradient block (in ms).
 Times are assumed to be in increasing order and between 0 and the duration of the gradient block.
 
-For N times this returns a vector with the N+1 replacement [`ConstantGradientBlock`](@ref) or [`ChangingGradientBlock`](@ref) objects.
+For N times this returns a vector with the N+1 replacement [`ConstantGradient`](@ref) or [`ChangingGradient`](@ref) objects.
 """
 function split_gradient(cgb::ChangingGradient, times::VariableType...)
     all_times = [0., times...]

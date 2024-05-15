@@ -361,6 +361,11 @@ function effective_time(bb::BuildingBlock)
     return effective_time(bb, index)
 end
 
+"""
+An empty BuildingBlock representing dead time.
+
+It only has a single variable, namely its [`duration`](@ref).
+"""
 struct Wait <: BaseBuildingBlock
     duration :: VariableType
     function Wait(var)
