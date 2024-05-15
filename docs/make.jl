@@ -17,6 +17,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "API" => "api.md",
     ],
     warnonly=Documenter.except(:example_block),
 )
