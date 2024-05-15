@@ -21,7 +21,7 @@ Rather than just directly running the sequences from this library on the scanner
 
 ## Installation
 It can be run from the command line using the Julia REPL, from a Julia script, or in a [Jupyter notebook](https://jupyter.org).
-Like any Julia package, Julia can be installed using the built-in Julia package manager
+Like any Julia package, Julia can be installed using the built-in [Julia package manager](https://pkgdocs.julialang.org/v1/):
 ```
 pkg> add https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl.git
 ```
