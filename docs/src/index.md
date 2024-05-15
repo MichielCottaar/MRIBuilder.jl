@@ -1,7 +1,3 @@
-```@meta
-CurrentModule = MRIBuilder
-```
-
 # MRIBuilder
 [MRIBuilder](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl) allows for the creation and optimisation of MRI sequences within [Julia](https://julialang.org).
 
