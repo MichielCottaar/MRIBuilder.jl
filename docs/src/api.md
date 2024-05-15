@@ -45,13 +45,6 @@ Modules = [
     MRIBuilder.Parts.EPIReadouts,
 ]
 ```
-## Post-hoc adjustments
-```@autodocs
-Modules = [
-    MRIBuilder.PostHoc,
-]
-```
-
 ## Sequence I/O
 ```@autodocs
 Modules = [

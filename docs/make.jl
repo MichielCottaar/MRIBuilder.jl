@@ -20,6 +20,8 @@ makedocs(;
         "Home" => "index.md",
         "Optimisation" => "sequence_optimisation.md",
         "Implemented sequences" => "implemented_sequences.md",
+        "Defining sequences" => "defining_sequence.md",
+        "Post-hoc adjustments" => "adjust_sequences.md",
         "Scanners" => "scanners.md",
         "Internal API" => "api.md",
     ],

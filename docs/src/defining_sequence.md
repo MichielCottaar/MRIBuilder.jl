@@ -103,7 +103,7 @@ Modules = [
 ```
 
 
-## Pathways
+## Pathways API
 ```@autodocs
 Modules = [
     MRIBuilder.Pathways,
