@@ -1,318 +1,525 @@
 module Pulseq
-import ...Variables: duration
-import ...Scanners: Scanner
-import ...Components: GenericPulse, GradientWaveform, ADC
-import ...Containers: BuildingBlock, Sequence, Wait
-import DataStructures: OrderedDict
-import Interpolations: linear_interpolation, Flat
-import StaticArrays: SVector
-
-struct PulseqSection
-    title :: String
-    content :: Vector{String}
-end
-
-struct CompressedPulseqShape
-    id :: Int
-    num :: Int
-    samples :: Vector{Float64}
-end
 
 
 """
-    control_points(shape::CompressedPulseqShape)
-
-Returns a tuple with:
-- vector of times
-- vector of amplitudes
-"""
-function control_points(pulseq::CompressedPulseqShape)
-    compressed = length(pulseq.samples) != pulseq.num
-    if !compressed
-        times = range(0, 1, length=pulseq.num)
-        return (times, pulseq.samples)
-    end
-    times = [zero(Float64)]
-    amplitudes = [pulseq.samples[1]]
-    repeating = false
-    time_norm = 1 / (pulseq.num - 1)
-    prev_sample = pulseq.samples[1]
-    prev_applied = true
-    for sample in pulseq.samples[2:end]
-        if repeating
-            nrepeats = Int(sample) + 2
-            if prev_applied
-                nrepeats -= 1
-            end
-            push!(times, times[end] + nrepeats * time_norm)
-            push!(amplitudes, amplitudes[end] + nrepeats * prev_sample)
-            repeating = false
-            prev_applied = true
-        elseif sample == prev_sample
-            repeating = true
-        else
-            if !prev_applied
-                push!(times, times[end] + time_norm)
-                push!(amplitudes, amplitudes[end] + prev_sample)
-            end
-            prev_sample = sample
-            prev_applied = false
-        end
-    end
-    if !prev_applied
-        push!(times, times[end] + time_norm)
-        push!(amplitudes, amplitudes[end] + prev_sample)
-    end
-    return (times, amplitudes)
-end
-
-"""
-    read_pulseq(IO; scanner=Scanner(B0=B0), B0=3., TR=<sequence duration>)
+    read_pulseq(IO)
 
 Reads a sequence from a pulseq file (http://pulseq.github.io/).
 Pulseq files can be produced using matlab (http://pulseq.github.io/) or python (https://pypulseq.readthedocs.io/en/master/).
 """
-function read_pulseq(io::IO; kwargs...)
-    keywords = read_pulseq_sections(io)
-    return build_sequence(; kwargs..., keywords...)
+function read_pulseq(io::IO)
+    sections = parse_pulseq_sections(io)
+    return parse_all_sections(sections)
 end
 
-function read_pulseq_sections(io::IO)
-    sections = PulseqSection[]
-    version = nothing
-    title = ""
+"""
+    write_pulseq(IO, sequence)
+
+Writes a sequence to an output IO file.
+"""
+function write_pulseq(io::IO, sequence::PulseqSequence)
+    if sequence.version < v"1.4"
+        error("Can only write to pulseq version 1.4 or later.")
+    end
+    sections = gen_all_sections(sequence)
+    write_section.(io, sections)
+end
+
+
+"""
+    parse_pulseq_dict(line, names, dtypes)
+
+Parse a line of integers/floats with known names and dtypes.
+
+This is useful to parse most of the columnar data in Pulseq, such as in BLOCKS, RF, GRADIENTS, etc.
+"""
+function parse_pulseq_dict(line, names, dtypes)
+    parts = split(line)
+    @assert length(parts) == length(names)
+    values = parse.(dtypes, split(line))
+    @assert names[1] == :id
+    return Dict(Symbol(name) => value for (name, value) in zip(names, values))
+end
+
+"""
+    parse_pulseq_properties(lines)
+
+Parse any `pulseq` section formatted as:
+```
+<name> <value>
+<name2> <value2>
+...
+```
+
+This includes the VERSION, DEFINITIONS, and part of the SHAPES
+"""
+function parse_pulseq_properties(strings::Vector{<:AbstractString})
+    result = Dict{String, Any}()
+    for s in strings
+        (name, value) = split(s, limit=2)
+        result[name] = _parse_value(value)
+    end
+    return result
+end
+
+function _parse_value(value::AbstractString)
+    for t in (Int, Float64)
+        try
+            return parse(t, value)
+        catch
+        end
+    end
+    for t in (Int, Float64)
+        try
+            return parse.(t, split(value))
+        catch
+        end
+    end
+    return value
+end
+
+
+
+"""
+    PulseqSection(:<title>)(lines)
+
+Represents a section in the pulseq file format.
+"""
+struct PulseqSection{T}
+    content :: Vector{String}
+end
+
+"""
+    parse_pulseq_sections(io)
+
+Reads a Pulseq file into a dictionary of [`PulseqSection`](@ref) objects.
+"""
+function parse_pulseq_sections(io::IO)
+    sections = Dict{String, PulseqSection}()
+    current_title = ""
     for line in readlines(io)
         line = strip(line)
         if length(line) == 0 || line[1] == '#'
             continue  # ignore comments
         end
         if line[1] == '[' && line[end] == ']'
-            if title == "VERSION"
-                version = parse_pulseq_section(sections[end]).second
-            end
             # new section starts
-            title = line[2:end-1]
-            push!(sections, PulseqSection(title, String[]))
-        elseif length(sections) > 0
-            push!(sections[end].content, line)
+            current_title = lowercase(line[2:end-1])
+            sections[current_title] = PulseqSection{Symbol(current_title)}(String[])
+        elseif length(current_title) > 0
+            push!(sections[current_title].content, line)
         else
             error("Content found in pulseq file before first section")
         end
     end
-    Dict(filter(pair -> !isnothing(pair), parse_pulseq_section.(sections, version))...)
+    return sections
 end
 
-function parse_pulseq_ordered_dict(strings::Vector{<:AbstractString}, names, dtypes)
-    as_dict = OrderedDict{Int, NamedTuple{Tuple(names), Tuple{dtypes...}}}()
-    for line in strings
-        parts = split(line)
-        @assert length(parts) == length(names)
-        values = parse.(dtypes, split(line))
-        @assert names[1] == :id
-        as_dict[values[1]] = (; zip(names, values)...)
+# Writing pulseq files
+
+struct PulseqShape
+    samples :: Vector{Float64}
+end
+
+struct PulseqRFPulse
+    amplitude :: Float64
+    magnitude :: PulseqShape
+    phase :: PulseqShape
+    time :: Union{Nothing, PulseqShape}
+    delay :: Int
+    frequency :: Float64
+    phase_offset :: Float64
+end
+
+abstract type AnyPulseqGradient end
+struct PulseqGradient <: AnyPulseqGradient
+    amplitude :: Float64
+    shape :: PulseqShape
+    time :: Union{Nothing, PulseqShape}
+    delay :: Int
+end
+
+struct PulseqTrapezoid <:AnyPulseqGradient
+    amplitude :: Float64
+    rise :: Int
+    flat :: Int
+    fall :: Int
+    delay :: Int
+end
+
+struct PulseqADC
+    nsamples :: Int
+    dwell_time :: Float64
+    delay :: Int
+    frequency :: Float64
+    phase :: Float64
+end
+
+struct PulseqExtension
+    name :: String
+    content :: Vector{String}
+end
+
+struct PulseqBlock
+    duration :: Int
+    rf :: Union{Nothing, PulseqRFPulse}
+    gx :: Union{Nothing, AnyPulseqGradient}
+    gy :: Union{Nothing, AnyPulseqGradient}
+    gz :: Union{Nothing, AnyPulseqGradient}
+    adc :: Union{Nothing, PulseqADC}
+    ext :: Vector{<:Tuple{PulseqExtension, Int}}
+end
+
+struct PulseqSequence
+    version:: VersionNumber
+    definitions:: NamedTuple
+    blocks:: Vector{PulseqBlock}
+end
+
+
+
+# I/O all sections
+function parse_all_sections(sections:: Dict{String, PulseqSection})
+    sections = copy(sections)
+    all_parts = Dict{Symbol, Any}()
+    for name in ["version", "definitions", "delays", "shapes", "rf", "gradients", "trap", "adc", "extensions", "blocks"]
+        if name in keys(sections)
+            section = pop!(sections, name)
+            all_parts[Symbol(name)] = parse_section(section; all_parts...)
+        end
     end
-    return as_dict
+    if length(sections) > 0
+        @warn "Following sections in pulseq input file are not being used: $(keys(sections))"
+    end
+    return PulseqSequence(all_parts[:version], all_parts[:definitions], all_parts[:blocks])
 end
 
-function parse_pulseq_properties(strings::Vector{<:AbstractString})
-    result = Dict{String, Any}()
-    for s in strings
-        (name, value) = split(s, limit=2)
-        result[name] = value
+function gen_all_sections(seq:: PulseqSequence)
+    sections = [gen_section(seq, Val(symbol)) for symbol in [:version, :definitions, :shapes, :rf, :gradients, :trap, :adc, :extensions, :blocks]]
+    return [section for section in sections if length(section.content) > 0]
+end
+
+# Version I/O
+
+"""
+    parse_section(section)
+
+Parses any [`PulseqSection`](@ref) and return the appropriate type.
+
+The opposite is [`gen_section`](@ref).
+"""
+function parse_section(section:: PulseqSection{:version}; kwargs...)
+    props = parse_pulseq_properties(section.content)
+    return VersionNumber(props["major"], props["minor"], props["revision"])
+end
+
+"""
+    gen_section(sequence, Val(:<title>))
+
+Creates a specific [`PulseqSection`](@ref){<title>} from a part of the PulseqSequence.
+
+This is the opposite of [`parse_section`](@ref)
+"""
+function gen_section(seq::PulseqSequence, ::Val{:version})
+    version = seq.version
+    return PulseqSection{:version}([
+        "major $(version.major)",
+        "minor $(version.minor)",
+        "revision $(version.patch)",
+    ])
+end
+
+# Definitions I/O
+
+function parse_section(section:: PulseqSection{:definitions}; kwargs...)
+    props = parse_pulseq_properties(section.content)
+    return NamedTuple(Symbol(key) => value for (key, value) in props)
+end
+
+_to_string_value(value::AbstractString) = value
+_to_string_value(value::Number) = string(value)
+_to_string_value(value::Vector) = join(_to_string_value.(value), " ")
+
+function gen_section(seq:: PulseqSequence, ::Val{:definitions})
+    definitions = seq.definitions
+    return PulseqSection{:definitions}(["$(key) $(_to_string_value(value))" for (key, value) in pairs(definitions)])
+end
+
+
+# Shapes I/O
+struct CompressedPulseqShape
+    num :: Int
+    samples :: Vector{Float64}
+end
+
+
+function parse_section(section:: PulseqSection{:shapes}; kwargs...)
+    current_id = -1
+    shapes = Dict{Int, CompressedPulseqShape}()
+    for line in section.content
+        if startswith(lowercase(line), "shape_id")
+            current_id = parse(Int, line[9:end])
+            continue
+        end
+        for text in ("num_uncompressed", "num_samples")
+            if startswith(lowercase(line), text)
+                @assert current_id != -1
+                if current_id in keys(shapes)
+                    error("Multiple shapes with the same ID detected.")
+                end
+                shapes[current_id] = CompressedPulseqShape(parse(Int, line[length(text)+1:end]), Float64[])
+            end
+        end
+        if !startswith(lowercase(line), "num")
+            push!(shapes[current_id].samples, parse(Float64, line))
+        end
+    end
+    return Dict(key => uncompress(shape) for (key, shape) in shapes)
+end
+
+function uncompress(compressed::CompressedPulseqShape)
+    if compressed.num == length(compressed.samples)
+        # not actually compressed
+        return PulseqShape(compressed.samples)
+    end
+    amplitudes = [compressed.samples[1]]
+    repeating = false
+    prev_sample = compressed.samples[1]
+    for sample in compressed.samples[2:end]
+        if repeating
+            for _ in 1:Int(sample)
+                push!(amplitudes, prev_sample)
+            end
+            repeating = false
+        else
+            push!(amplitudes, sample)
+            if sample == prev_sample
+                repeating = true
+            end
+        end
+    end
+    return PulseqShape(amplitudes)
+end
+
+same_shape(shape1::PulseqShape, shape2::PulseqShape) = length(shape1.samples) == length(shape2.samples) && all(shape1.samples .≈ shape2.samples)
+
+"""
+    shapes(sequence::PulseqSequence)
+
+Return all the unique shapes used in the MR sequence.
+"""
+function shapes(sequence:: PulseqSequence)
+    result = PulseqShape[]
+    for block in sequence.blocks
+        for new_shape in _all_shapes(block)
+            if !any(s -> same_shape(s, new_shape), result)
+                push!(result, new_shape)
+            end
+        end
     end
     return result
 end
 
-section_headers = Dict(
-    "BLOCKS" => ([:id, :duration, :rf, :gx, :gy, :gz, :adc, :ext], fill(Int, 8)),
-    ("BLOCKS", v"1.3.1") => ([:id, :delay, :rf, :gx, :gy, :gz, :adc, :ext], fill(Int, 8)),
-    ("DELAYS", v"1.3.1") => ([:id, :delay], [Int, Int]),
-    ("RF", v"1.3.1") => ([:id, :amp, :mag_id, :phase_id, :delay, :freq, :phase], [Int, Float64, Int, Int, Int, Float64, Float64]),
-    "RF" => ([:id, :amp, :mag_id, :phase_id, :time_id, :delay, :freq, :phase], [Int, Float64, Int, Int, Int, Int, Float64, Float64]),
-    ("GRADIENTS", v"1.3.1") => ([:id, :amp, :shape_id, :delay], [Int, Float64, Int, Int]),
-    "GRADIENTS" => ([:id, :amp, :shape_id, :time_id, :delay], [Int, Float64, Int, Int, Int]),
-    "TRAP" => ([:id, :amp, :rise, :flat, :fall, :delay], [Int, Float64, Int, Int, Int, Int]),
-    "ADC" => ([:id, :num, :dwell, :delay, :freq, :phase], [Int, Int, Float64, Int, Float64, Float64]),
-)
+_all_shapes(block::PulseqBlock) = vcat(_all_shapes.([block.gx, block.gy, block.gz, block.rf])...)
+_all_shapes(block::PulseqRFPulse) = vcat(_all_shapes.([block.magnitude, block.phase, block.time])...)
+_all_shapes(block::PulseqGradient) = vcat(_all_shapes.([block.shape, block.time])...)
+_all_shapes(shape::PulseqShape) = PulseqShape[shape]
+_all_shapes(::PulseqTrapezoid) = PulseqShape[]
+_all_shapes(::Nothing) = PulseqShape[]
 
-function parse_pulseq_section(section::PulseqSection, version=nothing)
-    if section.title == "VERSION"
-        props = parse_pulseq_properties(section.content)
-        result = VersionNumber(
-            parse(Int, props["major"]),
-            parse(Int, props["minor"]),
-            parse(Int, props["revision"]),
-        )
-    elseif section.title == "DEFINITIONS"
-        result = parse_pulseq_properties(section.content)
-    elseif (section.title, version) in keys(section_headers)
-        result = parse_pulseq_ordered_dict(section.content, section_headers[(section.title, version)]...)
-    elseif section.title in keys(section_headers)
-        result = parse_pulseq_ordered_dict(section.content, section_headers[section.title]...)
-    elseif section.title == "EXTENSION"
-        println("Ignoring all extensions in pulseq")
-    elseif section.title == "SHAPES"
-        current_id = -1
-        shapes = CompressedPulseqShape[]
-        for line in section.content
-            if length(line) > 8 && lowercase(line[1:8]) == "shape_id"
-                current_id = parse(Int, line[9:end])
-                continue
-            end
-            for text in ("num_uncompressed", "num_samples")
-                if startswith(lowercase(line), text)
-                    @assert current_id != -1
-                    push!(shapes, CompressedPulseqShape(current_id, parse(Int, line[length(text)+1:end]), Float64[]))
-                    current_id = -1
-                    break
-                end
-            end
-            if !startswith(lowercase(line), "num")
-                @assert current_id == -1
-                push!(shapes[end].samples, parse(Float64, line))
-            end
+
+function gen_section(seq:: PulseqSequence, ::Val{:shapes})
+    res = PulseqSection{:shapes}(String[])
+    for (index, shape) in enumerate(shapes(seq))
+        append!(res.content, [
+            "",
+            "shape_id $index",
+            "num_samples $(length(shape.samples))"
+        ])
+        for sample in shape.samples
+            push!(res.content, string(sample))
         end
-        result = Dict(
-            [s.id => (s.num, control_points(s)...) for s in shapes]...
-        )
-    elseif section.title in ["SIGNATURE"]
-        # silently ignore these sections
-        return nothing
-    else
-        error("Unrecognised pulseq section: $(section.title)")
     end
-    return Symbol(lowercase(section.title)) => result
+    return res
 end
 
-function align_in_time(pairs...)
-    interps = [linear_interpolation(time, ampl; extrapolation_bc=Flat()) for (time, ampl) in pairs]
-    all_times = sort(unique(vcat([time for (time, _) in pairs]...)))
-    return (all_times, [interp.(all_times) for interp in interps]...)
+function parse_section(section::PulseqSection{:delays}; version, kwargs...)
+    if version > v"1.3.1"
+        error("Did not expect a [DELAYS] section in pulseq file with version $(version)")
+    end
+    delays = Dict{Int, Int}()
+    for line in section.content
+        (id, delay) = parse.(Int, split(line))
+        delays[id] = delay
+    end
+    return delays
 end
 
+# Components I/O
+_get_component(id::Int, shapes::Dict) = iszero(id) ? nothing : shapes[id]
 
-function build_sequence(; scanner=nothing, B0=3., TR=nothing, definitions, version, blocks, rf=nothing, gradients=nothing, trap=nothing, delays=nothing, shapes=nothing, adc=nothing, name=:Pulseq)
-    if isnothing(scanner)
-        scanner = Scanner(B0=B0)
-    end
-    if version == v"1.4.0"
-        # load raster times (converting seconds to milliseconds)
-        convert = key -> parse(Float64, definitions[key]) * Float64(1e3)
-        gradient_raster = convert("GradientRasterTime")
-        rf_raster = convert("RadiofrequencyRasterTime")
-        adc_raster = convert("AdcRasterTime")
-        block_duration_raster = convert("BlockDurationRaster")
-    elseif version == v"1.3.1"
-        gradient_raster = rf_raster = block_duration_raster = Float64(1e-3) # 1 microsecond as default raster
-        adc_raster = Float64(1e-6) # ADC dwell time is in ns by default
-    else
-        error("Can only load pulseq files with versions v1.3.1 and v1.4.0, not $(version)")
-    end
-
-    full_blocks = BuildingBlock[]
-
-    for block in values(blocks)
-        block_duration = 0.
-        events = []
-        if !iszero(block.rf)
-            proc = rf[block.rf]
-            (num, times_shape, amplitudes_shape) = shapes[proc.mag_id]
-            block_duration = max(num * rf_raster + proc.delay * 1e-3, block_duration)
-            ampl_times = times_shape .* (num * rf_raster)
-            ampl_size = amplitudes_shape .* (proc.amp * 1e-3)
-            if iszero(proc.phase_id)
-                phase_times = ampl_times
-                phase_size = ampl_times .* 0
-            else
-                (num, times_shape, phase_shape) = shapes[proc.phase_id]
-                block_duration = max(num * rf_raster + proc.delay * 1e-3, block_duration)
-                phase_times = times_shape .* (num * rf_raster)
-                phase_size = rad2deg.(phase_shape) .+ phase_times .* (proc.freq * 1e-3 * 360) .+ rad2deg(proc.phase)
-            end
-            if version != v"1.3.1" && !iszero(proc.time_id)
-                (num, _, time_shape) = shapes[proc.time_id]
-                times = time_shape .* rf_raster
-                ampl = ampl_size
-                phase = phase_size
-                @assert length(times) == length(ampl) == length(phase)
-            else
-                (times, ampl, phase) = align_in_time((ampl_times, ampl_size), (phase_times, phase_size))
-            end
-            push!(events, (proc.delay * 1e-3, GenericPulse(times, ampl, phase)))
-        end
-        if !iszero(block.adc)
-            proc = adc[block.adc]
-            push!(events, (proc.delay * 1e-3, ADC(proc.num, proc.dwell * 1e-6, proc.dwell * proc.num * 1e-6 / 2, 1.)))
-            block_duration = max(proc.delay * 1e-3 + proc.dwell * proc.num * 1e-6, block_duration)
-        end
-        grad_shapes = []
-        for symbol_grad in [:gx, :gy, :gz]
-            grad_id = getfield(block, symbol_grad)
-            if iszero(grad_id)
-                push!(grad_shapes, (Float64[], Float64[]))
-                continue
-            end
-            if !isnothing(gradients) && grad_id in keys(gradients)
-                proc = gradients[grad_id]
-                start_time = proc.delay * 1e-3
-                (num, grad_time, grad_shape) = shapes[proc.shape_id]
-
-                if version != v"1.3.1" && !iszero(proc.time_id)
-                    (num, _, time_shape) = shapes[proc.time_id]
-                    times = time_shape .* gradient_raster .+ start_time
-                    @assert length(times) == length(grad_shape)
-                else
-                    times = grad_time .* (num * gradient_raster) .+ start_time
-                end
-                push!(grad_shapes, (times, grad_shape .* (proc.amp * 1e-9)))
-                block_duration = max(start_time + num * gradient_raster, block_duration)
-            elseif !isnothing(trap) && grad_id in keys(trap)
-                proc = trap[grad_id]
-                start_time = proc.delay * 1e-3
-                times = (cumsum([0, proc.rise, proc.flat, proc.fall]) .* 1e-3) .+ start_time
-                push!(grad_shapes, (times, [0, proc.amp * 1e-9, proc.amp * 1e-9, 0]))
-                block_duration = max((start_time + proc.rise + proc.flat + proc.fall) * 1e-3, block_duration)
-            else
-                error("Gradient ID $grad_id not found in either of [GRADIENTS] or [TRAP] sections")
-            end
-        end
+function parse_section(section::PulseqSection{:rf}; shapes::Dict{Int, PulseqShape}, version, kwargs...)
+    result = Dict{Int, PulseqRFPulse}()
+    for line in section.content
         if version == v"1.3.1"
-            if !iszero(block.delay)
-                actual_duration = max(block_duration, delays[block.delay].delay * 1e-3)
-            else
-                actual_duration = block_duration
-            end
+            props = parse_pulseq_dict(
+                line,
+                [:id, :amp, :mag_id, :phase_id, :delay, :freq, :phase], 
+                [Int, Float64, Int, Int, Int, Float64, Float64],
+            )
+            props[:time_id] = 0
         else
-            actual_duration = block.duration * block_duration_raster
-            @assert actual_duration >= block_duration
+            props = parse_pulseq_dict(
+                line,
+                [:id, :amp, :mag_id, :phase_id, :time_id, :delay, :freq, :phase], 
+                [Int, Float64, Int, Int, Int, Int, Float64, Float64],
+            )
         end
-        function extend_grad!(pair)
-            (times, amplitudes) = pair
-            if iszero(length(times)) || !iszero(times[1])
-                pushfirst!(times, 0.)
-                pushfirst!(amplitudes, 0.)
-            end
-            if times[end] != actual_duration
-                push!(times, actual_duration)
-                push!(amplitudes, 0.)
-            end
+        result[props[:id]] = PulseqRFPulse(
+            props[:amp],
+            _get_component(props[:mag_id], shapes),
+            _get_component(props[:phase_id], shapes),
+            _get_component(props[:time_id], shapes),
+            props[:delay],
+            props[:freq],
+            props[:phase],
+        )
+    end
+    return result
+end
+
+function parse_section(section::PulseqSection{:gradients}; shapes::Dict{Int, PulseqShape}, version::VersionNumber, kwargs...)
+    result = Dict{Int, PulseqGradient}()
+    for line in section.content
+        if version == v"1.3.1"
+            props = parse_pulseq_dict(
+                line,
+                [:id, :amp, :shape_id, :delay],
+                [Int, Float64, Int, Int]
+            )
+            props[:time_id] = 0
+        else
+            props = parse_pulseq_dict(
+                line,
+                [:id, :amp, :shape_id, :time_id, :delay],
+                [Int, Float64, Int, Int, Int]
+            )
         end
-        extend_grad!.(grad_shapes)
-        arrs = align_in_time(grad_shapes...)
-        waveform = [(t, SVector{3, Float64}(gx, gy, gz)) for (t, gx, gy, gz) in zip(arrs...)]
-        push!(full_blocks, BuildingBlock(waveform, events))
+        result[props[:id]] = PulseqGradient(
+            props[:amp],
+            _get_component(props[:shape_id], shapes),
+            _get_component(props[:time_id], shapes),
+            props[:delay]
+        ) 
     end
-    full_block_duration = sum(duration.(full_blocks))
-    if isnothing(TR)
-        total_duration = parse(Float64, get(definitions, "TotalDuration", "0")) * 1000
-        TR = iszero(total_duration) ? full_block_duration : total_duration
+    return result
+end
+
+function _get_shape_id(shapes, shape)
+    for (i, s) in enumerate(shapes)
+        if same_shape(s, shape)
+            return i
+        end
     end
-    if TR > full_block_duration
-        push!(full_blocks, Wait(TR - full_block_duration))
-    elseif TR < full_block_duration
-        @warn "Given TR ($TR) is shorter than the total duration of all the building blocks ($full_block_duration). Ignoring TR..."
+    error("Shape not found.")
+end
+
+
+function parse_section(section::PulseqSection{:trap}; kwargs...)
+    result = Dict{Int, PulseqTrapezoid}()
+    for line in section.content
+        props = parse_pulseq_dict(
+            line,
+            [:id, :amp, :rise, :flat, :fall, :delay],
+            [Int, Float64, Int, Int, Int, Int],
+        )
+        result[props[:id]] = PulseqTrapezoid(
+            props[:amp],
+            props[:rise],
+            props[:flat],
+            props[:fall],
+            props[:delay],
+        ) 
     end
-    Sequence(full_blocks; scanner=scanner, name=name)
+    return result
+end
+
+function parse_section(section::PulseqSection{:adc}; kwargs...)
+    result = Dict{Int, PulseqADC}()
+    for line in section.content
+        props = parse_pulseq_dict(
+            line,
+            [:id, :num, :dwell, :delay, :freq, :phase],
+            [Int, Int, Float64, Int, Float64, Float64],
+        )
+        result[props[:id]] = PulseqADC(
+            props[:num],
+            props[:dwell],
+            props[:delay],
+            props[:freq],
+            props[:phase],
+        ) 
+    end
+    return result
+end
+
+function parse_section(section::PulseqSection{:extensions}; kwargs...)
+    current_extension = -1
+    pre_amble = true
+    linked_list = Dict{Int, NTuple{3, Int}}()
+    extensions = Dict{Int, PulseqExtension}()
+    for line in section.content
+        if startswith(line, "extension ")
+            pre_amble = false
+            (_, name, str_id) = split(line)
+            current_extension = int(str_id)
+            extensions[current_extension] = PulseqExtension(name, String[])
+        elseif pre_ample
+            (id, type, ref, next) = int.(split(line))
+            linked_list[id] = (type=type, ref=ref, next=next)
+        else
+            push!(extensions[current_extension], line)
+        end
+    end
+
+    function get_extension_list(key::Int)
+        if iszero(key)
+            return Tuple{PulseqExtension, Int}[]
+        else
+            base = get_extension_list(linked_list[key].next)
+            pushfirst!(base, (extensions[linked_list[key].type], linked_list[key].ref))
+            return base
+        end
+    end
+
+    return Dict(key => get_extension_list(key) for key in keys(linked_list))
+end
+
+function parse_section(section::PulseqSection{:blocks}; version, rf=Dict(), gradients=Dict(), trap=Dict(), adc=Dict(), extensions=Dict(), delays=nothing, kwargs...)
+    all_grad = merge(gradients, trap)
+    
+    res = Vector{PulseqBlock}()
+    for line in section.content
+        props = parse_pulseq_dict(
+            line,
+            [:id, :duration, :rf, :gx, :gy, :gz, :adc, :ext],
+            fill(Int, 8),
+        )
+        if version == v"1.3.1"
+            props[:duration] = iszero(props[:duration]) ? 0 : delays[props[:duration]]
+        end
+        @assert length(res) + 1 == props[:id]
+        push!(res, PulseqBlock(
+            props[:duration],
+            _get_component(props[:rf], rf),
+            _get_component(props[:gx], all_grad),
+            _get_component(props[:gy], all_grad),
+            _get_component(props[:gz], all_grad),
+            _get_component(props[:adc], adc),
+            iszero(props[:ext]) ? Tuple{PulseqExtension, Int}[] : _get_component(props[:ext], extensions),
+        ))
+    end
+    return res
 end
 
 end
