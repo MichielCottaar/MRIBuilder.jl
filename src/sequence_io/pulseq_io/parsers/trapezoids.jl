@@ -19,7 +19,8 @@ end
 
 function gen_section(comp:: PulseqComponents, ::Val{:trap})
     res = PulseqSection{:trap}(String[])
-    for (i, grad) in comp.grads
+    for i in sort([keys(comp.grads)...])
+        grad = comp.grads[i]
         if !(grad isa PulseqTrapezoid)
             continue
         end

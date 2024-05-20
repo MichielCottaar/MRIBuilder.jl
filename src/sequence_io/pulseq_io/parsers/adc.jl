@@ -19,7 +19,8 @@ end
 
 function gen_section(comp:: PulseqComponents, ::Val{:adc})
     res = PulseqSection{:adc}(String[])
-    for (i, adc) in comp.adc
+    for i in sort([keys(comp.adc)...])
+        adc = comp.adc[i]
         values = string.(Any[
             i,
             adc.num,

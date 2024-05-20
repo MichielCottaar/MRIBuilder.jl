@@ -30,7 +30,8 @@ end
 
 function gen_section(comp:: PulseqComponents, ::Val{:rf})
     res = PulseqSection{:rf}(String[])
-    for (i, pulse) in comp.pulses
+    for i in sort([keys(comp.pulses)...])
+        pulse = comp.pulses[i]
         values = string.(Any[
             i,
             pulse.amplitude,

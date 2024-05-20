@@ -27,7 +27,8 @@ end
 
 function gen_section(comp:: PulseqComponents, ::Val{:gradients})
     res = PulseqSection{:gradients}(String[])
-    for (i, grad) in comp.grads
+    for i in sort([keys(comp.grads)...])
+        grad = comp.grads[i]
         if !(grad isa PulseqGradient)
             continue
         end
