@@ -3,14 +3,16 @@ Module converting MRIBuilder sequences to and from sequences recognised by [`Pul
 """
 module Pulseq
 import Interpolations: linear_interpolation
-import ..PulseqIO.Types: PulseqSequence, PulseqBlock, PulseqTrapezoid, PulseqGradient
-import ...Containers: Sequence, BuildingBlock
-import ...Components: GenericPulse, ADC
+import ..PulseqIO.Types: PulseqSequence, PulseqBlock, PulseqTrapezoid, PulseqGradient, PulseqRFPulse, PulseqShape, PulseqADC, PulseqExtension
+import ...Containers: Sequence, BuildingBlock, BaseBuildingBlock, events, waveform, iter_blocks
+import ...Components: GenericPulse, ADC, RFPulseComponent
 import ...Scanners: Scanner
+import ...Variables: duration, nsamples, dwell_time, make_generic
 
-function Sequence(pulseq::PulseqSequence; scanner=nothing, B0=3)
+function Sequence(pulseq::PulseqSequence; scanner=nothing, B0=nothing)
     if isnothing(scanner)
-        scanner = Scanner(B0=B0)
+        use_B0 = isnothing(B0) ? get(pulseq.definitions, :B0, 3.) : B0
+        scanner = Scanner(B0=use_B0)
     end
     blocks = BuildingBlock.(pulseq.blocks; pulseq.definitions...)
     return Sequence(blocks; name=Symbol(get(pulseq.definitions, :name, "from_pulseq")), scanner=scanner)
@@ -87,5 +89,81 @@ function _get_amplitude(grad::PulseqGradient, time::Number, raster::Number)
     return amp * linear_interpolation(edges, grad.shape.samples, extrapolation_bc=0.)(time)
 end
 
+
+function PulseqSequence(seq::Sequence{S}) where {S}
+    definitions = (
+        name=S,
+        AdcRasterTime=1e-9,
+        BlockDurationRaster=1e-9,
+        RadiofrequencyRasterTime=1e-9,
+        GradientRasterTime=1e-9,
+        TotalDuration=duration(seq) * 1e-3,
+        B0=seq.scanner.B0,
+    )
+    blocks = [PulseqBlock(block; definitions...) for (_, block) in iter_blocks(seq)]
+    return PulseqSequence(
+        v"1.4.0",
+        definitions,
+        blocks
+    )
+end
+
+function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTime, kwargs...)
+    rf = nothing
+    adc = nothing
+    for (delay, event) in events(block)
+        if event isa RFPulseComponent
+            if !isnothing(rf)
+                error("Pulseq does not support a single building block containing multiple RF pulses.")
+            end
+            gen = make_generic(event)
+            rf = PulseqRFPulse(
+                maximum(gen.amplitude) * 1e3,
+                PulseqShape(gen.amplitude ./ maximum(gen.amplitude)),
+                PulseqShape(deg2rad.(gen.phase)),
+                PulseqShape(gen.time .* 1e-3),
+                Int(div(delay, 1e-3)),
+                0., 
+                0.
+            )
+        elseif event isa ADC
+            if !isnothing(rf)
+                error("Pulseq does not support a single building block containing multiple ADC events.")
+            end
+            adc = PulseqADC(
+                nsamples(event),
+                div(dwell_time(event), AdcRasterTime),
+                Int(div(delay, 1e-3)),
+                0., 0.
+            )
+        else
+            error("Cannot write $(typeof(event)) to Pulseq.")
+        end
+    end
+
+    grads = []
+    times = [t for (t, _) in waveform(block)]
+    for dim in 1:3
+        amplitudes = [g[dim] for (_, g) in waveform(block)]
+        if iszero(maximum(abs.(amplitudes); init=0.))
+            push!(grads, nothing)
+        else
+            push!(grads, PulseqGradient(
+                maximum(amplitudes) * 1e3,
+                PulseqShape(amplitudes ./ maximum(amplitudes)),
+                PulseqShape(times .* 1e-3),
+                0.,
+            ))
+        end
+    end
+    
+    return PulseqBlock(
+        Int(div(1e-3 * duration(block), BlockDurationRaster)),
+        rf,
+        grads...,
+        adc,
+        Tuple{PulseqExtension, Int}[]
+    )
+end
 
 end

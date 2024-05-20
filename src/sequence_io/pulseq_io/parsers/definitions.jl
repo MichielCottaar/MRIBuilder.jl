@@ -4,6 +4,7 @@ function parse_section(section:: PulseqSection{:definitions}; kwargs...)
 end
 
 _to_string_value(value::AbstractString) = value
+_to_string_value(value::Symbol) = string(value)
 _to_string_value(value::Number) = string(value)
 _to_string_value(value::Vector) = join(_to_string_value.(value), " ")
 

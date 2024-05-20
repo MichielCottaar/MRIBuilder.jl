@@ -12,6 +12,7 @@ include("components.jl")
 include("parsers/parsers.jl")
 include("parse_sections.jl")
 
+import .Types: PulseqSequence
 
 
 """
