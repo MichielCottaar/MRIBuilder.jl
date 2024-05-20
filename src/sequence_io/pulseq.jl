@@ -122,7 +122,7 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
                 PulseqShape(gen.amplitude ./ maximum(gen.amplitude)),
                 PulseqShape(deg2rad.(gen.phase)),
                 PulseqShape(gen.time .* 1e-3),
-                Int(div(delay, 1e-3)),
+                Int(div(delay, 1e-3, RoundNearest)),
                 0., 
                 0.
             )
@@ -132,8 +132,8 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
             end
             adc = PulseqADC(
                 nsamples(event),
-                div(dwell_time(event), AdcRasterTime),
-                Int(div(delay, 1e-3)),
+                div(dwell_time(event), AdcRasterTime, RoundNearest),
+                Int(div(delay, 1e-3, RoundNearest)),
                 0., 0.
             )
         else
@@ -158,7 +158,7 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
     end
     
     return PulseqBlock(
-        Int(div(1e-3 * duration(block), BlockDurationRaster)),
+        Int(div(1e-3 * duration(block), BlockDurationRaster, RoundNearest)),
         rf,
         grads...,
         adc,
