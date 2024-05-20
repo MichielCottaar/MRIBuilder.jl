@@ -15,7 +15,7 @@ function Sequence(pulseq::PulseqSequence; scanner=nothing, B0=nothing)
         scanner = Scanner(B0=use_B0)
     end
     blocks = BuildingBlock.(pulseq.blocks; pulseq.definitions...)
-    return Sequence(blocks; name=Symbol(get(pulseq.definitions, :name, "from_pulseq")), scanner=scanner)
+    return Sequence(blocks; name=Symbol(get(pulseq.definitions, :Name, "from_pulseq")), scanner=scanner)
 end
 
 
@@ -92,7 +92,7 @@ end
 
 function PulseqSequence(seq::Sequence{S}) where {S}
     definitions = (
-        name=S,
+        Name=S,
         AdcRasterTime=1e-9,
         BlockDurationRaster=1e-9,
         RadiofrequencyRasterTime=1e-9,
