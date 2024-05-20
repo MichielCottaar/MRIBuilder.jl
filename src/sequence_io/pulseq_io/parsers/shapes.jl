@@ -46,8 +46,13 @@ function uncompress(compressed::CompressedPulseqShape)
             push!(amplitudes, sample)
             if sample == prev_sample
                 repeating = true
+            else
+                prev_sample = sample
             end
         end
+    end
+    if length(amplitudes) != compressed.num
+        error("Uncompressing shape did not produce correct number of elements.")
     end
     return PulseqShape(amplitudes)
 end
