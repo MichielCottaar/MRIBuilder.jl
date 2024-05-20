@@ -39,11 +39,11 @@ function uncompress(compressed::CompressedPulseqShape)
     for sample in compressed.samples[2:end]
         if repeating
             for _ in 1:Int(sample)
-                push!(amplitudes, prev_sample)
+                push!(amplitudes, prev_sample + amplitudes[end])
             end
             repeating = false
         else
-            push!(amplitudes, sample)
+            push!(amplitudes, sample + amplitudes[end])
             if sample == prev_sample
                 repeating = true
             else

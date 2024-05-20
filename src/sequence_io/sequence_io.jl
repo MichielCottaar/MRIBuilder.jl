@@ -1,9 +1,11 @@
 module SequenceIO
 
 include("pulseq_io/pulseq_io.jl")
+include("pulseq.jl")
 
-import .PulseqIO: read_pulseq
 import Serialization: serialize, deserialize
+import .PulseqIO: read_pulseq
+import ..Containers: Sequence
 
 
 function read_sequence(filename::AbstractString, args...; kwargs...)
@@ -25,7 +27,7 @@ function read_sequence(io::IO; format=nothing, kwargs...)
         error("Could not read the input filename. Tried all formats (:pulseq/:serialize).")
     end
     if format == :pulseq
-        return read_pulseq(io, kwargs...)
+        return Sequence(read_pulseq(io, kwargs...))
     elseif format == :serialize
         return deserialize(io, kwargs...)
     else
