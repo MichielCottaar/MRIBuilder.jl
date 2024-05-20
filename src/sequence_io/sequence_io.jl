@@ -1,8 +1,8 @@
 module SequenceIO
 
-include("pulseq.jl")
+include("pulseq_io/pulseq_io.jl")
 
-import .Pulseq: read_pulseq
+import .PulseqIO: read_pulseq
 import Serialization: serialize, deserialize
 
 
