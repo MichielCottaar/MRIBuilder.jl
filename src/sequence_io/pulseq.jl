@@ -23,11 +23,14 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
     stated_duration = pulseq.duration * BlockDurationRaster * 1e3
 
     events = []
+    min_duration = 0.
     if !isnothing(pulseq.rf)
         if isnothing(pulseq.rf.time)
             time = ((1:length(pulseq.rf.magnitude.samples)) .- 0.5) .* RadiofrequencyRasterTime .* 1e3
+            rf_dur = length(pulseq.rf.magnitude.samples) * RadiofrequencyRasterTime * 1e3
         else
             time = pulseq.rf.time.samples .* 1e3
+            rf_dur = maximum(time)
         end
         push!(events, (
             pulseq.rf.delay * 1e-3,
@@ -37,11 +40,12 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
                 rad2deg.(pulseq.rf.phase.samples .+ pulseq.rf.phase_offset .+ pulseq.rf.frequency .* time .* 2π)
             )
         ))
+        min_duration = max(min_duration, events[end][1] + rf_dur)
     end
     if !isnothing(pulseq.adc)
         dwell_time = pulseq.adc.dwell * 1e-6
         push!(events, (
-            pulseq.adc.delay * 1e-3
+            pulseq.adc.delay * 1e-3,
             ADC(
                 pulseq.adc.num,
                 dwell_time,
@@ -49,11 +53,12 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
                 1.
             )
         ))
+        min_duration = max(min_duration, events[end][1] + duration(events[end][2]))
     end
 
     grads = [pulseq.gx, pulseq.gy, pulseq.gz]
     min_duration = max(
-        maximum(e[1] + duration(e[2]) for e in events; init=0.),
+        min_duration,
         maximum(vcat(_control_times.(grads, GradientRasterTime)...); init=0.)
     )
 

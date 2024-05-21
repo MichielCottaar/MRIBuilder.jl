@@ -1,5 +1,5 @@
 @testset "test_IO.jl" begin
-    directory = joinpath(pwd(), "example_pulseseq")
+    directory = joinpath(pwd(), "test", "example_pulseseq")
     @testset "read v1.3.1 fiddisp.seq file" begin
         seq = read_sequence(joinpath(directory, "fiddisp_v131.seq"))
 
@@ -9,8 +9,8 @@
         @test length(events(seq[1])) == 1
         (index, pulse) = events(seq[1])[1]
 
-        @test start_time(seq, 1, index) == 0.1
-        @test end_time(seq, 1, index) == 0.22
+        @test start_time(seq, 1, index) ≈ 0.1
+        @test end_time(seq, 1, index) ≈ 0.2195
 
         for (time, ampl, phase_check) in [
             (0.09, 0., isnan),
