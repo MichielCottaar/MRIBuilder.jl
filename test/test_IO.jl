@@ -1,5 +1,5 @@
 @testset "test_IO.jl" begin
-    directory = joinpath(pwd(), "test", "example_pulseseq")
+    directory = joinpath(pwd(), "example_pulseseq")
     @testset "read v1.3.1 fiddisp.seq file" begin
         seq = read_sequence(joinpath(directory, "fiddisp_v131.seq"))
 
