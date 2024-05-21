@@ -1,5 +1,15 @@
-function parse_section(section:: PulseqSection{:definitions}; kwargs...)
+function parse_section(section:: PulseqSection{:definitions}; version, kwargs...)
     props = parse_pulseq_properties(section.content)
+    if version == v"1.3.1"
+        for name in [
+            "BlockDurationRaster", 
+            "RadiofrequencyRasterTime", 
+            "GradientRasterTime",
+        ]
+            props[name] = 1e-6
+        end
+        props["AdcRasterTime"] = 1e-9
+    end
     return NamedTuple(Symbol(key) => value for (key, value) in props)
 end
 
