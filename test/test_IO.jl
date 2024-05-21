@@ -9,8 +9,8 @@
         @test length(events(seq[1])) == 1
         (index, pulse) = events(seq[1])[1]
 
-        @test start_time(seq, 1, index) ≈ 0.1
-        @test end_time(seq, 1, index) ≈ 0.2195
+        @test start_time(seq, 1, index) == 0.1
+        @test end_time(seq, 1, index) == 0.22
 
         for (time, ampl, phase_check) in [
             (0.09, 0., isnan),
