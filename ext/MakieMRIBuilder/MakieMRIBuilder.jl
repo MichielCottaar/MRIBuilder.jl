@@ -30,7 +30,7 @@ function Makie.plot!(scene:: Plot_Sequence)
     ])
     text_kwargs = Dict([
         key => scene[key] for key in [
-            :textcolor, :font, :fonts, :fontsize
+            :font, :fonts, :fontsize
         ]
     ])
     text_kwargs[:color] = map((a, c) -> a === MakieCore.automatic ? c : a, scene[:textcolor], scene[:color])
