@@ -29,7 +29,7 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
             time = ((1:length(pulseq.rf.magnitude.samples)) .- 0.5) .* RadiofrequencyRasterTime .* 1e3
             rf_dur = length(pulseq.rf.magnitude.samples) * RadiofrequencyRasterTime * 1e3
         else
-            time = pulseq.rf.time.samples .* 1e3
+            time = pulseq.rf.time.samples .* 1e3 * RadiofrequencyRasterTime
             rf_dur = maximum(time)
         end
         push!(events, (
