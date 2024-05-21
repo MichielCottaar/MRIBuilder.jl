@@ -25,7 +25,7 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
     events = []
     if !isnothing(pulseq.rf)
         if isnothing(pulseq.rf.time)
-            time = ((1:length(pulseq.rf.magnitude.samples)) .- 1) .* RadiofrequencyRasterTime .* 1e3
+            time = ((1:length(pulseq.rf.magnitude.samples)) .- 0.5) .* RadiofrequencyRasterTime .* 1e3
         else
             time = pulseq.rf.time.samples .* 1e3
         end
@@ -41,7 +41,7 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
     if !isnothing(pulseq.adc)
         dwell_time = pulseq.adc.dwell * 1e-6
         push!(events, (
-            pulseq.adc.delay * 1e-3,
+            pulseq.adc.delay * 1e-3
             ADC(
                 pulseq.adc.num,
                 dwell_time,
