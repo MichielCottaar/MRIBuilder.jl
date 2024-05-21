@@ -14,13 +14,13 @@ function Sequence(pulseq::PulseqSequence; scanner=nothing, B0=nothing)
         use_B0 = isnothing(B0) ? get(pulseq.definitions, :B0, 3.) : B0
         scanner = Scanner(B0=use_B0)
     end
-    blocks = BuildingBlock.(pulseq.blocks; pulseq.definitions...)
+    blocks = BuildingBlock.(pulseq.blocks; pulseq.definitions..., version=pulseq.version)
     return Sequence(blocks; name=Symbol(get(pulseq.definitions, :Name, "from_pulseq")), scanner=scanner)
 end
 
 
-function BuildingBlock(pulseq::PulseqBlock; BlockDurationRaster, RadiofrequencyRasterTime, GradientRasterTime, kwargs...)
-    duration = pulseq.duration * BlockDurationRaster * 1e3
+function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, RadiofrequencyRasterTime, GradientRasterTime, kwargs...)
+    stated_duration = pulseq.duration * BlockDurationRaster * 1e3
 
     events = []
     if !isnothing(pulseq.rf)
@@ -52,7 +52,20 @@ function BuildingBlock(pulseq::PulseqBlock; BlockDurationRaster, RadiofrequencyR
     end
 
     grads = [pulseq.gx, pulseq.gy, pulseq.gz]
-    times = sort(unique(vcat([0., duration], _control_times.(grads, GradientRasterTime)...)))
+    min_duration = max(
+        maximum(e[1] + duration(e[2]) for e in events; init=0.),
+        maximum(vcat(_control_times.(grads, GradientRasterTime)...); init=0.)
+    )
+
+    if min_duration > stated_duration
+        if version == v"1.3.1"
+            stated_duration = min_duration
+        else
+            error("Minimum duration to play all RF/gradient/ADC events exceeds stated duration.")
+        end
+    end
+
+    times = sort(unique(vcat([0., stated_duration], _control_times.(grads, GradientRasterTime)...)))
     waveform = [(t, _get_amplitude.(grads, t, GradientRasterTime)) for t in times]
 
     return BuildingBlock(waveform, events)
