@@ -153,9 +153,9 @@ function split_timestep(gp::GenericPulse, precision)
     return sqrt(2 * precision / max_second_der)
 end
 
-function adjust_internal(block::GenericPulse; scale=1., frequency=0.)
+function adjust_internal(block::GenericPulse; scale=1., frequency=0., stretch=1.)
     GenericPulse(
-        block.time,
+        block.time .* stretch,
         block.amplitude .* scale,
         block.phase .+ (360. * frequency) .* (block.time .- effective_time(block))
     )

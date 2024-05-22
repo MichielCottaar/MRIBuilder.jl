@@ -107,7 +107,7 @@ function split_timestep(block::SincPulse, precision)
     return sqrt(2 * precision / max_second_derivative)
 end
 
-function adjust_internal(block::SincPulse; scale=1., frequency=0.)
+function adjust_internal(block::SincPulse; scale=1., frequency=0., stretch=1.)
     SincPulse(
         block.apodise,
         block.Nzeros,
@@ -115,7 +115,7 @@ function adjust_internal(block::SincPulse; scale=1., frequency=0.)
         block.amplitude * scale,
         block.phase,
         block.frequency + frequency,
-        block.lobe_duration,
+        block.lobe_duration * stretch,
         block.group
     )
 end

@@ -64,10 +64,10 @@ end
 
 split_timestep(pulse::ConstantPulse, precision) = Inf
 
-function adjust_internal(block::ConstantPulse; scale=1., frequency=0.)
+function adjust_internal(block::ConstantPulse; scale=1., frequency=0., stretch=1.)
     ConstantPulse(
         block.amplitude * scale,
-        block.duration,
+        block.duration * stretch,
         block.phase,
         block.frequency + frequency,
         block.group,
