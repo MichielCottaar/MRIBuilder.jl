@@ -125,7 +125,7 @@ end
 function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTime, kwargs...)
     rf = nothing
     adc = nothing
-    for (delay, event) in events(block)
+    for (key, event) in events(block)
         if event isa RFPulseComponent
             if !isnothing(rf)
                 error("Pulseq does not support a single building block containing multiple RF pulses.")
@@ -136,7 +136,7 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
                 PulseqShape(gen.amplitude ./ maximum(gen.amplitude)),
                 PulseqShape(deg2rad.(gen.phase)),
                 PulseqShape(gen.time .* 1e-3),
-                Int(div(delay, 1e-3, RoundNearest)),
+                Int(div(start_time(block, key), 1e-3, RoundNearest)),
                 0., 
                 0.
             )

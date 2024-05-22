@@ -6,9 +6,9 @@ import StaticArrays: SVector
 import JuMP: @constraint
 import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic, gradient_strength, amplitude, phase, gradient_strength3, get_gradient, get_pulse, frequency, gradient_orientation, get_gradient
 import ...BuildSequences: global_model, global_scanner
-import ...Components: EventComponent, NoGradient
+import ...Components: EventComponent, NoGradient, edge_times
 import ...Scanners: Scanner, B0
-import ..Abstract: ContainerBlock, start_time, readout_times, edge_times
+import ..Abstract: ContainerBlock, start_time, readout_times
 import ..BuildingBlocks: Wait, BuildingBlock, BaseBuildingBlock
 
 """

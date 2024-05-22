@@ -5,9 +5,9 @@ module BuildingBlocks
 import LinearAlgebra: norm
 import JuMP: @constraint
 import StaticArrays: SVector
-import ..Abstract: ContainerBlock, start_time, readout_times, edge_times, end_time, iter
+import ..Abstract: ContainerBlock, start_time, readout_times, end_time, iter
 import ...BuildSequences: global_model
-import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient
+import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient, edge_times
 import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase, frequency
 import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient, gradient_orientation
 
@@ -234,9 +234,12 @@ bmat_gradient(bb::BaseBuildingBlock, qstart) = bmat_gradient(bb, qstart, nothing
 
 function edge_times(bb::BaseBuildingBlock)
     res = Float64[]
-    for key in keys(bb)
-        push!(res, start_time(bb, key))
-        push!(res, end_time(bb, key))
+    for (key, event) in events(bb)
+        append!(res, edge_times(event) .+ start_time(bb, key))
+    end
+    @show res
+    for (time, _) in waveform(bb)
+        push!(res, time)
     end
     return sort(unique(res))
 end

@@ -54,4 +54,19 @@ adjustable(::RFPulseComponent) = :pulse
 adjustable(::GradientWaveform) = :gradient
 gradient_orientation(gw::GradientWaveform{1}) = gw.orientation
 
+
+"""
+    edge_times(container/component; tol=1e-6)
+
+Returns all the edge times during a sequence in ms.
+
+Edges are defined as any time, when:
+- the edge of a building block
+- the slope of the gradient profile changes suddenly
+- an RF pulse starts or ends
+
+Edges that are within `tol` ms of each other are considered to be one edge (default: 1 ns).
+"""
+edge_times(comp::BaseComponent) = [0., duration(comp)]
+
 end

@@ -1,8 +1,8 @@
 module Linearise
 import StaticArrays: SVector
-import ...Components: GradientWaveform, split_timestep, InstantPulse, InstantGradient3D, InstantGradient1D
+import ...Components: GradientWaveform, split_timestep, InstantPulse, InstantGradient3D, InstantGradient1D, edge_times
 import ...Variables: amplitude, phase, gradient_strength3, duration, qval
-import ..Abstract: edge_times, start_time, end_time, ContainerBlock, iter_instant_gradients, iter_instant_pulses
+import ..Abstract: start_time, end_time, ContainerBlock, iter_instant_gradients, iter_instant_pulses
 import ..BaseSequences: BaseSequence, Sequence
 import ..BuildingBlocks: BaseBuildingBlock
 

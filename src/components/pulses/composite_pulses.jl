@@ -1,6 +1,6 @@
 module CompositePulses
 import JuMP: @constraint
-import ...AbstractTypes: RFPulseComponent, split_timestep
+import ...AbstractTypes: RFPulseComponent, split_timestep, edge_times
 import ....BuildSequences: global_model
 import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal
 import ..GenericPulses: GenericPulse
@@ -100,6 +100,18 @@ for (fn, default) in [
         return $fn(pulse.pulses[index], rtime)
     end
 end
+
+function edge_times(comp::CompositePulse)
+    res = Float64[]
+    t1 = duration(comp.pulses[1]) * 0.5
+    for (index, pulse) in enumerate(comp.pulses)
+        d = duration(pulse)
+        push!(res, t1 - d/2 + comp.pulse_time * (index - 1))
+        push!(res, t1 + d/2 + comp.pulse_time * (index - 1))
+    end
+    return res
+end
+
 
 function make_generic(comp::CompositePulse)
     sub_generics = make_generic.(comp.pulses)
