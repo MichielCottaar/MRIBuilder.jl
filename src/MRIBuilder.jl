@@ -25,8 +25,8 @@ export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra, Default_Sc
 import .Variables: variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inverse_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, repetition_time, TR, Δ, get_gradient, get_pulse, get_readout, TE, echo_time, diffusion_time, make_generic, slew_rate3, gradient_strength3, qval3
 export variables, duration, effective_time, flip_angle, amplitude, phase, frequency, bandwidth, N_left, N_right, qval, δ, rise_time, flat_time, slew_rate, gradient_strength, qvec, qval_square, slice_thickness, inversne_slice_thickness, fov, inverse_fov, voxel_size, inverse_voxel_size, resolution, nsamples, oversample, dwell_time, ramp_overlap, spoiler_scale, repetition_time, TR, Δ, get_gradient, get_pulse, get_readout, TE, echo_time, diffusion_time, make_generic, slew_rate3, gradient_strength3, qval3
 
-import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC
-export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC
+import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse
+export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse
 
 import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, readout_times, edge_times, iter_blocks, iter_instant_gradients, iter_instant_pulses
 export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, readout_times, edge_times, iter_blocks, iter_instant_gradients, iter_instant_pulses
