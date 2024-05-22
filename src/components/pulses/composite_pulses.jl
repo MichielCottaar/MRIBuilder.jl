@@ -111,13 +111,13 @@ function make_generic(comp::CompositePulse)
         start_time = t1 + (index - 1) * comp.pulse_time - duration(comp.pulses[index]) / 2
         push!(times, start_time)
         push!(amplitude, 0.)
-        push!(phase, NaN)
+        push!(phase, generic.phase[1])
         append!(times, start_time .+ generic.time)
         append!(amplitude, generic.amplitude)
         append!(phase, generic.phase)
         push!(times, times[end])
         push!(amplitude, 0.)
-        push!(phase, NaN)
+        push!(phase, generic.phase[end])
     end
     return GenericPulse(times, amplitude, phase)
 end
