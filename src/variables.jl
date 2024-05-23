@@ -14,6 +14,7 @@ In addition this defines:
 module Variables
 import JuMP: @constraint, @variable, Model, @objective, objective_function, AbstractJuMPScalar
 import StaticArrays: SVector
+import MacroTools
 import ..Scanners: gradient_strength, slew_rate, Scanner
 import ..BuildSequences: global_model, global_scanner, fixed
 
@@ -53,98 +54,107 @@ Can return one of:
 adjustable(::AbstractBlock) = :false
 
 
-
-all_variables_symbols = [
-    :block => [
-        :duration => "duration of the building block in ms.",
-    ],
-    :sequence => [
-        :TR => "Time on which an MRI sequence repeats itself in ms. Defaults to the result of [`repetition_time`](@ref).",
-        :repetition_time => "Time on which an MRI sequence repeats itself in ms.",
-        :TE => "Echo time of the sequence in ms. Defaults to the result of [`echo_time`](@ref).",
-        :echo_time => "Echo time of the sequence in ms.",
-        :diffusion_time => "Diffusion time in ms (i.e., time between start of the diffusion-weighted gradients).",
-        :Δ => "Diffusion time in ms (i.e., time between start of the diffusion-weighted gradients). Defaults to the result of [`diffusion_time`](@ref).",
-        :qvec => "Net dephasing due to gradients in rad/um.",
-        :area_under_curve => "Net dephasing due to gradients in rad/um (same as [`qvec`](@ref)).",
-        :bmat => "Full 3x3 diffusion-weighting matrix in ms/um^2.",
-        :bval => "Size of diffusion-weighting in ms/um^2 (trace of [`bmat`](@ref)).",
-        :duration_dephase => "Net T2' dephasing experienced over a sequence (in ms).",
-        :duration_transverse => "Net T2 signal loss experienced over a sequence (in ms). This is the total duration spins spent in the transverse plane.",
-        :delay => "Delay between readout and spin echo in an asymmetric spin echo in ms.",
-    ],
-    :pulse => [
-        :flip_angle => "The flip angle of the RF pulse in degrees",
-        :amplitude => "The maximum amplitude of an RF pulse in kHz",
-        :phase => "The angle of the phase of an RF pulse in KHz",
-        :frequency => "The off-resonance frequency of an RF pulse (relative to the Larmor frequency of water) in KHz",
-        :bandwidth => "Bandwidth of the RF pulse in kHz. To set constraints it is often better to use [`inverse_bandwidth`](@ref).",
-        :inverse_bandwidth => "Inverse of bandwidth of the RF pulse in 1/kHz. Also see [`bandwidth`](@ref).",
-        :N_left => "The number of zero crossings of the RF pulse before the main peak",
-        :N_right => "The number of zero crossings of the RF pulse after the main peak",
-        :slice_thickness => "Slice thickness of an RF pulse that is active during a gradient in mm. To set constraints it is often better to use [`inverse_slice_thickness`](@ref).",
-        :inverse_slice_thickness => "Inverse of slice thickness of an RF pulse that is active during a gradient in 1/mm. Also, see [`slice_thickness`](@ref).",
-    ],
-    :gradient => [
-        :qval3 => "The spatial range with orientation on which the displacements can be detected due to this gradient in rad/um (also see [`qval`](@ref)).",
-        :qval => "The spatial range on which the displacements can be detected due to this gradient in rad/um. This will be a scalar if the orientation is fixed and a scalar otherwise. If you always want a vector, use [`qvec`](@ref).",
-        :qval_square => "Square of [`qval`](@ref) in rad^2/um^2.",
-        :δ => "Effective duration of a gradient pulse ([`rise_time`](@ref) + [`flat_time`](@ref)) in ms.",
-        :rise_time => "Time for gradient pulse to reach its maximum value in ms.",
-        :flat_time => "Time of gradient pulse at maximum value in ms.",
-        :gradient_strength => "Vector with maximum strength of a gradient along each dimension (kHz/um)",
-        :slew_rate => "Vector with maximum slew rate of a gradient along each dimension (kHz/um/ms)",
-        :spoiler_scale => "Length-scale on which spins will be dephased by exactly 2π in mm.",
-    ],
-    :readout => [
-        :dwell_time => "Time between two samples in an `ADC` in ms.",
-        :nsamples => "Number of samples during a readout. During the optimisation this might produce non-integer values.",
-        :fov => "Size of the field of view in mm. To set constraints it is often better to use [`inverse_fov`](@ref).",
-        :inverse_fov => "Inverse of size of the field of view in 1/mm. Also see [`fov`](@ref).",
-        :voxel_size => "Size of each voxel in mm. To set constraints it is often better to use [`inverse_voxel_size`](@ref).",
-        :inverse_voxel_size => "Inverse of voxel size in 1/mm. Also see [`voxel_size`](@ref).",
-        :resolution => "Number of voxels in the final readout. During the optimisation this might produce non-integer values, but this will be fixed after optimsation.",
-        :oversample => "How much to oversample with ([`nsamples`](@ref) / [`resolution`](@ref))",
-        :ramp_overlap => "Fraction of overlap between ADC event and underlying gradient pulse ramp (between 0 and 1)."
-    ],
-]
+abstract type AnyVariable end
 
 """
-Collection of all functions that return variables that can be used to query or constrain their values.
+A sequence property that can be constrained and/or optimised.
+
+It acts as a function, so you can call it on a sequence or building block to get the actual values (e.g., `v(sequence)`).
+It can return one of the following:
+- a number
+- a vector of number
+- a NamedTuple with the values for individual sequence components
 """
-variables = Dict{Symbol, Function}()
-
-
-for (block_symbol, all_functions) in all_variables_symbols
-    for (func_symbol, description) in all_functions
-        as_string = "    $func_symbol($block_symbol)\n\n$description\n\nThis represents a variable within the sequence. Variables can be set during the construction of a [`AbstractBlock`](@ref) or used to create constraints after the fact."
-        new_func = @eval begin
-            function $func_symbol end
-            @doc $as_string $func_symbol
-            $func_symbol
-        end
-        variables[func_symbol] = new_func
-    end
+struct Variable <: AnyVariable
+    name :: Symbol
+    f :: Function
 end
 
-
-TE(ab::AbstractBlock) = echo_time(ab)
-TR(ab::AbstractBlock) = repetition_time(ab)
-Δ(ab::AbstractBlock) = diffusion_time(ab)
-
 """
-Dictionary with alternative versions of specific function.
-    
-Setting constraints on these alternative functions can be helpful as it avoids some operations, which the optimiser might struggle with.
+    variable_defined_for(var, Val(type))
+
+Check whether variable is defined for a specific sub-type.
 """
-alternative_variables = Dict(
-    qval => (qval_square, n->n^2, sqrt, false),
-    slice_thickness => (inverse_slice_thickness, inv, inv, true),
-    spoiler_scale => (qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true),
-    bandwidth => (inverse_bandwidth, inv, inv, true),
-    fov => (inverse_fov, inv, inv, true),
-    voxel_size => (inverse_voxel_size, inv, inv, true),
-)
+variable_defined_for(var::Variable, ::Val{T}) where {T <: AbstractBlock} = hasmethod(var.f, (T, ))
+
+all_variables = Dict{Symbol, AnyVariable}()
+
+macro defvar(func_def)
+    func_names = []
+
+    function adjust_function(ex)
+        try
+            fn_def = MacroTools.splitdef(ex)
+            push!(func_names, fn_def[:name])
+            fn_def[:name] = Expr(:., fn_def[:name], QuoteNode(:f))
+            return MacroTools.combinedef(fn_def)
+        catch e
+            if e isa AssertionError
+                return ex
+            end
+            rethrow()
+        end
+    end
+    new_func_def = MacroTools.prewalk(adjust_function, func_def)
+
+    function fix_function_name(ex)
+        if ex in func_names
+            return esc(ex)
+        else
+            return ex
+        end
+    end
+    new_func_def = MacroTools.postwalk(fix_function_name, new_func_def)
+
+    expressions = Expr[]
+    for func_name in func_names
+        push!(expressions, quote
+            $(esc(func_name)) = if $(QuoteNode(func_name)) in keys(all_variables)
+                all_variables[$(QuoteNode(func_name))]
+            else
+                function $(func_name) end
+                all_variables[$(QuoteNode(func_name))] = Variable($(QuoteNode(func_name)), $(func_name))
+            end
+        end
+        )
+    end
+    return Expr(
+        :block,
+        expressions...,
+        new_func_def
+    )
+end
+
+@defvar function duration end
+@doc """    duration(block)
+
+Duration of the sequence or building block in ms.
+""" duration
+
+
+struct AlternateVariable <: AnyVariable
+    name :: Symbol
+    other_var :: Symbol
+    to_other :: Function
+    from_other :: Function
+    inverse :: Bool
+end
+
+all_variables[:qval] = AlternateVariable(:qval, :qval_square, q->q^2, sqrt, false)
+all_variables[:spoiler_scale] = AlternateVariable(:spoiler_scale, :spoiler_scale, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
+
+for name in [:slice_thickness, :bandwidth, :fov, :voxel_size]
+    inv_name = Symbol("inverse_" * string(name))
+    all_variables[name] = AlternateVariable(name, inv_name, inv, inv, true)
+end
+
+for (name, alt_name) in [
+    (:TE, :echo_time),
+    (:TR, :repetition_time),
+    (:Δ, :diffusion_time),
+]
+    all_variables[name] = AlternateVariable(name, alt_name, identity, identity, false)
+end
 
 
 """
@@ -244,6 +254,8 @@ mutable struct VariableNotAvailable <: Exception
     alt_variable :: Union{Nothing, Function}
 end
 VariableNotAvailable(bb::Type{<:AbstractBlock}, variable::Function) = VariableNotAvailable(bb, variable, nothing)
+
+
 
 function Base.showerror(io::IO, e::VariableNotAvailable)
     if isnothing(e.alt_variable)
