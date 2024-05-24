@@ -138,7 +138,7 @@ function _defvar(func_def, getter=nothing)
             new_def[:name] = Expr(:., fn_def[:name], QuoteNode(:f))
             new_def[:args] = esc.(fn_def[:args])
             new_def[:kwargs] = esc.(fn_def[:kwargs])
-            new_def[:body] = esc(fn_def[:body])
+            new_def[:body] = fn_def[:body]
             new_def[:whereparams] = esc.(fn_def[:whereparams])
             return MacroTools.combinedef(new_def)
         catch e
