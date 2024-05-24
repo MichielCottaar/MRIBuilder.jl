@@ -2,7 +2,7 @@ module ConstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
 import ..GenericPulses: GenericPulse
 
 """
@@ -38,17 +38,19 @@ function ConstantPulse(; amplitude=nothing, duration=nothing, phase=nothing, fre
     return res
 end
 
-amplitude(pulse::ConstantPulse) = pulse.amplitude
-duration(pulse::ConstantPulse) = pulse.duration
-phase(pulse::ConstantPulse) = pulse.phase
-frequency(pulse::ConstantPulse) = pulse.frequency
-flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
-inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
-effective_time(pulse::ConstantPulse) = duration(pulse) / 2
+@defvar begin
+    amplitude(pulse::ConstantPulse) = pulse.amplitude
+    duration(pulse::ConstantPulse) = pulse.duration
+    phase(pulse::ConstantPulse) = pulse.phase
+    frequency(pulse::ConstantPulse) = pulse.frequency
+    flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
+    inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
+    effective_time(pulse::ConstantPulse) = duration(pulse) / 2
 
-amplitude(pulse::ConstantPulse, time::Number) = amplitude(pulse)
-phase(pulse::ConstantPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse)) * 360.
-frequency(pulse::ConstantPulse, time::Number) = frequency(pulse)
+    amplitude(pulse::ConstantPulse, time::Number) = amplitude(pulse)
+    phase(pulse::ConstantPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse)) * 360.
+    frequency(pulse::ConstantPulse, time::Number) = frequency(pulse)
+end
 
 function make_generic(block::ConstantPulse)
     d = duration(block)

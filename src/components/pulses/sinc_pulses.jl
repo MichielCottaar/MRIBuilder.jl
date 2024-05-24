@@ -2,7 +2,7 @@ module SincPulses
 import JuMP: @constraint
 import QuadGK: quadgk
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal, bandwidth
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
 import ...AbstractTypes: RFPulseComponent, split_timestep
 import ..GenericPulses: GenericPulse
 
@@ -79,20 +79,22 @@ function integral_nzero(Nzeros, apodise)
     return quadgk(f, 0, Nzeros)[1]
 end
 
-amplitude(pulse::SincPulse) = pulse.amplitude
-N_left(pulse::SincPulse) = pulse.Nzeros[1]
-N_right(pulse::SincPulse) = pulse.Nzeros[2]
-duration(pulse::SincPulse) = (N_left(pulse) + N_right(pulse)) * lobe_duration(pulse)
-phase(pulse::SincPulse) = pulse.phase
-frequency(pulse::SincPulse) = pulse.frequency
-flip_angle(pulse::SincPulse) = (pulse.norm_flip_angle[1] + pulse.norm_flip_angle[2]) * amplitude(pulse) * lobe_duration(pulse) * 360
-lobe_duration(pulse::SincPulse) = pulse.lobe_duration
-inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
-effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
+@defvar begin
+    amplitude(pulse::SincPulse) = pulse.amplitude
+    N_left(pulse::SincPulse) = pulse.Nzeros[1]
+    N_right(pulse::SincPulse) = pulse.Nzeros[2]
+    duration(pulse::SincPulse) = (N_left(pulse) + N_right(pulse)) * lobe_duration(pulse)
+    phase(pulse::SincPulse) = pulse.phase
+    frequency(pulse::SincPulse) = pulse.frequency
+    flip_angle(pulse::SincPulse) = (pulse.norm_flip_angle[1] + pulse.norm_flip_angle[2]) * amplitude(pulse) * lobe_duration(pulse) * 360
+    lobe_duration(pulse::SincPulse) = pulse.lobe_duration
+    inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
+    effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
 
-amplitude(pulse::SincPulse, time::Number) = amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
-phase(pulse::SincPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse)) * 360.
-frequency(pulse::SincPulse, time::Number) = frequency(pulse)
+    amplitude(pulse::SincPulse, time::Number) = amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
+    phase(pulse::SincPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse)) * 360.
+    frequency(pulse::SincPulse, time::Number) = frequency(pulse)
+end
 
 function make_generic(block::SincPulse)
     normed_times = -N_left(block):0.1:N_right(block) + 1e-5

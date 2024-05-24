@@ -2,7 +2,7 @@ module CompositePulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep, edge_times
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
 import ..GenericPulses: GenericPulse
 
 """
@@ -63,13 +63,15 @@ function wait_times(comp::CompositePulse)
     comp.pulse_time - (d[1:end-1] + d[2:end]) / 2
 end
 
-duration(pulse::CompositePulse) = (
-    0.5 * duration(pulse.pulses[1]) + 
-    0.5 * duration(pulse.pulses[end]) + 
-    pulse.pulse_time * (length(pulse) - 1)
-)
-flip_angle(pulse::CompositePulse) = sum(flip_angle.(pulse.pulses))
-effective_time(pulse::CompositePulse) = duration(pulse) / 2
+@defvar begin
+    duration(pulse::CompositePulse) = (
+        0.5 * duration(pulse.pulses[1]) + 
+        0.5 * duration(pulse.pulses[end]) + 
+        pulse.pulse_time * (length(pulse) - 1)
+    )
+    flip_angle(pulse::CompositePulse) = sum(flip_angle.(pulse.pulses))
+    effective_time(pulse::CompositePulse) = duration(pulse) / 2
+end
 
 
 function get_pulse_index(comp::CompositePulse, time::Number)
@@ -89,7 +91,7 @@ for (fn, default) in [
     (:phase, NaN),
     (:frequency, NaN),
 ]
-    @eval function $fn(pulse::CompositePulse, time::Number)
+    @eval function variables.$fn.f(pulse::CompositePulse, time::Number)
         (index, rtime) = get_pulse_index(pulse, time)
         if (
             index < 1 || index > length(pulse) ||

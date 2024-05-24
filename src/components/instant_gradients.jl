@@ -1,7 +1,7 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
 import JuMP: @constraint
-import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic, adjust_internal, adjustable, gradient_orientation, spoiler_scale
+import ...Variables: @defvar, VariableType, variables, get_free_variable, set_simple_constraints!, make_generic, adjust_internal, adjustable, gradient_orientation
 import ...BuildSequences: global_model
 import ..AbstractTypes: EventComponent, GradientWaveform
 
@@ -42,7 +42,7 @@ struct InstantGradient1D <: InstantGradient{1}
     group :: Union{Nothing, Symbol}
 end
 
-qval(ig::InstantGradient1D) = ig.qval
+@defvar qval(ig::InstantGradient1D) = ig.qval
 
 """
 An [`InstantGradient`](@ref) with a variable orientation.
@@ -61,12 +61,12 @@ function InstantGradient3D(; qval=[nothing, nothing, nothing], group=nothing, va
     return res
 end
 
-qval(ig::InstantGradient3D) = ig.qvec
+@defvar qval(ig::InstantGradient3D) = ig.qvec
 
 
-duration(::InstantGradient) = 0.
-effective_time(::InstantGradient) = 0.
-bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
+variables.duration.f(::InstantGradient) = 0.
+variables.effective_time.f(::InstantGradient) = 0.
+@defvar bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
 
 make_generic(ig::InstantGradient) = ig
 

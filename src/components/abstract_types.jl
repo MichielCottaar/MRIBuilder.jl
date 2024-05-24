@@ -1,5 +1,5 @@
 module AbstractTypes
-import ...Variables: AbstractBlock, duration, variables, effective_time, adjustable, gradient_orientation
+import ...Variables: AbstractBlock, duration, variables, adjustable, gradient_orientation
 
 """
 Super-type for all individual components that form an MRI sequence (i.e., RF pulse, gradient waveform, or readout event).

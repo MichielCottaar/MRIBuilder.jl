@@ -2,7 +2,7 @@ module GenericPulses
 
 import Polynomials: fit
 import ...AbstractTypes: RFPulseComponent, split_timestep
-import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic, phase, frequency, adjust_internal
+import ....Variables: make_generic, variables, @defvar, adjust_internal
 
 
 """
@@ -68,19 +68,21 @@ end
 
 GenericPulse(pulse::RFPulseComponent, t1::Number, t2::Number) = GenericPulse(make_generic(pulse), t1, t2)
 
-duration(fp::GenericPulse) = maximum(fp.time)
-amplitude(fp::GenericPulse) = maximum(abs.(fp.amplitude))
-effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]
-phase(pulse::GenericPulse) = pulse.phase[findmax(abs.(pulse.amplitude))[2]]
-flip_angle(pulse::GenericPulse) = sum(get_weights(pulse) .* pulse.amplitude) * 360
-function time_halfway_flip(pulse::GenericPulse)
-    w = get_weights(pulse)
-    flip_so_far = cumsum(w .* pulse.amplitude)
-    return pulse.time[findfirst(f -> f >= flip_so_far[end] / 2, flip_so_far)]
+@defvar begin
+    duration(fp::GenericPulse) = maximum(fp.time)
+    amplitude(fp::GenericPulse) = maximum(abs.(fp.amplitude))
+    effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]
+    phase(pulse::GenericPulse) = pulse.phase[findmax(abs.(pulse.amplitude))[2]]
+    flip_angle(pulse::GenericPulse) = sum(get_weights(pulse) .* pulse.amplitude) * 360
+    function time_halfway_flip(pulse::GenericPulse)
+        w = get_weights(pulse)
+        flip_so_far = cumsum(w .* pulse.amplitude)
+        return pulse.time[findfirst(f -> f >= flip_so_far[end] / 2, flip_so_far)]
+    end
 end
 
 for fn in (:amplitude, :phase)
-    @eval function $fn(fp::GenericPulse, time::Number)
+    @eval function variables.$fn.f(fp::GenericPulse, time::Number)
         i2 = findfirst(t->t > time, fp.time)
         if isnothing(i2)
             @assert time ≈ fp.time[end]
@@ -97,7 +99,7 @@ for fn in (:amplitude, :phase)
 end
 
 
-function frequency(gp::GenericPulse, time::Number)
+@defvar function frequency(gp::GenericPulse, time::Number)
     i2 = findfirst(t -> t > time, gp.time)
     if isnothing(i2)
         @assert time ≈ gp.time[end]

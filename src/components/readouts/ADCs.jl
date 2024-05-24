@@ -2,7 +2,7 @@ module ADCs
 import JuMP: @constraint, value
 import ...AbstractTypes: ReadoutComponent
 import ....BuildSequences: global_model, fixed
-import ....Variables: oversample, nsamples, dwell_time, duration, effective_time, resolution, VariableType, apply_simple_constraint!, set_simple_constraints!, get_free_variable, make_generic
+import ....Variables: VariableType, apply_simple_constraint!, set_simple_constraints!, get_free_variable, make_generic, variables, @defvar
 
 
 """
@@ -48,14 +48,16 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
     return res
 end
 
-readout_times(adc::ADC) = ((1:Int(nsamples(adc))) .- 0.5) .* dwell_time(adc)
-oversample(adc::ADC) = adc.oversample
-nsamples(adc::ADC) = resolution(adc) * oversample(adc)
-dwell_time(adc::ADC) = adc.dwell_time
-duration(adc::ADC) = nsamples(adc) * dwell_time(adc)
-time_to_center(adc::ADC) = adc.time_to_center
-effective_time(adc::ADC) = time_to_center(adc)
-resolution(adc::ADC) = adc.resolution
+@defvar begin
+    readout_times(adc::ADC) = ((1:Int(nsamples(adc))) .- 0.5) .* dwell_time(adc)
+    oversample(adc::ADC) = adc.oversample
+    nsamples(adc::ADC) = resolution(adc) * oversample(adc)
+    dwell_time(adc::ADC) = adc.dwell_time
+    duration(adc::ADC) = nsamples(adc) * dwell_time(adc)
+    time_to_center(adc::ADC) = adc.time_to_center
+    effective_time(adc::ADC) = time_to_center(adc)
+    resolution(adc::ADC) = adc.resolution
+end
 
 function fixed(adc::ADC)
     # round nsamples during fixing
