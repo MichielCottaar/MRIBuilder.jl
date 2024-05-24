@@ -83,17 +83,25 @@ end
     amplitude(pulse::SincPulse) = pulse.amplitude
     N_left(pulse::SincPulse) = pulse.Nzeros[1]
     N_right(pulse::SincPulse) = pulse.Nzeros[2]
-    duration(pulse::SincPulse) = (N_left(pulse) + N_right(pulse)) * lobe_duration(pulse)
+end
+
+@defvar begin
     phase(pulse::SincPulse) = pulse.phase
     frequency(pulse::SincPulse) = pulse.frequency
-    flip_angle(pulse::SincPulse) = (pulse.norm_flip_angle[1] + pulse.norm_flip_angle[2]) * amplitude(pulse) * lobe_duration(pulse) * 360
     lobe_duration(pulse::SincPulse) = pulse.lobe_duration
+end
+
+@defvar begin
+    duration(pulse::SincPulse) = (N_left(pulse) + N_right(pulse)) * lobe_duration(pulse)
+    flip_angle(pulse::SincPulse) = (pulse.norm_flip_angle[1] + pulse.norm_flip_angle[2]) * amplitude(pulse) * lobe_duration(pulse) * 360
     inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
     effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
+end
 
-    amplitude(pulse::SincPulse, time::Number) = amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
-    phase(pulse::SincPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse)) * 360.
-    frequency(pulse::SincPulse, time::Number) = frequency(pulse)
+@defvar begin
+    amplitude(pulse::SincPulse, time::Number) = variables.amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
+    phase(pulse::SincPulse, time::Number) = variables.phase(pulse) + variables.frequency(pulse) * (time - effective_time(pulse)) * 360.
+    frequency(pulse::SincPulse, time::Number) = variables.frequency(pulse)
 end
 
 function make_generic(block::SincPulse)

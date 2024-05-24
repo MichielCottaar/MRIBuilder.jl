@@ -104,7 +104,7 @@ repetition_time(bs::BaseSequence) = duration(bs)
 
 @defvar begin
     duration(bs::BaseSequence{0}) = 0.
-    duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
+    duration(bs::BaseSequence) = sum(variables.duration.(bs); init=0.)
 end
 
 function edge_times(seq::BaseSequence; tol=1e-6)

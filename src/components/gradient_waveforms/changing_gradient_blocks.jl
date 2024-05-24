@@ -34,17 +34,16 @@ struct ChangingGradient3D <: ChangingGradient{3}
     group :: Union{Nothing, Symbol}
 end
 
-
 @defvar begin
     duration(cgb::ChangingGradient) = cgb.duration
 
     grad_start(cgb::ChangingGradient) = cgb.gradient_strength_start
     slew_rate(cgb::ChangingGradient) = cgb.slew_rate
-    grad_end(cgb::ChangingGradient) = grad_start(cgb) .+ slew_rate(cgb) .* duration(cgb)
-    gradient_strength(cgb::ChangingGradient) = max.(grad_start(cgb), grad_end(cgb))
-    qval(cgb::ChangingGradient) = (grad_start(cgb) .+ grad_end(cgb)) .* (duration(cgb) * π)
+    grad_end(cgb::ChangingGradient) = variables.grad_start(cgb) .+ variables.slew_rate(cgb) .* variables.duration(cgb)
+    gradient_strength(cgb::ChangingGradient) = max.(variables.grad_start(cgb), variables.grad_end(cgb))
+    qval(cgb::ChangingGradient) = (variables.grad_start(cgb) .+ variables.grad_end(cgb)) .* (variables.duration(cgb) * π)
 
-    gradient_strength(cgb::ChangingGradient, time::Number) = slew_rate(cgb) .* time .+ grad_start(cgb)
+    gradient_strength(cgb::ChangingGradient, time::Number) = variables.slew_rate(cgb) .* time .+ variables.grad_start(cgb)
 end
 
 _mult(g1::VariableType, g2::VariableType) = g1 * g2
@@ -69,7 +68,7 @@ to_vec(::ChangingGradient3D, g::AbstractVector) = g
         return (
             _mult(qstart, qstart) .* duration(cgb) .+
             duration(cgb)^2 .* _mult(qstart, grad_aver) .* 2π ./ 3 .+
-            bmat_gradient(cgb)
+            variables.bmat_gradient(cgb)
         )
     end
 

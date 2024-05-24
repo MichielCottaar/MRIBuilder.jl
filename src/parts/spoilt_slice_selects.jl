@@ -112,9 +112,12 @@ Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall2}) = ChangingGradient(slew_
     rise_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1, spoilt.fall_time2 - spoilt.diff_time)
     flat_time(spoilt::SpoiltSliceSelect) = (spoilt.flat_time1, spoilt.flat_time2)
     fall_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1 - spoilt.diff_time, spoilt.fall_time2)
-    duration(spoilt::SpoiltSliceSelect) = sum(rise_time(spoilt)) + sum(flat_time(spoilt)) + sum(flat_time(spoilt)) + duration(spoilt.pulse)
     slew_rate(spoilt::SpoiltSliceSelect) = spoilt.slew_rate
-    inverse_slice_thickness(spoilt::SpoiltSliceSelect) = spoilt.slew_rate * spoilt.diff_time * duration(spoilt.pulse) * 1e3
+end
+
+@defvar begin
+    duration(spoilt::SpoiltSliceSelect) = sum(rise_time(spoilt)) + sum(flat_time(spoilt)) + sum(flat_time(spoilt)) + variables.duration(spoilt.pulse)
+    inverse_slice_thickness(spoilt::SpoiltSliceSelect) = slew_rate(spoilt) * spoilt.diff_time * variables.duration(spoilt.pulse) * 1e3
     gradient_strength(spoilt::SpoiltSliceSelect) = slew_rate(spoilt) * max(spoilt.rise_time1, spoilt.fall_time2)
 end
 

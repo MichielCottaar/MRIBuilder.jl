@@ -142,7 +142,7 @@ function start_time(building_block::BaseBuildingBlock, index)
     error("Building block with index '$index' not found")
 end
 
-@defvar duration(bb::BaseBuildingBlock) = sum([duration(wv) for (_, wv) in waveform_sequence(bb)])
+@defvar duration(bb::BaseBuildingBlock) = sum([variables.duration(wv) for (_, wv) in waveform_sequence(bb)])
 
 # Pathway support
 """
@@ -195,18 +195,18 @@ end
         if (!isnothing(index1)) && (index1 == index2)
             return 0.
         end
-        res = sum([qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
+        res = sum([variables.qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
 
         t1 = isnothing(index1) ? 0. : start_time(bb, index1)
         t2 = isnothing(index2) ? duration(bb) : start_time(bb, index2)
         for (key, event) in events(bb)
             if event isa InstantGradient && (t1 <= start_time(bb, key) <= t2)
-                res = res .+ qval(event)
+                res = res .+ variables.qval(event)
             end
         end
         return res
     end
-    qval(bb::BaseBuildingBlock) = qval(bb, nothing, nothing)
+    qval(bb::BaseBuildingBlock) = variables.qval(bb, nothing, nothing)
 
     function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
         if (!isnothing(index1)) && (index1 == index2)
@@ -216,12 +216,12 @@ end
         qcurrent = Vector{VariableType}(qstart)
 
         for (_, part) in waveform_sequence(bb, index1, index2)
-            result = result .+ bmat_gradient(part, qcurrent)
+            result = result .+ variables.bmat_gradient(part, qcurrent)
             qcurrent = qcurrent .+ qval3(part, qcurrent)
         end
         return result
     end
-    bmat_gradient(bb::BaseBuildingBlock, qstart) = bmat_gradient(bb, qstart, nothing, nothing)
+    bmat_gradient(bb::BaseBuildingBlock, qstart) = variables.bmat_gradient(bb, qstart, nothing, nothing)
 end
 
 """
@@ -277,7 +277,7 @@ end
 
 @defvar function gradient_strength(bb::BaseBuildingBlock, time::Number)
     (grad, time) = get_gradient(bb, time)
-    return gradient_strength(grad, time)
+    return variables.gradient_strength(grad, time)
 end
 
 """
@@ -363,7 +363,7 @@ end
         error("BuildingBlock contains multiple RF pulse or readout events, so `effective_time` is not defined.")
     end
     index = index[1]
-    return effective_time(bb, index)
+    return variables.effective_time(bb, index)
 end
 
 """

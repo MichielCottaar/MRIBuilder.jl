@@ -65,12 +65,12 @@ end
 
 @defvar begin
     duration(pulse::CompositePulse) = (
-        0.5 * duration(pulse.pulses[1]) + 
-        0.5 * duration(pulse.pulses[end]) + 
+        0.5 * variables.duration(pulse.pulses[1]) + 
+        0.5 * variables.duration(pulse.pulses[end]) + 
         pulse.pulse_time * (length(pulse) - 1)
     )
-    flip_angle(pulse::CompositePulse) = sum(flip_angle.(pulse.pulses))
-    effective_time(pulse::CompositePulse) = duration(pulse) / 2
+    flip_angle(pulse::CompositePulse) = sum(variables.flip_angle.(pulse.pulses))
+    effective_time(pulse::CompositePulse) = variables.duration(pulse) / 2
 end
 
 

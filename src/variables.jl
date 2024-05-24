@@ -95,6 +95,7 @@ variables = _Variables(Dict{Symbol, AnyVariable}())
 
 Base.getindex(v::_Variables, i::Symbol) = getfield(v, :variables)[i]
 Base.keys(v::_Variables) = keys(getfield(v, :variables))
+Base.values(v::_Variables) = values(getfield(v, :variables))
 
 Base.propertynames(v::_Variables) = Tuple(keys(getfield(v, :variables)))
 
@@ -441,16 +442,8 @@ function scanner_constraints!(bb::AbstractBlock)
         value = nothing
         try
             value = f(bb)
-        catch e
-                continue
-                continue
-            else
-                rethrow()
-            end
+        catch
             continue
-            else
-                rethrow()
-            end
         end
         if value isa AbstractVector
             for v in value

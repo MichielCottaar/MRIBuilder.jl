@@ -34,8 +34,8 @@ end_time(block::AbstractBlock) = duration(block)
 end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = duration(block[2])
 
 @defvar begin
-    effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + effective_time(container[index], indices...)
-    effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effective_time(block[2])
+    effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + variables.effective_time(container[index], indices...)
+    effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + variables.effective_time(block[2])
 end
 """
     effective_time(container, indices...)
