@@ -186,10 +186,12 @@ function _defvar(func_def, getter=nothing)
 end
 
 @defvar function duration end
-@doc """    duration(block)
+"""
+    duration(block)
 
 Duration of the sequence or building block in ms.
-""" duration
+""" 
+duration
 
 
 function def_alternate_variable!(name::Symbol, other_var::Symbol, to_other::Function, from_other::Function, inverse::Bool)
