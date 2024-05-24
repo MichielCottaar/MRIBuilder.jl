@@ -216,9 +216,9 @@ function dwi_gradients(; type=:trapezoid, optimise=false, scanner=nothing, refoc
             group=group, orientation=o, Dict(key => get_index(value, i) for (key, value) in pairs(real_variables))...
             ) for (i, o) in enumerate((orientation, other_orientation))]
         if !isnothing(orientation) || refocus
-            apply_simple_constraint!(qval(g1), qval(g2))
+            apply_simple_constraint!(variables.qval(g1), variables.qval(g2))
         else
-            apply_simple_constraint!(qval(g1), -qval(g2))
+            apply_simple_constraint!(variables.qval(g1), -variables.qval(g2))
         end
         for var_func in match
             if var_func isa Symbol
