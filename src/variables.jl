@@ -127,6 +127,9 @@ function _defvar(func_def, getter=nothing)
     end
 
     function adjust_function(ex)
+        if ex isa Expr && ex.head == :block
+            return Expr(:block, adjust_function.(ex.args)...)
+        end
         if ex isa Expr && ex.head == :function && length(ex.args) == 1
             push!(func_names, ex.args[1])
             return :nothing
@@ -148,7 +151,7 @@ function _defvar(func_def, getter=nothing)
             rethrow()
         end
     end
-    new_func_def = MacroTools.postwalk(adjust_function, func_def)
+    new_func_def = adjust_function(func_def)
 
     function fix_function_name(ex)
         if ex in func_names
