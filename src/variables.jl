@@ -134,8 +134,13 @@ function _defvar(func_def, getter=nothing)
         try
             fn_def = MacroTools.splitdef(ex)
             push!(func_names, fn_def[:name])
-            fn_def[:name] = Expr(:., fn_def[:name], QuoteNode(:f))
-            return MacroTools.combinedef(fn_def)
+            new_def = Dict{Symbol, Any}()
+            new_def[:name] = Expr(:., fn_def[:name], QuoteNode(:f))
+            new_def[:args] = esc.(fn_def[:args])
+            new_def[:kwargs] = esc.(fn_def[:kwargs])
+            new_def[:body] = esc(fn_def[:body])
+            new_def[:whereparams] = esc.(fn_def[:whereparams])
+            return MacroTools.combinedef(new_def)
         catch e
             if e isa AssertionError
                 return ex
@@ -143,7 +148,7 @@ function _defvar(func_def, getter=nothing)
             rethrow()
         end
     end
-    new_func_def = MacroTools.prewalk(adjust_function, func_def)
+    new_func_def = MacroTools.postwalk(adjust_function, func_def)
 
     function fix_function_name(ex)
         if ex in func_names
@@ -198,7 +203,6 @@ function def_alternate_variable!(name::Symbol, other_var::Symbol, to_other::Func
     getfield(variables, :variables)[name] = AlternateVariable(name, other_var, to_other, from_other, inverse)
 end
 
-def_alternate_variable!(:qval, :qval_square, q->q^2, sqrt, false)
 def_alternate_variable!(:spoiler_scale, :spoiler_scale, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
 
 for name in [:slice_thickness, :bandwidth, :fov, :voxel_size]
@@ -288,16 +292,6 @@ Any `pathway` variables not explicitly defined for this building block will be p
 """
 function get_pathway end
 
-"""
-    bmat_gradient(gradient::GradientBlock, qstart=(0, 0, 0))
-
-Computes the diffusion-weighting matrix due to a single gradient block in rad^2 ms/um^2.
-
-This should be defined for every `GradientBlock`, but not be called directly.
-Instead, the `bmat` and `bval` should be constrained for specific `Pathways`
-"""
-function bmat_gradient end
-
 
 """
     gradient_orientation(building_block)
@@ -307,10 +301,10 @@ Returns the gradient orientation.
 function gradient_orientation end
 
 
-function effective_time end
+@defvar function effective_time end
 
 
-function (var::Type{Variable})(block::AbstractBlock, args...; kwargs...)
+function (var::Variable)(block::AbstractBlock, args...; kwargs...)
     if !applicable(var.f, block, args...) && !isnothing(var.getter)
         apply_to = var.getter(block)
         if apply_to isa AbstractBlock
@@ -324,7 +318,7 @@ function (var::Type{Variable})(block::AbstractBlock, args...; kwargs...)
     return var.f(block, args...; kwargs...)
 end
 
-function (var::Type{AlternateVariable})(args...; kwargs...)
+function (var::AlternateVariable)(args...; kwargs...)
     other_var = variables[var.other_var]
     apply_from_other(res::Number) = var.from_other(res)
     apply_from_other(res::AbstractArray{<:Number}) = var.from_other.(res)
