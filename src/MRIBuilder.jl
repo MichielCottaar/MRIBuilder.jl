@@ -8,7 +8,7 @@ include("build_sequences.jl")
 include("variables.jl")
 include("components/components.jl")
 include("containers/containers.jl")
-#include("pathways.jl")
+include("pathways.jl")
 #include("parts/parts.jl")
 #include("post_hoc.jl")
 #include("sequences/sequences.jl")
@@ -31,8 +31,8 @@ export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, Si
 import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, readout_times, iter_blocks, iter_instant_gradients, iter_instant_pulses
 export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, readout_times, iter_blocks, iter_instant_gradients, iter_instant_pulses
 
-#import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
-#export Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
+import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
+export Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
 
 #import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
 #export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size

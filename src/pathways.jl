@@ -3,7 +3,7 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
 import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
-import ..Variables: qvec, qval, qval3, bmat_gradient, VariableType, effective_time, duration, TR, bmat, bval, area_under_curve, duration_dephase, duration_transverse, VariableNotAvailable
+import ..Variables: VariableType, get_pathway, variables, @defvar
 
 
 """
@@ -71,6 +71,9 @@ function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_inde
     )
 end
 
+@defvar function duration_state(pathway::Pathway, transverse, positive)
+    return pathway.duration_states[duration_state_index(transverse, positive)]
+end
 
 """
     duration_state(pathway::Pathway, transverse::Bool, positive::Bool)
@@ -83,10 +86,11 @@ The requested state can be set using `transverse` and `positive` as follows:
 - `transverse=false`, `positive=false`: -longitudinal
 - `transverse=true`, `positive=false`: -transverse
 """
-function duration_state(pathway::Pathway, transverse, positive)
-    return pathway.duration_states[duration_state_index(transverse, positive)]
-end
+duration_state
 
+@defvar function duration_transverse(pathway::Pathway)
+    return duration_state(pathway, true, true) + duration_state(pathway, true, false)
+end
 """
     duration_transverse(pathway::Pathway)
 
@@ -95,10 +99,11 @@ This determines the amount of T2-weighting as ``e^{t/T_2}``, where ``t`` is the 
 
 Also see [`duration_dephase`](@ref) for T2'-weighting.
 """
-function duration_transverse(pathway::Pathway)
-    return duration_state(pathway, true, true) + duration_state(pathway, true, false)
-end
+duration_transverse
 
+@defvar function duration_dephase(pathway::Pathway)
+    return duration_state(pathway, true, true) - duration_state(pathway, true, false)
+end
 """
     duration_dephase(pathway::Pathway)
 
@@ -107,23 +112,23 @@ This determines the amount of T2'-weighting as ``e^{t/T_2'}``, where ``t`` is th
 
 Also see [`duration_transverse`](@ref) for T2-weighting.
 """
-function duration_dephase(pathway::Pathway)
-    return duration_state(pathway, true, true) - duration_state(pathway, true, false)
-end
+duration_dephase
 
 
+@defvar net_dephasing(pathway::Pathway) = pathway.qvec
 """
-    qvec(pathway::Pathway)
+    net_dephasing(pathway::Pathway)
 
-Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
+Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref) in kHz/um.
 
 Only gradients active while the spins are in the transverse plane are considered.
 
 Returns a NamedTuple with the `qvec` for all gradient groups.
 """
-qvec(pathway::Pathway) = pathway.qvec
+net_dephasing
 
 
+@defvar area_under_curve(pathway::Pathway) = norm(qvec(pathway))
 """
     area_under_curve(pathway::Pathway)
 
@@ -133,9 +138,10 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `area_under_curve` for all gradient groups.
 """
-area_under_curve(pathway::Pathway) = norm(qvec(pathway))
+area_under_curve
 
 
+@defvar bmat(pathway::Pathway)  = pathway.bmat
 """
     bmat(pathway::Pathway)
 
@@ -145,8 +151,9 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `bmat` for all gradient groups.
 """
-bmat(pathway::Pathway)  = pathway.bmat
+bmat
 
+@defvar bval(pathway::Pathway) = tr(bmat(pathway))
 """
     bval(pathway::Pathway)
 
@@ -156,7 +163,7 @@ Only gradients active while the spins are in the transverse plane will contribut
 
 Returns a NamedTuple with the `bval` for all gradient groups.
 """
-bval(pathway::Pathway) = tr(bmat(pathway))
+bval
 
 
 """
@@ -167,27 +174,6 @@ Gets the main [`PathWay`](@ref) that spins are expected to experience in the seq
 Multiple pathways might be returned as an array or (named)tuple.
 """
 function get_pathway end
-
-for fn in (:qvec, :area_under_curve, :bmat, :bval, :duration_dephase, :duration_transverse)
-    @eval function $fn(seq::Sequence)
-        pathway = try
-            get_pathway(seq)
-        catch e
-            if e isa MethodError
-                throw(VariableNotAvailable(typeof(seq), $fn))
-            end
-            rethrow()
-        end
-        if pathway isa Pathway
-            return $fn(pathway)
-        elseif pathway isa AbstractVector || pathway isa Tuple
-            return $fn.(pathway)
-        elseif pathway isa NumedTuple
-            return NamedTuple(k => $fn(v) for (k, v) in pairs(pathway))
-        end
-        error("get_pathway returned unexpected type for $seq")
-    end
-end
 
 
 """
