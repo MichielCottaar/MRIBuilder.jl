@@ -1,6 +1,5 @@
 module Abstract
-import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase, VariableType, get_pulse, get_gradient
-import ...Components.Readouts: readout_times
+import ...Variables: AbstractBlock, variables, VariableType, get_pulse, get_gradient, @defvar
 import ...Components: BaseComponent, InstantPulse, InstantGradient, ReadoutComponent, NoGradient, RFPulseComponent, GradientWaveform
 
 """
@@ -34,6 +33,10 @@ end_time(container::ContainerBlock, index, indices...) = start_time(container, i
 end_time(block::AbstractBlock) = duration(block)
 end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = duration(block[2])
 
+@defvar begin
+    effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + effective_time(container[index], indices...)
+    effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effective_time(block[2])
+end
 """
     effective_time(container, indices...)
 
@@ -43,8 +46,7 @@ This will crash if the component does not have an [`effective_time`](@ref) (e.g.
 
 Also see [`duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
 """
-effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + effective_time(container[index], indices...)
-effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effective_time(block[2])
+effective_time
 
 
 """
@@ -52,7 +54,7 @@ effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effec
 
 Returns the gradient strength at a particular time within the sequence.
 """
-function gradient_strength end
+gradient_strength = variables.gradient_strength
 
 
 """
@@ -60,7 +62,7 @@ function gradient_strength end
 
 Returns the RF amplitude at a particular time within the sequence in kHz.
 """
-function amplitude end
+amplitude = variables.amplitude
 
 
 """
@@ -70,7 +72,7 @@ Returns the RF phase at a particular time within the sequence in degrees.
 
 NaN is returned if there is no pulse activate at that `time`.
 """
-function phase end
+phase = variables.phase
 
 """
     frequency(sequence, time)
@@ -79,7 +81,7 @@ Returns the RF frequency at a particular time within the sequence in kHz.
 
 NaN is returned if there is no pulse activate at that `time`.
 """
-function frequency end
+frequency = variables.frequency
 
 """
     iter(sequence, get_type)
@@ -139,12 +141,14 @@ This function will return a tuple with 2 elements:
 """
 function get_gradient end
 
+@defvar readout_times(container::ContainerBlock) = [time for (time, _) in iter(container, Val(:readout))]
 """
     readout_times(sequence)
 
 Returns all the times that the sequence will readout.
 """
-readout_times(container::ContainerBlock) = [time for (time, _) in iter(container, Val(:readout))]
+readout_times
+
 iter(component::Tuple{<:Number, <:ReadoutComponent}, ::Val{:readout}) = [(time, nothing) for time in readout_times(component[2])]
 
 end

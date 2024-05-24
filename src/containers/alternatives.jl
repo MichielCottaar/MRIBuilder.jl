@@ -2,7 +2,7 @@ module Alternatives
 import JuMP: @constraint
 import ..Abstract: ContainerBlock
 import ...BuildSequences: global_model, fixed
-import ...Variables: duration, make_generic
+import ...Variables: @defvar, make_generic
 
 """
     AlternativeBlocks(name, blocks)
@@ -23,7 +23,7 @@ AlternativeBlocks(name::Symbol, options_vector::AbstractVector) = AlternativeBlo
 Base.getindex(alt::AlternativeBlocks, index) = alt.options[index]
 Base.length(alt::AlternativeBlocks) = length(alt.options)
 
-duration(alt::AlternativeBlocks) = maximum(duration.(values(alt.options)))
+@defvar duration(alt::AlternativeBlocks) = maximum(duration.(values(alt.options)))
 
 """
     match_blocks!(alternatives, function)

@@ -4,7 +4,7 @@ Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic, gradient_strength, amplitude, phase, gradient_strength3, get_gradient, get_pulse, frequency, gradient_orientation, get_gradient
+import ...Variables: get_free_variable, VariableType, variables, set_simple_constraints!, make_generic, get_gradient, get_pulse, get_gradient, @defvar
 import ...BuildSequences: global_model, global_scanner
 import ...Components: EventComponent, NoGradient, edge_times
 import ...Scanners: Scanner, B0
@@ -102,9 +102,10 @@ nrepeat(bs::BaseSequence) = 1
 
 repetition_time(bs::BaseSequence) = duration(bs)
 
-
-duration(bs::BaseSequence{0}) = 0.
-duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
+@defvar begin
+    duration(bs::BaseSequence{0}) = 0.
+    duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
+end
 
 function edge_times(seq::BaseSequence; tol=1e-6)
     res = Float64[]
@@ -120,13 +121,19 @@ function edge_times(seq::BaseSequence; tol=1e-6)
     return sort(unique_res)
 end
 
-for fn in (:gradient_strength, :amplitude, :phase, :frequency, :gradient_strength3, :get_gradient, :get_pulse)
+for fn in (:gradient_strength, :amplitude, :phase, :frequency, :gradient_strength3)
+    @eval function $fn(sequence::BaseSequence, time::AbstractFloat)
+        (block_time, block) = sequence(time)
+        return variables.$fn.f(block, block_time)
+    end
+end
+
+for fn in (:get_gradient, :get_pulse)
     @eval function $fn(sequence::BaseSequence, time::AbstractFloat)
         (block_time, block) = sequence(time)
         return $fn(block, block_time)
     end
 end
-
 """
     Sequence(blocks; name=:Sequence, variables...)
     Sequence(blocks...; name=:Sequence, variables...)
