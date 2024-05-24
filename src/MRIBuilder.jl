@@ -9,12 +9,12 @@ include("variables.jl")
 include("components/components.jl")
 include("containers/containers.jl")
 include("pathways.jl")
-#include("parts/parts.jl")
-#include("post_hoc.jl")
-#include("sequences/sequences.jl")
-#include("printing.jl")
-#include("sequence_io/sequence_io.jl")
-#include("plot.jl")
+include("parts/parts.jl")
+include("post_hoc.jl")
+include("sequences/sequences.jl")
+include("printing.jl")
+include("sequence_io/sequence_io.jl")
+include("plot.jl")
 
 import .BuildSequences: build_sequence, global_model, global_scanner, fixed
 export build_sequence, global_model, global_scanner, fixed
@@ -34,22 +34,22 @@ export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events
 import .Pathways: Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
 export Pathway, duration_transverse, duration_dephase, bval, bmat, get_pathway
 
-#import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
-#export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
+import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
+export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
 
-#import .PostHoc: adjust, merge_sequences
-#export adjust, merge_sequences
+import .PostHoc: adjust, merge_sequences
+export adjust, merge_sequences
 
-#import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
-#export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
+import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
+export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
 
-#import .SequenceIO: read_sequence, write_sequence
-#export read_sequence, write_sequence
+import .SequenceIO: read_sequence, write_sequence
+export read_sequence, write_sequence
 
-#import .Plot: plot_sequence
-#export plot_sequence
+import .Plot: plot_sequence
+export plot_sequence
 
-#import JuMP: @constraint, @objective, objective_function, value, Model
-#export @constraint, @objective, objective_function, value, Model
+import JuMP: @constraint, @objective, objective_function, value, Model
+export @constraint, @objective, objective_function, value, Model
 
 end

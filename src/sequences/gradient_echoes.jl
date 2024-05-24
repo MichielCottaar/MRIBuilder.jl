@@ -1,7 +1,7 @@
 module GradientEchoes
 import ...Containers: Sequence
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler
-import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, TR, TE, repetition_time
+import ...Variables: get_pulse, get_readout, variables, @defvar
 import ...Pathways: Pathway, get_pathway
 import ...BuildSequences: build_sequence
 import ...Scanners: Default_Scanner
@@ -47,7 +47,7 @@ end
 get_pulse(ge::GradientEcho) = ge.excitation
 get_readout(ge::GradientEcho) = ge.readout
 get_pathway(ge::GradientEcho) = Pathway(ge, [90], 1)
-echo_time(ge::GradientEcho) = duration_transverse(ge)
+@defvar echo_time(ge::GradientEcho) = variables.duration_transverse(ge)
 
 
 

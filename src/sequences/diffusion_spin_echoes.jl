@@ -2,7 +2,7 @@ module DiffusionSpinEchoes
 import ...Containers: Sequence
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler, refocus_pulse, dwi_gradients
 import ...Containers: start_time
-import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, delay, effective_time, diffusion_time, Δ, TR, TE, repetition_time, get_gradient
+import ...Variables: get_pulse, get_readout, get_gradient, variables, @defvar
 import ...Pathways: Pathway, get_pathway
 import ...BuildSequences: build_sequence
 import ...Scanners: Default_Scanner
@@ -64,8 +64,11 @@ get_pulse(ge::DiffusionSpinEcho) = (excitation=ge[:excitation], refocus=ge[:refo
 get_gradient(ge::DiffusionSpinEcho) = (gradient=ge[:gradient], gradient2=ge[:gradient2])
 get_readout(ge::DiffusionSpinEcho) = ge.readout
 get_pathway(ge::DiffusionSpinEcho) = Pathway(ge, [90, 180], 1, group=:diffusion)
-echo_time(ge::DiffusionSpinEcho) = 2 * (effective_time(ge, :refocus) - effective_time(ge, :excitation))
-delay(ge::DiffusionSpinEcho) = duration_transverse(ge) - echo_time(ge)
-diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
+
+@defvar begin
+    echo_time(ge::DiffusionSpinEcho) = 2 * (effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
+    delay(ge::DiffusionSpinEcho) = variables.duration_transverse(ge) - variables.echo_time(ge)
+    diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
+end
 
 end

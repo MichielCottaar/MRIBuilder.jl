@@ -4,7 +4,7 @@ import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @constraint, @objective, objective_function
 import ...BuildSequences: global_model, global_scanner
-import ...Variables: VariableType, duration, rise_time, flat_time, effective_time, qval, gradient_strength, slew_rate, inverse_slice_thickness, get_free_variable, get_pulse, set_simple_constraints!, gradient_orientation
+import ...Variables: VariableType, get_pulse, set_simple_constraints!, variables, @defvar
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
 import ...Containers: BaseBuildingBlock
 
@@ -92,9 +92,11 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
     return res
 end
 
-gradient_orientation(spoilt::SpoiltSliceSelect) = spoilt.orientation
-duration_trap1(spoilt::SpoiltSliceSelect) = 2 * spoilt.rise_time1 + spoilt.flat_time1 - spoilt.diff_time
-duration_trap2(spoilt::SpoiltSliceSelect) = 2 * spoilt.fall_time2 + spoilt.flat_time2 - spoilt.diff_time
+@defvar begin
+    gradient_orientation(spoilt::SpoiltSliceSelect) = spoilt.orientation
+    duration_trap1(spoilt::SpoiltSliceSelect) = 2 * spoilt.rise_time1 + spoilt.flat_time1 - spoilt.diff_time
+    duration_trap2(spoilt::SpoiltSliceSelect) = 2 * spoilt.fall_time2 + spoilt.flat_time2 - spoilt.diff_time
+end
 
 Base.keys(::SpoiltSliceSelect) = Val.((:rise1, :flat1, :fall1, :flat_pulse, :pulse, :rise2, :flat2, :fall2))
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:rise1}) = ChangingGradient(0., slew_rate(spoilt), gradient_orientation(spoilt), rise_time(spoilt)[1], spoilt.group)
@@ -106,16 +108,19 @@ Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:rise2}) = ChangingGradient(slew_
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:flat2}) = ConstantGradient(slew_rate(spoilt) * fall_time(spoilt)[2], gradient_orientation(spoilt), flat_time(spoilt)[2], spoilt.group)
 Base.getindex(spoilt::SpoiltSliceSelect, ::Val{:fall2}) = ChangingGradient(slew_rate(spoilt) * fall_time(spoilt)[2], -slew_rate(spoilt), gradient_orientation(spoilt), fall_time(spoilt)[2], spoilt.group)
 
-rise_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1, spoilt.fall_time2 - spoilt.diff_time)
-flat_time(spoilt::SpoiltSliceSelect) = (spoilt.flat_time1, spoilt.flat_time2)
-fall_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1 - spoilt.diff_time, spoilt.fall_time2)
-duration(spoilt::SpoiltSliceSelect) = sum(rise_time(spoilt)) + sum(flat_time(spoilt)) + sum(flat_time(spoilt)) + duration(spoilt.pulse)
-slew_rate(spoilt::SpoiltSliceSelect) = spoilt.slew_rate
-inverse_slice_thickness(spoilt::SpoiltSliceSelect) = spoilt.slew_rate * spoilt.diff_time * duration(spoilt.pulse) * 1e3
-gradient_strength(spoilt::SpoiltSliceSelect) = slew_rate(spoilt) * max(spoilt.rise_time1, spoilt.fall_time2)
+@defvar begin
+    rise_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1, spoilt.fall_time2 - spoilt.diff_time)
+    flat_time(spoilt::SpoiltSliceSelect) = (spoilt.flat_time1, spoilt.flat_time2)
+    fall_time(spoilt::SpoiltSliceSelect) = (spoilt.rise_time1 - spoilt.diff_time, spoilt.fall_time2)
+    duration(spoilt::SpoiltSliceSelect) = sum(rise_time(spoilt)) + sum(flat_time(spoilt)) + sum(flat_time(spoilt)) + duration(spoilt.pulse)
+    slew_rate(spoilt::SpoiltSliceSelect) = spoilt.slew_rate
+    inverse_slice_thickness(spoilt::SpoiltSliceSelect) = spoilt.slew_rate * spoilt.diff_time * duration(spoilt.pulse) * 1e3
+    gradient_strength(spoilt::SpoiltSliceSelect) = slew_rate(spoilt) * max(spoilt.rise_time1, spoilt.fall_time2)
+end
+
 get_pulse(spoilt::SpoiltSliceSelect) = spoilt.pulse
 
-function all_gradient_strengths(spoilt::SpoiltSliceSelect)
+@defvar function all_gradient_strengths(spoilt::SpoiltSliceSelect)
     grad1 = spoilt.slew_rate * rise_time(spoilt)[1]
     grad2 = grad1 - spoilt.slew_rate * flat_time(spoilt)[1]
     grad3 = spoilt.slew_rate * fall_time(spoilt)[2]

@@ -6,8 +6,7 @@ module Trapezoids
 import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ...Variables: qval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
-import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout, gradient_orientation, ramp_overlap, adjustable, adjust_internal
+import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ...Containers: BaseBuildingBlock
@@ -107,14 +106,16 @@ gradient_orientation(pg::Trapezoid{1}) = pg.orientation
 get_group(pg::Trapezoid) = pg.group
 get_group(pg::BaseTrapezoid) = get_group(get_gradient(pg))
 
-rise_time(pg::Trapezoid) = pg.rise_time
-flat_time(pg::Trapezoid) = pg.flat_time
-gradient_strength(g::Trapezoid) = slew_rate(g) .* rise_time(g)
-slew_rate(g::Trapezoid) = g.slew_rate
-δ(g::Trapezoid) = rise_time(g) + flat_time(g)
-duration(g::BaseTrapezoid) = 2 * rise_time(g) + flat_time(g)
+@defvar begin
+    rise_time(pg::Trapezoid) = pg.rise_time
+    flat_time(pg::Trapezoid) = pg.flat_time
+    gradient_strength(g::Trapezoid) = slew_rate(g) .* rise_time(g)
+    slew_rate(g::Trapezoid) = g.slew_rate
+    diffusion_time(g::Trapezoid) = rise_time(g) + flat_time(g)
+    duration(g::BaseTrapezoid) = 2 * rise_time(g) + flat_time(g)
 
-qval(g::BaseTrapezoid, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
+    qval(g::BaseTrapezoid, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
+end
 
 adjustable(::BaseTrapezoid) = :gradient
 
@@ -176,11 +177,11 @@ end
 Base.keys(::SliceSelect) = (Val(:rise), Val(:flat), Val(:pulse), Val(:fall))
 Base.getindex(pg::SliceSelect, ::Val{:pulse}) = (0., pg.pulse)
 
-inverse_slice_thickness(ss::SliceSelect) = 1e3 * gradient_strength(ss.trapezoid) .* inverse_bandwidth(ss.pulse)
+@defvar inverse_slice_thickness(ss::SliceSelect) = 1e3 * variables.gradient_strength(ss.trapezoid) .* variables.inverse_bandwidth(ss.pulse)
 
 get_pulse(ss::SliceSelect) = ss.pulse
 get_gradient(ss::SliceSelect) = ss.trapezoid
-effective_time(ss::SliceSelect) = effective_time(ss, :pulse)
+@defvar effective_time(ss::SliceSelect) = variables.effective_time(ss, :pulse)
 
 """
     LineReadout(adc; ramp_overlap=1., orientation=nothing, group=nothing, variables...)
@@ -221,10 +222,12 @@ end
 Base.keys(::LineReadout) = (Val(:rise), Val(:adc), Val(:flat), Val(:fall))
 Base.getindex(lr::LineReadout, ::Val{:adc}) = ((1 - ramp_overlap(lr)) * rise_time(lr), lr.adc)
 
-ramp_overlap(lr::LineReadout) = lr.ramp_overlap
-inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid) * lr.adc.oversample
-inverse_voxel_size(lr::LineReadout) = 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
-effective_time(lr::LineReadout) = effective_time(lr, :adc)
+@defvar begin
+    ramp_overlap(lr::LineReadout) = lr.ramp_overlap
+    inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid) * lr.adc.oversample
+    inverse_voxel_size(lr::LineReadout) = 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
+    effective_time(lr::LineReadout) = variables.effective_time(lr, :adc)
+end
 
 get_readout(lr::LineReadout) = lr.adc
 get_gradient(lr::LineReadout) = lr.trapezoid

@@ -1,7 +1,7 @@
 module Plot
 import MakieCore: generic_plot_attributes!
 import ..Containers: BaseBuildingBlock, BaseSequence, waveform, events, start_time, ndim_grad, waveform_sequence
-import ..Variables: duration, flip_angle, phase, make_generic, gradient_orientation
+import ..Variables: make_generic, gradient_orientation, variables
 import ..Components: RFPulseComponent, ADC, InstantPulse, NoGradient, InstantGradient1D, InstantGradient3D
 
 """
@@ -16,7 +16,7 @@ struct SinglePlotLine
     event_amplitudes :: Vector{Float64}
 end
 
-duration(pl::SinglePlotLine) = iszero(length(pl.times)) ? 0. : pl.times[end]
+duration_line(pl::SinglePlotLine) = iszero(length(pl.times)) ? 0. : pl.times[end]
 SinglePlotLine(times::Vector{Float64}, amplitudes::Vector{Float64}) = SinglePlotLine(times, amplitudes, Float64[], Float64[])
 
 function SinglePlotLine(control_points::AbstractVector{<:Tuple}, duration::Number)
@@ -45,7 +45,7 @@ function SinglePlotLine(plot_lines::SinglePlotLine...)
         append!(amplitudes, pl.amplitudes)
         append!(event_times, pl.event_times .+ current_time)
         append!(event_amplitudes, pl.event_amplitudes)
-        current_time += duration(pl)
+        current_time += duration_line(pl)
     end
     return SinglePlotLine(times, amplitudes, event_times, event_amplitudes)
 end
@@ -119,7 +119,7 @@ function SequenceDiagram(bbb::BaseBuildingBlock)
     if !all([wvs isa NoGradient for (_, wvs) in waveform_sequence(bbb)])
         orientation = ndim_grad(bbb) == 3 ? 1. : gradient_orientation(bbb)
         for (index, symbol) in enumerate((:Gx, :Gy, :Gz))
-            kwargs[symbol] = SinglePlotLine([(time, (orientation .* amplitude)[index]) for (time, amplitude) in waveform(bbb)], duration(bbb))
+            kwargs[symbol] = SinglePlotLine([(time, (orientation .* amplitude)[index]) for (time, amplitude) in waveform(bbb)], variables.duration(bbb))
         end
     end
 
@@ -132,7 +132,7 @@ function SequenceDiagram(bbb::BaseBuildingBlock)
             end
             for (symbol, fn) in [(:RFx, cosd), (:RFy, sind)]
                 if event isa InstantPulse
-                    kwargs[symbol] = SinglePlotLine([0., duration(bbb)], [0., 0.], [delay], [flip_angle(event) * fn(phase(event))])
+                    kwargs[symbol] = SinglePlotLine([0., variables.duration(bbb)], [0., 0.], [delay], [variables.flip_angle(event) * fn(variables.phase(event))])
                 else
                     points = Tuple{Float64, Float64}[]
                     t_prev = p_prev = a_prev = nothing
@@ -154,34 +154,34 @@ function SequenceDiagram(bbb::BaseBuildingBlock)
                         p_prev = p
                         a_prev = a
                     end
-                    kwargs[symbol] = SinglePlotLine(points, duration(bbb))
+                    kwargs[symbol] = SinglePlotLine(points, variables.duration(bbb))
                 end
             end
         elseif event isa ADC
             if :ADC in keys(kwargs)
                 error("Cannot plot a building block with more than 1 ADC event.")
             end
-            if iszero(duration(event))
+            if iszero(variables.duration(event))
                 kwargs[:ADC] = SinglePlotLine(
-                    [0., duration(bbb)],
+                    [0., variables.duration(bbb)],
                     [0., 0.],
                     [delay], [1.]
                 )
             else
                 kwargs[:ADC] = SinglePlotLine(
-                    [0., delay, delay, delay + duration(event), delay + duration(event), duration(bbb)],
+                    [0., delay, delay, delay + variables.duration(event), delay + variables.duration(event), variables.duration(bbb)],
                     [0., 0., 1., 1., 0., 0.],
                 )
             end
         elseif event isa InstantGradient1D
-            kwargs[:G] = SinglePlotLine([0., duration(bbb)], [0., 0.], [delay], [event.qval])
+            kwargs[:G] = SinglePlotLine([0., variables.duration(bbb)], [0., 0.], [delay], [event.qval])
         elseif event isa InstantGradient3D
             for (index, symbol) in enumerate([:Gx, :Gy, :Gz])
-                kwargs[symbol] = SinglePlotLine([0., duration(bbb)], [0., 0.], [delay], [event.qval[index]])
+                kwargs[symbol] = SinglePlotLine([0., variables.duration(bbb)], [0., 0.], [delay], [event.qval[index]])
             end
         end
     end
-    return SequenceDiagram(duration(bbb); kwargs...)
+    return SequenceDiagram(variables.duration(bbb); kwargs...)
 end
 
 function SequenceDiagram(seq::BaseSequence)

@@ -1,7 +1,7 @@
 module SliceSelectRephases
 import ...Containers: BaseSequence, get_index_single_TR
 import ..Trapezoids: SliceSelect, Trapezoid
-import ...Variables: get_pulse, qval, apply_simple_constraint!, effective_time
+import ...Variables: get_pulse, apply_simple_constraint!, variables, @defvar
 import ...Components: RFPulseComponent
 
 """
@@ -34,6 +34,6 @@ end
 get_index_single_TR(ss::SliceSelectRephase, ::Val{1}) = ss.slice_select
 get_index_single_TR(ss::SliceSelectRephase, ::Val{2}) = ss.rephase
 get_pulse(ssr::SliceSelectRephase) = ssr.slice_select
-effective_time(ssr::SliceSelectRephase) = effective_time(ssr, 1)
+@defvar effective_time(ssr::SliceSelectRephase) = variables.effective_time(ssr, 1)
 
 end

@@ -8,7 +8,7 @@ import ..EPIReadouts: EPIReadout
 import ...BuildSequences: global_model, build_sequence, global_scanner
 import ...Containers: Sequence
 import ...Components: SincPulse, ConstantPulse, InstantPulse, SingleReadout, InstantGradient
-import ...Variables: qvec, flat_time, rise_time, qval, apply_simple_constraint!, variables
+import ...Variables: variables
 
 
 function _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)

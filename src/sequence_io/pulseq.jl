@@ -7,7 +7,7 @@ import ..PulseqIO.Types: PulseqSequence, PulseqBlock, PulseqTrapezoid, PulseqGra
 import ...Containers: Sequence, BuildingBlock, BaseBuildingBlock, events, waveform, iter_blocks
 import ...Components: GenericPulse, ADC, RFPulseComponent
 import ...Scanners: Scanner
-import ...Variables: duration, nsamples, dwell_time, make_generic
+import ...Variables: variables, make_generic
 
 function Sequence(pulseq::PulseqSequence; scanner=nothing, B0=nothing)
     if isnothing(scanner)
@@ -145,8 +145,8 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
                 error("Pulseq does not support a single building block containing multiple ADC events.")
             end
             adc = PulseqADC(
-                nsamples(event),
-                div(dwell_time(event), AdcRasterTime, RoundNearest),
+                variables.nsamples(event),
+                div(variables.dwell_time(event), AdcRasterTime, RoundNearest),
                 Int(div(delay, 1e-3, RoundNearest)),
                 0., 0.
             )

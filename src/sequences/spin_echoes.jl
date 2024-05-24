@@ -1,7 +1,7 @@
 module SpinEchoes
 import ...Containers: Sequence
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler, refocus_pulse
-import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, delay, effective_time, TR, TR, repetition_time
+import ...Variables: get_pulse, get_readout, variables, @defvar
 import ...Pathways: Pathway, get_pathway
 import ...BuildSequences: build_sequence
 import ...Scanners: Default_Scanner
@@ -51,8 +51,11 @@ end
 get_pulse(ge::SpinEcho) = (excitation=ge.excitation, refocus=ge.refocus)
 get_readout(ge::SpinEcho) = ge.readout
 get_pathway(ge::SpinEcho) = Pathway(ge, [90, 180], 1)
-echo_time(ge::SpinEcho) = 2 * (effective_time(ge, :refocus) - effective_time(ge, :excitation))
-delay(ge::SpinEcho) = duration_transverse(ge) - echo_time(ge)
+
+@defvar begin
+    echo_time(ge::SpinEcho) = 2 * (variables.effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
+    delay(ge::SpinEcho) = variables.duration_transverse(ge) - variables.echo_time(ge)
+end
 
 
 end

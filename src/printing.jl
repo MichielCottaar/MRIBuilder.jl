@@ -1,8 +1,7 @@
 module Printing
 import JuMP: value
 import Printf: @sprintf
-import ..Variables: VariableType, variables, AbstractBlock, VariableNotAvailable, alternative_variables
-
+import ..Variables: VariableType, variables, AbstractBlock 
 
 function _robust_value(possible_number::VariableType)
     try
@@ -47,20 +46,14 @@ function Base.show(io::IO, block::AbstractBlock)
     end
 
     for fn in values(variables)
-        if fn in [fn_alt for (fn_alt, _, _, _) in values(alternative_variables)]
-            continue
-        end
         try
             numeric_value = _robust_value(fn(block))
             if isnothing(numeric_value)
                 continue
             end
             print(io, "$(nameof(fn))=$(numeric_value), ")
-        catch e
-            if e isa VariableNotAvailable
-                continue
-            end
-            rethrow()
+        catch
+            continue
         end
     end
     print(io, ")")
