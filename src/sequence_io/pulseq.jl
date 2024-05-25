@@ -54,7 +54,7 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
 
     grads = [pulseq.gx, pulseq.gy, pulseq.gz]
     min_duration = max(
-        maximum(e[1] + duration(e[2]) for e in events; init=0.),
+        maximum(e[1] + variables.duration(e[2]) for e in events; init=0.),
         maximum(vcat(_control_times.(grads, GradientRasterTime)...); init=0.)
     )
 
