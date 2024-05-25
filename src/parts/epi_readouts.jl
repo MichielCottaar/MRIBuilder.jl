@@ -61,7 +61,7 @@ function EPIReadout(; resolution::AbstractVector{<:Integer}, recenter=false, gro
     return res
 end
 
-@defvar begin
+@defvar readout begin
     inverse_fov(epi::EPIReadout) = [variables.inverse_fov(epi.positive_line), 1e3 * epi.ky_step]
     inverse_voxel_size(epi::EPIReadout) = [variables.inverse_voxel_size(epi.positive_line), 1e3 * epi.ky_step * maximum(abs.(epi.ky_lines))]
     resolution(epi::EPIReadout) = [variables.resolution(epi.positive_line), maximum(abs.(epi.ky_lines))]
