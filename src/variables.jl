@@ -322,6 +322,15 @@ function (var::Variable)(block::AbstractBlock, args...; kwargs...)
     return var.f(block, args...; kwargs...)
 end
 
+# Special case for BuildingBlock events
+function (var::Variable)(event::Tuple{<:Number, <:AbstractBlock}, args...; kwargs...)
+    if applicable(var.f, event, args...; kwargs...)
+        return var.f(event, args...; kwargs...)
+    end
+    # falling back to just processing the `AbstractBlock`
+    return var(event[2], args...; kwargs...)
+end
+
 function (var::AlternateVariable)(args...; kwargs...)
     other_var = variables[var.other_var]
     apply_from_other(res::Number) = var.from_other(res)
