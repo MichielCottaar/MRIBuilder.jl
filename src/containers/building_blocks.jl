@@ -239,7 +239,6 @@ function edge_times(bb::BaseBuildingBlock)
     for (key, event) in events(bb)
         append!(res, edge_times(event) .+ start_time(bb, key))
     end
-    @show res
     for (time, _) in waveform(bb)
         push!(res, time)
     end
