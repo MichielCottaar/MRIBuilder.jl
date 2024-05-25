@@ -62,7 +62,7 @@ end
 
 get_pulse(ge::DiffusionSpinEcho) = (excitation=ge[:excitation], refocus=ge[:refocus])
 get_gradient(ge::DiffusionSpinEcho) = (gradient=ge[:gradient], gradient2=ge[:gradient2])
-get_readout(ge::DiffusionSpinEcho) = ge.readout
+get_readout(ge::DiffusionSpinEcho) = ge[:readout]
 get_pathway(ge::DiffusionSpinEcho) = Pathway(ge, [90, 180], 1, group=:diffusion)
 
 @defvar begin
