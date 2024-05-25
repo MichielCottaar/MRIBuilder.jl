@@ -12,7 +12,7 @@ In addition this defines:
 - [`gradient_orientation`](@ref): returns the gradient orientation of a waveform if fixed.
 """
 module Variables
-import JuMP: @constraint, @variable, Model, @objective, objective_function, AbstractJuMPScalar
+import JuMP: @constraint, @variable, Model, @objective, objective_function, AbstractJuMPScalar, QuadExpr, AffExpr
 import StaticArrays: SVector
 import MacroTools
 import ..Scanners: gradient_strength, slew_rate, Scanner
@@ -472,6 +472,9 @@ function scanner_constraints!(bb::AbstractBlock)
             continue
         end
         for v in value
+            if v isa Number || ((v isa Union{QuadExpr, AffExpr}) && length(v.terms) == 0)
+                continue
+            end
             @constraint global_model() v <= max_value
             @constraint global_model() v >= -max_value
         end
