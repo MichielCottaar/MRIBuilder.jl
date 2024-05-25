@@ -326,6 +326,8 @@ function (var::Variable)(block::AbstractBlock, args...; kwargs...)
             return NamedTuple(k => var(v, args...; kwargs...) for (k, v) in pairs(apply_to))
         elseif apply_to isa AbstractVector{<:AbstractBlock} || apply_to isa Tuple
             return var.(apply_to, args...; kwargs...)
+        else
+            error("$(var.getter) returned an unexpected type: $(typeof(apply_to)).")
         end
     end
     return var.f(block, args...; kwargs...)
