@@ -100,8 +100,6 @@ How often sequence should be repeated.
 """
 nrepeat(bs::BaseSequence) = 1
 
-repetition_time(bs::BaseSequence) = duration(bs)
-
 @defvar begin
     duration(bs::BaseSequence{0}) = 0.
     duration(bs::BaseSequence) = sum(variables.duration.(bs); init=0.)
