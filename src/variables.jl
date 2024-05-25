@@ -453,26 +453,19 @@ function make_generic end
 Constraints [`gradient_strength`](@ref) and [`slew_rate`](@ref) to be less than the [`global_scanner`](@ref) maximum.
 """
 function scanner_constraints!(bb::AbstractBlock)
-    try
-        global_scanner()
-    catch e
-        return
-    end
-    for f in (slew_rate, gradient_strength)
+    for (var, max_value) in [
+        (variables.slew_rate, global_scanner().slew_rate),
+        (variables.gradient_strength, global_scanner().gradient),
+    ]
         value = nothing
         try
-            value = f(bb)
+            value = var(bb)
         catch
             continue
         end
-        if value isa AbstractVector
-            for v in value
-                @constraint global_model() v <= f(global_scanner())
-                @constraint global_model() v >= -f(global_scanner())
-            end
-        else
-            @constraint global_model() value <= f(global_scanner())
-            @constraint global_model() value >= -f(global_scanner())
+        for v in value
+            @constraint global_model() v <= max_value
+            @constraint global_model() v >= -max_value
         end
     end
 end
