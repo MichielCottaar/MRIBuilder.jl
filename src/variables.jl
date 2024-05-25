@@ -214,8 +214,8 @@ def_alternate_variable!(:qval_square, :qvec, qv -> sum(q -> q * q, qv), nothing,
 for vec_variable in [:gradient_strength, :slew_rate]
     vec_square = Symbol(string(vec_variable) * "_square")
     vec_norm = Symbol(string(vec_variable) * "_norm")
-    def_alternate_variable!(:vec_norm, :vec_square, sqrt, v -> v * v, false)
-    def_alternate_variable!(:vec_square, :vec_variable, v -> v[1] * v[1] + v[2] * v[2] + v[3] * v[3], nothing, false)
+    def_alternate_variable!(vec_norm, vec_square, sqrt, v -> v * v, false)
+    def_alternate_variable!(vec_square, vec_variable, v -> v[1] * v[1] + v[2] * v[2] + v[3] * v[3], nothing, false)
 end
 
 for name in [:slice_thickness, :bandwidth, :fov, :voxel_size]
@@ -345,7 +345,15 @@ end
 function (var::AlternateVariable)(args...; kwargs...)
     other_var = variables[var.other_var]
     apply_from_other(res::VariableType) = var.from_other(res)
-    apply_from_other(res::AbstractVector{<:VariableType}) = var.from_other(res)
+    function apply_from_other(res::AbstractVector{<:VariableType}) 
+        try
+            return var.from_other(res)
+        catch e
+            if e isa MethodError
+                return var.from_other.(res)
+            end
+        end
+    end
     apply_from_other(res::NamedTuple) = NamedTuple(k => apply_from_other(v) for (k, v) in pairs(res))
     return apply_from_other(other_var(args...; kwargs...))
 end
