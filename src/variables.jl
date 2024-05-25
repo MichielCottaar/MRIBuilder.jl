@@ -361,12 +361,12 @@ If set to a numeric value, a constraint will be added to fix the function value 
 If set to `:min` or `:max`, minimising or maximising this function will be added to the cost function.
 """
 function set_simple_constraints!(block::AbstractBlock, kwargs)
-    real_kwargs = NamedTuple(key => value for (key, value) in kwargs if !isnothing(value))
+    real_kwargs = Dict(key => value for (key, value) in kwargs if !isnothing(value))
 
     for (key, value) in real_kwargs
         var = variables[key]
         if var isa AlternateVariable
-            if var.other_var in real_kwargs
+            if var.other_var in keys(real_kwargs)
                 error("Set constraints on both $key and $(var.other_var), however they are equivalent.")
             end
             invert_value(value::VariableType) = var.to_other(value)
