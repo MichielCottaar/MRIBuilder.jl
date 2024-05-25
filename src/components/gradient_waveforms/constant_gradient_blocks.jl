@@ -30,8 +30,10 @@ struct ConstantGradient3D <: ConstantGradient{3}
     group :: Union{Symbol, Nothing}
 end
 
-@defvar begin
-    duration(cgb::ConstantGradient) = cgb.duration
+
+@defvar duration(cgb::ConstantGradient) = cgb.duration
+
+@defvar gradient begin
     gradient_strength(cgb::ConstantGradient) = cgb.gradient_strength
     slew_rate(::ConstantGradient1D) = 0.
     slew_rate(::ConstantGradient3D) = zero(SVector{3, Float64})

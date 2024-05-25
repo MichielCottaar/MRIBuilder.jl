@@ -32,7 +32,7 @@ struct EPIReadout{N} <: BaseSequence{N}
     ky_lines :: AbstractVector{<:Integer}
 end
 
-function EPIReadout(; resolution::AbstractVector{<:Integer}, recenter=false, group=:FOV, ky_lines=nothing, variables...)
+function EPIReadout(; resolution::AbstractVector{<:Integer}, recenter=false, group=:FOV, ky_lines=nothing, vars...)
     if length(resolution) != 2
         error("EPIReadout expects the image resolution in the x- and y-direction.")
     end
@@ -49,15 +49,15 @@ function EPIReadout(; resolution::AbstractVector{<:Integer}, recenter=false, gro
         get_free_variable(nothing),
         ky_lines
     )
-    apply_simple_constraint!(variables.qval3(res.start_gradient), VariableType[-variables.qval(pos)/2, ky_lines[1] * res.ky_step, 0.])
+    apply_simple_constraint!(variables.qval(res.start_gradient), VariableType[-variables.qval(pos)/2, ky_lines[1] * res.ky_step, 0.])
     if recenter
         sign = isodd(length(ky_lines)) ? -1 : 1
-        apply_simple_constraint!(variables.qval3(res.recenter_gradient), VariableType[sign * variables.qval(pos)/2, -ky_lines[end] * res.ky_step, 0.])
+        apply_simple_constraint!(variables.qval(res.recenter_gradient), VariableType[sign * variables.qval(pos)/2, -ky_lines[end] * res.ky_step, 0.])
     end
     for shift in unique(ky_lines[2:end] - ky_lines[1:end-1])
         res.blips[shift] = Trapezoid(orientation=[0, shift > 0 ? 1 : -1, 0], group=group, qval=abs(shift) * res.ky_step)
     end
-    set_simple_constraints!(res, variables)
+    set_simple_constraints!(res, vars)
     return res
 end
 

@@ -24,7 +24,7 @@ end
     gradient_strength(nb::NoGradient, time::Number) = 0.
 end
 
-@defvar begin
+@defvar gradient begin
     bmat_gradient(::NoGradient) = 0.
     bmat_gradient(ngb::NoGradient, qstart::VariableType) = qstart^2 * duration(ngb)
     bmat_gradient(ngb::NoGradient, qstart::AbstractVector{<:VariableType}) = @. qstart * permutedims(qstart) * duration(ngb)

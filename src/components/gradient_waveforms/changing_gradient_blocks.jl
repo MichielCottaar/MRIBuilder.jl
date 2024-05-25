@@ -36,7 +36,9 @@ end
 
 @defvar begin
     duration(cgb::ChangingGradient) = cgb.duration
+end
 
+@defvar gradient begin
     grad_start(cgb::ChangingGradient) = cgb.gradient_strength_start
     slew_rate(cgb::ChangingGradient) = cgb.slew_rate
     grad_end(cgb::ChangingGradient) = variables.grad_start(cgb) .+ variables.slew_rate(cgb) .* variables.duration(cgb)
@@ -52,7 +54,7 @@ _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
 to_vec(cgb::ChangingGradient1D, g::VariableType) = cgb.orientation .* g
 to_vec(::ChangingGradient3D, g::AbstractVector) = g
 
-@defvar begin
+@defvar gradient begin
     function bmat_gradient(cgb::ChangingGradient, qstart::AbstractVector)
         # grad = (g1 * (duration - t) + g2 * t) / duration
         #      = g1 + (g2 - g1) * t / duration

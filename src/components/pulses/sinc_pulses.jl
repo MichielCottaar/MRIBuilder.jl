@@ -79,13 +79,13 @@ function integral_nzero(Nzeros, apodise)
     return quadgk(f, 0, Nzeros)[1]
 end
 
-@defvar begin
+@defvar pulse begin
     amplitude(pulse::SincPulse) = pulse.amplitude
     N_left(pulse::SincPulse) = pulse.Nzeros[1]
     N_right(pulse::SincPulse) = pulse.Nzeros[2]
 end
 
-@defvar begin
+@defvar pulse begin
     phase(pulse::SincPulse) = pulse.phase
     frequency(pulse::SincPulse) = pulse.frequency
     lobe_duration(pulse::SincPulse) = pulse.lobe_duration

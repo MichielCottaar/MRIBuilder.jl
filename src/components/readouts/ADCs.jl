@@ -48,17 +48,17 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
     return res
 end
 
-@defvar begin
+@defvar readout begin
     oversample(adc::ADC) = adc.oversample
     dwell_time(adc::ADC) = adc.dwell_time
     time_to_center(adc::ADC) = adc.time_to_center
     resolution(adc::ADC) = adc.resolution
 end
 
-@defvar nsamples(adc::ADC) = resolution(adc) * oversample(adc)
+@defvar readout nsamples(adc::ADC) = resolution(adc) * oversample(adc)
 
+@defvar readout_times(adc::ADC) = ((1:Int(nsamples(adc))) .- 0.5) .* dwell_time(adc)
 @defvar begin
-    readout_times(adc::ADC) = ((1:Int(nsamples(adc))) .- 0.5) .* dwell_time(adc)
     duration(adc::ADC) = nsamples(adc) * dwell_time(adc)
     effective_time(adc::ADC) = time_to_center(adc)
 end

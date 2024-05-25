@@ -42,7 +42,7 @@ struct InstantGradient1D <: InstantGradient{1}
     group :: Union{Nothing, Symbol}
 end
 
-@defvar qval(ig::InstantGradient1D) = ig.qval
+@defvar gradient qval(ig::InstantGradient1D) = ig.qval
 
 """
 An [`InstantGradient`](@ref) with a variable orientation.
@@ -61,12 +61,12 @@ function InstantGradient3D(; qval=[nothing, nothing, nothing], group=nothing, va
     return res
 end
 
-@defvar qval(ig::InstantGradient3D) = ig.qvec
+@defvar gradient qval(ig::InstantGradient3D) = ig.qvec
 
 
 variables.duration.f(::InstantGradient) = 0.
 variables.effective_time.f(::InstantGradient) = 0.
-@defvar bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
+@defvar gradient bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
 
 make_generic(ig::InstantGradient) = ig
 

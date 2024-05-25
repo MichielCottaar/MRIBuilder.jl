@@ -63,12 +63,13 @@ function wait_times(comp::CompositePulse)
     comp.pulse_time - (d[1:end-1] + d[2:end]) / 2
 end
 
-@defvar begin
-    duration(pulse::CompositePulse) = (
+@defvar duration(pulse::CompositePulse) = (
         0.5 * variables.duration(pulse.pulses[1]) + 
         0.5 * variables.duration(pulse.pulses[end]) + 
         pulse.pulse_time * (length(pulse) - 1)
     )
+
+@defvar begin
     flip_angle(pulse::CompositePulse) = sum(variables.flip_angle.(pulse.pulses))
     effective_time(pulse::CompositePulse) = variables.duration(pulse) / 2
 end

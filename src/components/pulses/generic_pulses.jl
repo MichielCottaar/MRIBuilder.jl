@@ -68,10 +68,11 @@ end
 
 GenericPulse(pulse::RFPulseComponent, t1::Number, t2::Number) = GenericPulse(make_generic(pulse), t1, t2)
 
-@defvar begin
-    duration(fp::GenericPulse) = maximum(fp.time)
+@defvar duration(fp::GenericPulse) = maximum(fp.time)
+@defvar effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]
+
+@defvar pulse begin
     amplitude(fp::GenericPulse) = maximum(abs.(fp.amplitude))
-    effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]
     phase(pulse::GenericPulse) = pulse.phase[findmax(abs.(pulse.amplitude))[2]]
     flip_angle(pulse::GenericPulse) = sum(get_weights(pulse) .* pulse.amplitude) * 360
     function time_halfway_flip(pulse::GenericPulse)
@@ -99,7 +100,7 @@ for fn in (:amplitude, :phase)
 end
 
 
-@defvar function frequency(gp::GenericPulse, time::Number)
+@defvar pulse function frequency(gp::GenericPulse, time::Number)
     i2 = findfirst(t -> t > time, gp.time)
     if isnothing(i2)
         @assert time ≈ gp.time[end]

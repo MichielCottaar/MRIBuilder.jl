@@ -38,18 +38,19 @@ function ConstantPulse(; amplitude=nothing, duration=nothing, phase=nothing, fre
     return res
 end
 
-@defvar begin
+@defvar duration(pulse::ConstantPulse) = pulse.duration
+@defvar effective_time(pulse::ConstantPulse) = duration(pulse) / 2
+
+@defvar pulse begin
     amplitude(pulse::ConstantPulse) = pulse.amplitude
-    duration(pulse::ConstantPulse) = pulse.duration
     phase(pulse::ConstantPulse) = pulse.phase
     frequency(pulse::ConstantPulse) = pulse.frequency
     amplitude(pulse::ConstantPulse, time::Number) = variables.amplitude(pulse)
 end
 
-@defvar begin
+@defvar pulse begin
     flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
     inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
-    effective_time(pulse::ConstantPulse) = duration(pulse) / 2
 
     phase(pulse::ConstantPulse, time::Number) = variables.phase(pulse) + variables.frequency(pulse) * (time - variables.effective_time(pulse)) * 360.
     frequency(pulse::ConstantPulse, time::Number) = variables.frequency(pulse)
