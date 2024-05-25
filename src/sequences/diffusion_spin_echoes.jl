@@ -66,7 +66,7 @@ get_readout(ge::DiffusionSpinEcho) = ge.readout
 get_pathway(ge::DiffusionSpinEcho) = Pathway(ge, [90, 180], 1, group=:diffusion)
 
 @defvar begin
-    echo_time(ge::DiffusionSpinEcho) = 2 * (effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
+    echo_time(ge::DiffusionSpinEcho) = 2 * (variables.effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
     delay(ge::DiffusionSpinEcho) = variables.duration_transverse(ge) - variables.echo_time(ge)
     diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
 end
