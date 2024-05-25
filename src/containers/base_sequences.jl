@@ -175,6 +175,8 @@ nrepeat(::Sequence) = 0
 to_block_pair(pair::Pair) = pair[1] => to_block(pair[2])
 to_block_pair(other) = nothing => to_block(other)
 
+@defvar repetition_time(seq::Sequence) = duration(seq)
+
 """
     to_block(block_like)
 
