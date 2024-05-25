@@ -71,7 +71,7 @@ function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_inde
     )
 end
 
-@defvar function duration_state(pathway::Pathway, transverse, positive)
+@defvar pathway function duration_state(pathway::Pathway, transverse, positive)
     return pathway.duration_states[duration_state_index(transverse, positive)]
 end
 
@@ -88,7 +88,7 @@ The requested state can be set using `transverse` and `positive` as follows:
 """
 duration_state
 
-@defvar function duration_transverse(pathway::Pathway)
+@defvar pathway function duration_transverse(pathway::Pathway)
     return duration_state(pathway, true, true) + duration_state(pathway, true, false)
 end
 """
@@ -101,7 +101,7 @@ Also see [`duration_dephase`](@ref) for T2'-weighting.
 """
 duration_transverse
 
-@defvar function duration_dephase(pathway::Pathway)
+@defvar pathway function duration_dephase(pathway::Pathway)
     return duration_state(pathway, true, true) - duration_state(pathway, true, false)
 end
 """
@@ -115,7 +115,7 @@ Also see [`duration_transverse`](@ref) for T2-weighting.
 duration_dephase
 
 
-@defvar net_dephasing(pathway::Pathway) = pathway.qvec
+@defvar pathway net_dephasing(pathway::Pathway) = pathway.qvec
 """
     net_dephasing(pathway::Pathway)
 
@@ -128,7 +128,7 @@ Returns a NamedTuple with the `qvec` for all gradient groups.
 net_dephasing
 
 
-@defvar area_under_curve(pathway::Pathway) = norm(qvec(pathway))
+@defvar pathway area_under_curve(pathway::Pathway) = norm(qvec(pathway))
 """
     area_under_curve(pathway::Pathway)
 
@@ -141,7 +141,7 @@ Returns a NamedTuple with the `area_under_curve` for all gradient groups.
 area_under_curve
 
 
-@defvar bmat(pathway::Pathway)  = pathway.bmat
+@defvar pathway bmat(pathway::Pathway)  = pathway.bmat
 """
     bmat(pathway::Pathway)
 
@@ -153,7 +153,7 @@ Returns a NamedTuple with the `bmat` for all gradient groups.
 """
 bmat
 
-@defvar bval(pathway::Pathway) = tr(bmat(pathway))
+@defvar pathway bval(pathway::Pathway) = tr(bmat(pathway))
 """
     bval(pathway::Pathway)
 
@@ -271,7 +271,7 @@ The function should return `true` if the `Pathway` has reached its end (i.e., th
 function walk_pathway!(seq::Sequence, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}) 
     current_TR = 0
     nwait = length(pulse_effects) + nreadout[]
-    while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * TR(seq)))
+    while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * variables.duration(seq)))
         new_nwait = length(pulse_effects) + nreadout[]
         if nwait == new_nwait
             not_seen = iszero(length(pulse_effects)) ? "readout" : "pulse"
@@ -320,7 +320,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
         # apply gradients up till interrupt
         for (_, part) in waveform_sequence(block, current_index, index_inter)
             update_walker_gradient!(part, walker, current_time)
-            current_time = current_time + duration(part)
+            current_time = current_time + variables.duration(part)
         end 
 
         # apply interrupt
@@ -339,7 +339,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
     # apply remaining gradients
     for (_, part) in waveform_sequence(block, current_index, nothing)
         update_walker_gradient!(part, walker, current_time)
-        current_time = current_time + duration(part)
+        current_time = current_time + variables.duration(part)
     end
     return false
 end
@@ -472,9 +472,9 @@ function update_walker_gradient!(gradient::GradientWaveform, walker::PathwayWalk
 
         # update qvec/bmat during gradient
         tracker = walker.gradient_trackers[key]
-        tracker.bmat = tracker.bmat .+ bmat_gradient(gradient, tracker.qvec)
-        tracker.qvec = tracker.qvec .+ qval3(gradient)
-        tracker.last_gradient_time = gradient_start_time + duration(gradient)
+        tracker.bmat = tracker.bmat .+ variables.bmat_gradient(gradient, tracker.qvec)
+        tracker.qvec = tracker.qvec .+ variables.qval3(gradient)
+        tracker.last_gradient_time = gradient_start_time + variables.duration(gradient)
     end
 end
 
