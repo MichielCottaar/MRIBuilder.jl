@@ -52,7 +52,7 @@ function Base.show(io::IO, block::AbstractBlock)
                 continue
             end
             print(io, "$(nameof(fn))=$(numeric_value), ")
-        catch
+        catch e
             continue
         end
     end
