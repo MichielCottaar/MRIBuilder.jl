@@ -3,7 +3,7 @@ import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
 import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
-import ..Variables: VariableType, get_pathway, variables, @defvar
+import ..Variables: VariableType, get_pathway, variables, @defvar, AbstractBlock
 
 
 """
@@ -45,7 +45,7 @@ The area under curve, q-values, and b-values are computed separately for each gr
 - [`bmat`](@ref): Net diffusion weighting due to gradients along the `Pathway` in matrix form.
 - [`bval`](@ref): Net diffusion weighting due to gradients along the `Pathway` as a single number.
 """
-struct Pathway
+struct Pathway <: AbstractBlock
     # user provided
     sequence :: Sequence
     pulse_effects :: Vector{<:Union{Symbol, Number}}
