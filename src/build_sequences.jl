@@ -66,7 +66,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
                     end
                     optimize!(model)
                     while termination_status(model) == INVALID_MODEL
-                        @variable(model, x[i=1:10])
+                        @variable(model)
                         optimize!(model)
                     end
                     if termination_status(model) in (LOCALLY_SOLVED, OPTIMAL)
