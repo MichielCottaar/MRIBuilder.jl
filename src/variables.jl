@@ -343,7 +343,7 @@ end
 function (var::AlternateVariable)(args...; kwargs...)
     other_var = variables[var.other_var]
     apply_from_other(res::VariableType) = var.from_other(res)
-    apply_from_other(res::AbstractArray{<:VariableType}) = var.from_other.(res)
+    apply_from_other(res::AbstractVector{<:VariableType}) = var.from_other(res)
     apply_from_other(res::NamedTuple) = NamedTuple(k => apply_from_other(v) for (k, v) in pairs(res))
     return apply_from_other(other_var(args...; kwargs...))
 end
