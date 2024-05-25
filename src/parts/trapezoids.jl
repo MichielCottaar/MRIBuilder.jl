@@ -6,7 +6,7 @@ module Trapezoids
 import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType
+import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType, get_gradient, get_pulse, get_readout
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ...Containers: BaseBuildingBlock
@@ -106,17 +106,18 @@ gradient_orientation(pg::Trapezoid{1}) = pg.orientation
 get_group(pg::Trapezoid) = pg.group
 get_group(pg::BaseTrapezoid) = get_group(get_gradient(pg))
 
-@defvar begin
+@defvar gradient begin
     rise_time(pg::Trapezoid) = pg.rise_time
     flat_time(pg::Trapezoid) = pg.flat_time
     slew_rate(g::Trapezoid) = g.slew_rate
 end
 
-@defvar begin
+@defvar gradient begin
     gradient_strength(g::Trapezoid) = slew_rate(g) .* rise_time(g)
     δ(g::Trapezoid) = rise_time(g) + flat_time(g)
-    duration(g::BaseTrapezoid) = 2 * rise_time(g) + flat_time(g)
 end
+
+@defvar duration(g::BaseTrapezoid) = 2 * rise_time(g) + flat_time(g)
 
 @defvar qval(g::BaseTrapezoid, ::Nothing, ::Nothing) = variables.δ(g) .* gradient_strength(g) .* 2π
 
