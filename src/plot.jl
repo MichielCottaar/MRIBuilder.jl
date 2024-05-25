@@ -103,7 +103,7 @@ struct SequenceDiagram
 end
 
 function SequenceDiagram(actual_duration; kwargs...)
-    durations = duration.([values(kwargs)...])
+    durations = duration_line.([values(kwargs)...])
     @assert all(isapprox.(actual_duration, durations, rtol=1e-3))
     res = SinglePlotLine[]
     for symbol in (:RFx, :RFy, :G, :Gx, :Gy, :Gz, :ADC)

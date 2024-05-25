@@ -107,11 +107,11 @@ function waveform(bb::BaseBuildingBlock)
             @assert all(abs.(prev_grad) .<= 1e-12) "$(typeof(bb)) inserts NoGradient before the gradient is zero. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad))
         elseif block isa ConstantGradient
-            @assert all(isapprox.(gradient_strength(block), prev_grad, atol=tol, rtol=tol)) "$(typeof(bb)) inserts ConstantGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
+            @assert all(isapprox.(variables.gradient_strength(block), prev_grad, atol=tol, rtol=tol)) "$(typeof(bb)) inserts ConstantGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad))
         elseif block isa ChangingGradient
             @assert all(isapprox.(block.gradient_strength_start, prev_grad, atol=tol, rtol=tol)) "$(typeof(bb)) inserts ChangingGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
-            push!(result, (new_time, prev_grad .+ slew_rate(block) .* duration(block)))
+            push!(result, (new_time, prev_grad .+ variables.slew_rate(block) .* variables.duration(block)))
         else
             error("Unrecognised block type in BuildingBlock: $(typeof(bb)).")
         end
