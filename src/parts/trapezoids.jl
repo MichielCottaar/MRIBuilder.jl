@@ -229,8 +229,8 @@ Base.getindex(lr::LineReadout, ::Val{:adc}) = ((1 - ramp_overlap(lr)) * rise_tim
 
 @defvar begin
     ramp_overlap(lr::LineReadout) = lr.ramp_overlap
-    inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid) * lr.adc.oversample
-    inverse_voxel_size(lr::LineReadout) = 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
+    inverse_fov(lr::LineReadout) = 1e3 * variables.dwell_time(lr.adc) * variables.gradient_strength_norm(lr.trapezoid) * lr.adc.oversample
+    inverse_voxel_size(lr::LineReadout) = 1e3 * variables.duration(lr.adc) * variables.gradient_strength(lr.trapezoid)
     effective_time(lr::LineReadout) = variables.effective_time(lr, :adc)
 end
 
