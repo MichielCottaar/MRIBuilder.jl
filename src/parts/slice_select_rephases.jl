@@ -24,9 +24,9 @@ function SliceSelectRephase(pulse::RFPulseComponent; orientation=nothing, group=
         Trapezoid(; orientation=rephase_orientation, group=group, kwargs...)
     )
     if N == 1
-        apply_simple_constraint!(qval(res.slice_select, :pulse, nothing), qval(res.rephase))
+        apply_simple_constraint!(variables.qval(res.slice_select, :pulse, nothing), variables.qval(res.rephase))
     else
-        apply_simple_constraint!(qval(res.slice_select, :pulse, nothing), -qval(res.rephase))
+        apply_simple_constraint!(variables.qval(res.slice_select, :pulse, nothing), -variables.qval(res.rephase))
     end
     return res
 end
