@@ -34,11 +34,10 @@ end
 @defvar duration(cgb::ConstantGradient) = cgb.duration
 
 @defvar gradient begin
-    gradient_strength(cgb::ConstantGradient) = cgb.gradient_strength
-    slew_rate(::ConstantGradient1D) = 0.
-    slew_rate(::ConstantGradient3D) = zero(SVector{3, Float64})
-    qval(cgb::ConstantGradient1D) = variables.duration(cgb) * variables.gradient_strength(cgb) * 2π
-    qval(cgb::ConstantGradient3D) = variables.duration(cgb) .* variables.gradient_strength(cgb) .* 2π
+    gradient_strength(cgb::ConstantGradient1D) = cgb.gradient_strength * cgb.orientation
+    gradient_strength(cgb::ConstantGradient3D) = cgb.gradient_strength
+    slew_rate(::ConstantGradient) = zero(SVector{3, Float64})
+    qvec(cgb::ConstantGradient) = variables.duration(cgb) * variables.gradient_strength(cgb) * 2π
 
     gradient_strength(cgb::ConstantGradient, time::Number) = variables.gradient_strength(cgb)
 end
@@ -46,12 +45,9 @@ end
 _mult(g1::VariableType, g2::VariableType) = g1 * g2
 _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
 
-to_vec(cgb::ConstantGradient1D, g::VariableType) = cgb.orientation .* g
-to_vec(::ConstantGradient3D, g::AbstractVector) = g
-
 @defvar begin
     function bmat_gradient(cgb::ConstantGradient)
-        grad = to_vec(cgb, 2π .* gradient_strength(cgb))
+        grad = 2π .* gradient_strength(cgb)
         return _mult(grad, grad) .* duration(cgb)^3 ./3
     end
 
@@ -60,7 +56,7 @@ to_vec(::ConstantGradient3D, g::AbstractVector) = g
         #   qstart^2 * duration +
         #   qstart * grad * duration^2 +
         #   grad * grad * duration^3 / 3 +
-        grad = to_vec(cgb, 2π .* gradient_strength(cgb))
+        grad = 2π .* gradient_strength(cgb)
         return (
             _mult(qstart, qstart) .* duration(cgb) .+
             _mult(qstart, grad) .* duration(cgb)^2 .+

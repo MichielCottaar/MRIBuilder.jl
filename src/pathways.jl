@@ -473,7 +473,7 @@ function update_walker_gradient!(gradient::GradientWaveform, walker::PathwayWalk
         # update qvec/bmat during gradient
         tracker = walker.gradient_trackers[key]
         tracker.bmat = tracker.bmat .+ variables.bmat_gradient(gradient, tracker.qvec)
-        tracker.qvec = tracker.qvec .+ variables.qval3(gradient)
+        tracker.qvec = tracker.qvec .+ variables.qvec(gradient)
         tracker.last_gradient_time = gradient_start_time + variables.duration(gradient)
     end
 end
@@ -482,15 +482,11 @@ end
     update_walker_instant_gradient!(gradient, walker)
 """
 function update_walker_instant_gradient!(gradient::InstantGradient{N}, walker::PathwayWalker, gradient_start_time::VariableType) where {N}
-    if N == 1
-        qvec3 = qval(gradient) .* gradient.orientation
-    else
-        qvec3 = qval(gradient)
-    end
+    qvec3 = variables.qvec(gradient)
     for key in (isnothing(gradient.group) ? [nothing] : [nothing, gradient.group])
         update_gradient_tracker_till_time!(walker, key, gradient_start_time)
         tracker = walker.gradient_trackers[key]
-        tracker.qvec = tracker.qvec  .+ qvec3
+        tracker.qvec = tracker.qvec .+ qvec3
     end
 end
 

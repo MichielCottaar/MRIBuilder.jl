@@ -11,7 +11,7 @@ These parts are combined into a full gradient waveform in a `BuildingBlock`.
 Each part of this gradient waveform can compute:
 - `gradient_strength`: maximum gradient strength in each dimension.
 - `slew_rate`: maximum slew rate in each dimension.
-- `qval`/`qval3`: area under curve
+- `qval`/`qvec`: area under curve
 - `bmat_gradient`: diffusion weighting (scalar in 1D or matrix in 3D).
 """
 module GradientWaveforms

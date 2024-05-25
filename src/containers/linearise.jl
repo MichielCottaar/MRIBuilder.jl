@@ -182,7 +182,7 @@ function LinearSequence(container::BaseSequence, times::AbstractVector{<:Number}
                     continue
                 end
                 if pulse isa InstantGradient1D
-                    pulse = InstantGradient3D(qval(pulse) .* pulse.orientation, pulse.group)
+                    pulse = InstantGradient3D(qvec(pulse) .* pulse.orientation, pulse.group)
                 end
                 index = findmin(t -> abs(t - real_time), times)[2] 
                 to_store[index] = pulse

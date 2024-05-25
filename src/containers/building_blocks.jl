@@ -191,22 +191,22 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
 end
 
 @defvar begin
-    function qval(bb::BaseBuildingBlock, index1, index2)
+    function qvec(bb::BaseBuildingBlock, index1, index2)
         if (!isnothing(index1)) && (index1 == index2)
             return 0.
         end
-        res = sum([variables.qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
+        res = sum([variables.qvec(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
 
         t1 = isnothing(index1) ? 0. : start_time(bb, index1)
         t2 = isnothing(index2) ? duration(bb) : start_time(bb, index2)
         for (key, event) in events(bb)
             if event isa InstantGradient && (t1 <= start_time(bb, key) <= t2)
-                res = res .+ variables.qval(event)
+                res = res .+ variables.qvec(event)
             end
         end
         return res
     end
-    qval(bb::BaseBuildingBlock) = variables.qval(bb, nothing, nothing)
+    qvec(bb::BaseBuildingBlock) = variables.qvec(bb, nothing, nothing)
 
     function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
         if (!isnothing(index1)) && (index1 == index2)
@@ -217,7 +217,7 @@ end
 
         for (_, part) in waveform_sequence(bb, index1, index2)
             result = result .+ variables.bmat_gradient(part, qcurrent)
-            qcurrent = qcurrent .+ qval3(part, qcurrent)
+            qcurrent = qcurrent .+ variables.qvec(part, qcurrent)
         end
         return result
     end
@@ -225,14 +225,14 @@ end
 end
 
 """
-    qval(overlapping[, first_event, last_event])
+    qvec(overlapping[, first_event, last_event])
 
 Computes the area under the curve for the gradient waveform in [`BaseBuildingBlock`](@ref).
 
 If `first_event` is set to something else than `nothing`, only the gradient waveform after this RF pulse/Readout will be considered.
 Similarly, if `last_event` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
 """
-qval
+qvec
 
 function edge_times(bb::BaseBuildingBlock)
     res = Float64[]

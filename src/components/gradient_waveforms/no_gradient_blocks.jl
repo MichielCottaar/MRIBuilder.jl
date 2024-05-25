@@ -15,8 +15,8 @@ struct NoGradient <: GradientWaveform{0}
     duration :: VariableType
 end
 
-for func in (:qval, :gradient_strength, :slew_rate)
-    @eval variables.$(func).f(::NoGradient) = 0.
+for func in (:qvec, :gradient_strength, :slew_rate)
+    @eval variables.$(func).f(::NoGradient) = zero(SVector{3, Float64})
 end
 
 @defvar begin

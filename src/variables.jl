@@ -74,8 +74,8 @@ end
 struct AlternateVariable <: AnyVariable
     name :: Symbol
     other_var :: Symbol
-    to_other :: Function
     from_other :: Function
+    to_other :: Union{Nothing, Function}
     inverse :: Bool
 end
 
@@ -203,11 +203,20 @@ Duration of the sequence or building block in ms.
 duration
 
 
-function def_alternate_variable!(name::Symbol, other_var::Symbol, to_other::Function, from_other::Function, inverse::Bool)
-    getfield(variables, :variables)[name] = AlternateVariable(name, other_var, to_other, from_other, inverse)
+function def_alternate_variable!(name::Symbol, other_var::Symbol, from_other::Function, to_other::Union{Nothing, Function}, inverse::Bool)
+    getfield(variables, :variables)[name] = AlternateVariable(name, other_var, from_other, to_other, inverse)
 end
 
-def_alternate_variable!(:spoiler_scale, :spoiler_scale, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
+def_alternate_variable!(:spoiler_scale, :qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
+def_alternate_variable!(:qval, :qval_square, sqrt, q -> q * q, false)
+def_alternate_variable!(:qval_square, :qvec, qv -> sum(q -> q * q, qv), nothing, false)
+
+for vec_variable in [:gradient_strength, :slew_rate]
+    vec_square = Symbol(string(vec_variable) * "_square")
+    vec_norm = Symbol(string(vec_variable) * "_norm")
+    def_alternate_variable!(:vec_norm, :vec_square, sqrt, v -> v * v, false)
+    def_alternate_variable!(:vec_square, :vec_variable, v -> v[1] * v[1] + v[2] * v[2] + v[3] * v[3], nothing, false)
+end
 
 for name in [:slice_thickness, :bandwidth, :fov, :voxel_size]
     inv_name = Symbol("inverse_" * string(name))
@@ -333,8 +342,8 @@ end
 
 function (var::AlternateVariable)(args...; kwargs...)
     other_var = variables[var.other_var]
-    apply_from_other(res::Number) = var.from_other(res)
-    apply_from_other(res::AbstractArray{<:Number}) = var.from_other.(res)
+    apply_from_other(res::VariableType) = var.from_other(res)
+    apply_from_other(res::AbstractArray{<:VariableType}) = var.from_other.(res)
     apply_from_other(res::NamedTuple) = NamedTuple(k => apply_from_other(v) for (k, v) in pairs(res))
     return apply_from_other(other_var(args...; kwargs...))
 end
