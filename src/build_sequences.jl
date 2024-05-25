@@ -1,5 +1,5 @@
 module BuildSequences
-import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED, objective_value
+import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED, objective_value, INVALID_MODEL, @variable
 import Ipopt
 import Juniper
 import ..Scanners: Scanner, gradient_strength, Default_Scanner
@@ -65,6 +65,10 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
                         end
                     end
                     optimize!(model)
+                    while termination_status(model) == INVALID_MODEL
+                        @variable(model, x[i=1:10])
+                        optimize!(model)
+                    end
                     if termination_status(model) in (LOCALLY_SOLVED, OPTIMAL)
                         if objective_value(model) < min_objective
                             min_objective = objective_value(model)
