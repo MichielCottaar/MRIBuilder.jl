@@ -332,7 +332,7 @@ function (var::Variable)(block::AbstractBlock, args...; kwargs...)
 end
 
 # Special case for BuildingBlock events
-function (var::Variable)(event::Tuple{<:Number, <:AbstractBlock}, args...; kwargs...)
+function (var::Variable)(event::Tuple{<:VariableType, <:AbstractBlock}, args...; kwargs...)
     if applicable(var.f, event, args...; kwargs...)
         return var.f(event, args...; kwargs...)
     end
