@@ -2,8 +2,8 @@
     @testset "GradientEcho" begin
         seq = GradientEcho(TE=40)
         @test length(seq) == 3
-        @test duration(seq) == 40
-        @test all(isapprox.(duration.(seq), [0., 40., 0.], atol=1e-6))
+        @test variables.duration(seq) == 40
+        @test all(isapprox.(variables.duration.(seq), [0., 40., 0.], atol=1e-6))
         @test length(collect(iter_instant_pulses(seq))) == 1
         @test length(collect(iter_instant_gradients(seq))) == 0.
         @test variables.duration_dephase(seq) ≈ 40.
@@ -12,8 +12,8 @@
     @testset "SpinEcho" begin
         seq = SpinEcho(TE=40)
         @test length(seq) == 5
-        @test duration(seq) == 40
-        @test all(isapprox.(duration.(seq), [0., 20., 0., 20., 0.], atol=1e-6))
+        @test variables.duration(seq) == 40
+        @test all(isapprox.(variables.duration.(seq), [0., 20., 0., 20., 0.], atol=1e-6))
         @test length(collect(iter_instant_pulses(seq))) == 2
         @test length(collect(iter_instant_gradients(seq))) == 0.
         @test variables.duration_dephase(seq) ≈ 0. atol=1e-4
@@ -30,10 +30,10 @@
                 @test all(isapprox.(duration.(seq), [0., 0., grad_duration, 0., 0., 0., grad_duration, 0., 0.], atol=1e-6))
                 @test length([iter_instant_pulses(seq)...]) == 2
                 @test length([iter_instant_gradients(seq)...]) == 0.
-                @test bval(seq) ≈ 1.
-                @test 40. < TE(seq) < 50.
-                @test TR(seq) ≈ TE(seq)
-                @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
+                @test variables.bval(seq) ≈ 1.
+                @test 40. < variables.TE(seq) < 50.
+                @test variables.duration(seq) ≈ TE(seq)
+                @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
             end
             @testset "Maximise b-value" begin
                 seq = DiffusionSpinEcho(TE=80., bval=:max)
@@ -42,7 +42,7 @@
                 @test length([iter_instant_pulses(seq)...]) == 2
                 @test length([iter_instant_gradients(seq)...]) == 0.
                 @test TE(seq) ≈ 80.
-                @test TR(seq) ≈ 80.
+                @test variables.duration(seq) ≈ 80.
                 @test 4.8 < bval(seq) < 4.9
                 @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
                 @test all(isapprox.(edge_times(seq, tol=1e-3), [0., min_rise_time, 40. - min_rise_time, 40, 40 + min_rise_time, 80 - min_rise_time, 80.], atol=1e-4))
@@ -58,7 +58,7 @@
                 @test all(isapprox.(duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test variables.Δ(seq) ≈ 70.
                 @test variables.TE(seq) ≈ 80.
-                @test variables.TR(seq) ≈ 80.
+                @test variables.duration(seq) ≈ 80.
                 @test 0.72 < variables.bval(seq) < 0.73
                 @test variables.readout_times(seq)[1] ≈ variables.TE(seq)
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
@@ -69,7 +69,7 @@
                 @test all(isapprox.(duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test variables.Δ(seq) ≈ 70. rtol=1e-4
                 @test variables.TE(seq) ≈ 80.
-                @test variables.TR(seq) ≈ 80.
+                @test variables.duration(seq) ≈ 80.
                 @test 0.72 < variables.bval(seq) < 0.73
                 @test variables.readout_times(seq)[1] ≈ variables.TE(seq)
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
@@ -107,7 +107,7 @@
                 @test variables.bval(seq) ≈ 2.
                 @test length(readout_times(seq)) > 50
                 @test 67 < variables.TE(seq) < 68
-                @test 72 < variables.TR(seq) < 73
+                @test 72 < variables.duration(seq) < 73
 
                 (pulse, t_pulse) = get_pulse(seq, 1.)
                 @test 1. - t_pulse ≈ min_rise_time rtol=1e-4
