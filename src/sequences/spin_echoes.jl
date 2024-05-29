@@ -28,7 +28,7 @@ If image parameters are provided, this will switch to a sinc pulse and EPI reado
 ## Variables
 - [`TE`](@ref)/[`echo_time`](@ref): echo time between excitation pulse and spin echo in ms (required).
 - [`delay`](@ref): delay between the readout and the peak of the spin echo in ms (positive number indicates that readout is after the spin echo). Defaults to zero.
-- [`TR`](@ref)/[`repetition_time`](@ref)/[`duration`](@ref): total duration of the sequence from start of excitation pulse to end of readout or spoiler in ms.
+- [`duration`](@ref): total duration of the sequence from start of excitation pulse to end of readout or spoiler in ms.
 """
 function SpinEcho(; delay=0., excitation=(), refocus=(), readout=(), optim=(), spoiler=nothing, resolution=nothing, fov=nothing, voxel_size=nothing, slice_thickness=nothing, scanner=Default_Scanner, variables...)
     build_sequence(scanner; optim...) do

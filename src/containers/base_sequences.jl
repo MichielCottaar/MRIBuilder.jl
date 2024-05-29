@@ -64,7 +64,7 @@ function start_time(bs::BaseSequence{N}, index::Integer) where {N}
     if iszero(nTR)
         return base_time
     else
-        return nTR * repetition_time(bs) + base_time
+        return nTR * duration(bs) + base_time
     end
 end
 
@@ -144,9 +144,6 @@ Defines an MRI sequence from a vector of building blocks.
     - numbers/`nothing`/`:min`/`:max` : replaced with a [`Wait`](@ref) block with the appropriate constraint/objective added to its [`duration`](@ref).
     - RF pulse or readout: will be embedded within a [`BuildingBlock`](@ref) of the appropriate length
 
-## Variables
-- [`repetition_time`](@ref)/[`TR`](@ref): how long between repeats in ms. This is always set to the total length of the sequence. If you want to add some down-time between repeats, you can simply add a [`Wait`](@ref) block of the appropriate length at the end of the sequence.
-
 Specific named sequences might define additional variables.
 """
 struct Sequence{S, N} <: BaseSequence{N}
@@ -172,8 +169,6 @@ nrepeat(::Sequence) = 0
 
 to_block_pair(pair::Pair) = pair[1] => to_block(pair[2])
 to_block_pair(other) = nothing => to_block(other)
-
-@defvar repetition_time(seq::Sequence) = duration(seq)
 
 """
     to_block(block_like)

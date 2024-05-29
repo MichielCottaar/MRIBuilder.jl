@@ -5,7 +5,7 @@ In most MR sequence building software, the user will have to set all of these fr
 
 In MRIBuilder the internal free parameters are not set directly. 
 Instead, they are inferred using a non-linear, constrained optimisation.
-For each sequence type, the developer defines how to compute various summary variables from the `BuildingBlock` free parameters, such as [`echo_time`](@ref), [`repetition_time`](@ref), [`resolution`](@ref), [`gradient_strength`](@ref), [`diffusion_time`](@ref), etc.
+For each sequence type, the developer defines how to compute various summary variables from the `BuildingBlock` free parameters, such as [`echo_time`](@ref), [`duration`](@ref), [`resolution`](@ref), [`gradient_strength`](@ref), [`diffusion_time`](@ref), etc.
 A user can then create a specific instantiation of the sequence by fixing any of these summary variables to their desired values (or setting them to `:min`/`:max` to minimise/maximise them).
 In addition to the user-defined constraints, this optimisation will also take into account any [scanner-defined constraints](@ref scanners).
 Internally, MRIBuilder will then optimise the `BuildingBlock` free parameters to match any user-defined constraints and/or objectives.
