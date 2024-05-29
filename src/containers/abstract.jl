@@ -1,5 +1,5 @@
 module Abstract
-import ...Variables: AbstractBlock, variables, VariableType, get_pulse, get_gradient, @defvar
+import ...Variables: AbstractBlock, variables, VariableType, get_pulse, get_gradient, @defvar, duration
 import ...Components: BaseComponent, InstantPulse, InstantGradient, ReadoutComponent, NoGradient, RFPulseComponent, GradientWaveform
 
 """
