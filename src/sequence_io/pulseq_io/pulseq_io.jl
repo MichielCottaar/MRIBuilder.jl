@@ -6,6 +6,7 @@ The translation of these types into MRIBuilder types is defined in "../pulseq.jl
 """
 module PulseqIO
 include("types.jl")
+include("extensions.jl")
 include("basic_parsers.jl")
 include("sections_io.jl")
 include("components.jl")
@@ -13,6 +14,7 @@ include("parsers/parsers.jl")
 include("parse_sections.jl")
 
 import .Types: PulseqSequence
+import .Extensions: parse_extension, get_extension_name, add_extension_definition!
 
 
 """

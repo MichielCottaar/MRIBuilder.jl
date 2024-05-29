@@ -15,13 +15,13 @@ struct PulseqComponents
     pulses:: Dict{Int, PulseqRFPulse}
     grads:: Dict{Int, AnyPulseqGradient}
     adc:: Dict{Int, PulseqADC}
-    extensions:: Dict{Int, PulseqExtension}
+    extensions:: Dict{Int, Any}
     PulseqComponents(shapes, pulses, grads, adc, extensions) = new(
         _convert_to_dict(shapes, PulseqShape),
         _convert_to_dict(pulses, PulseqRFPulse),
         _convert_to_dict(grads, AnyPulseqGradient),
         _convert_to_dict(adc, PulseqADC),
-        _convert_to_dict(extensions, PulseqExtension),
+        _convert_to_dict(extensions, Any),
     )
 end
 

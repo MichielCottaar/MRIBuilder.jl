@@ -94,18 +94,17 @@ end
 
 Abstract definition of an unknown Pulseq extension.
 """
-struct PulseqExtensionDefinition
-    name :: String
+struct PulseqExtensionDefinition{N}
     content :: Vector{String}
 end
 
 """
     PulseqExtension(definition::PulseqExtensionDefinition, id::Int)
 
-Reference to a specific implementation of the [`PulseqExtensionDefinition`](@ref).
+Reference to a specific implementation of a [`PulseqExtensionDefinition`](@ref).
 """
-struct PulseqExtension <: AnyPulseqComponent
-    definition::PulseqExtensionDefinition
+struct PulseqExtension{N} <: AnyPulseqComponent
+    definition::PulseqExtensionDefinition{N}
     id :: Int
 end
 

@@ -1,14 +1,16 @@
+import ..Extensions: parse_extension, get_extension_name, add_extension_definition!
+
 function parse_section(section::PulseqSection{:extensions}; kwargs...)
     current_extension = -1
     pre_amble = true
     linked_list = Dict{Int, NTuple{3, Int}}()
-    extensions = Dict{Int, PulseqExtension}()
+    extensions = Dict{Int, PulseqExtensionDefinition}()
     for line in section.content
         if startswith(line, "extension ")
             pre_amble = false
             (_, name, str_id) = split(line)
             current_extension = int(str_id)
-            extensions[current_extension] = PulseqExtension(name, String[])
+            extensions[current_extension] = PulseqExtensionDefinition{name}(String[])
         elseif pre_ample
             (id, type, ref, next) = int.(split(line))
             linked_list[id] = (type=type, ref=ref, next=next)
@@ -17,15 +19,69 @@ function parse_section(section::PulseqSection{:extensions}; kwargs...)
         end
     end
 
+    extension_mappers = Dict(key => parse_extension(ext) for (key, ext) in extensions)
+
     function get_extension_list(key::Int)
         if iszero(key)
             return Tuple{PulseqExtension, Int}[]
         else
             base = get_extension_list(linked_list[key].next)
-            pushfirst!(base, (extensions[linked_list[key].type], linked_list[key].ref))
+            pushfirst!(base, extension_mappers[linked_list[key].type][linked_list[key].ref])
             return base
         end
     end
 
     return Dict(key => get_extension_list(key) for key in keys(linked_list))
+end
+
+function gen_section(comp:: PulseqComponents, ::Val{:extensions})
+    definitions = Dict{Symbol, PulseqExtensionDefinition}()
+    extensions_ref_id = Dict{Any, Int}()
+    for ext_vec in comp.extensions
+        for ext in ext_vec
+            name = get_extension_name(ext)
+            if !(name in keys(definitions))
+                definitions[name] = PulseqExtensionDefinition{name}(String[])
+            end
+            extensions_ref_id[ext] = add_extension_definition!(definitions[name].content, ext)
+        end
+    end
+
+    definitions_order = [keys(definitions)...]
+
+    extension_vec_id = Dict{Vector, Int}()
+
+    labels = Tuple{Int, Int, Int}[]
+    function add_extension_vec!(ext_vec::Vector)
+        if length(ext_vec) == 0
+            return 0
+        end
+        next_id = add_extension_vec!(ext_vec[2:end])
+        ext = ext_vec[1]
+        type_id = findfirst(get_extension_name(ext), definitions_order)
+        ref_id = extensions_ref_id[ext]
+        all_ids = (type_id, ref_id, next_id)
+        if all_ids in labels
+            extension_vec_id[ext_vec] = findfirst(lables, all_ids)
+        else
+            push!(labels, all_ids)
+            extension_vec_id[ext_vec] = length(lables)
+        end
+    end
+    add_extension_definition!.(values(comp.extensions))
+
+    content = String[]
+    for (id0, (id1, id2, id3)) in enumerate(labels)
+        push!(content, "$id0 $id1 $id2 $id3")
+    end
+    push!(content, "")
+
+    for (index, name) in enumerate(definitions_order)
+        def = definitions[name]
+        push!(content, "extension $(string(name)) $(string(index))")
+        append!(content, def.content)
+        push!(content, "")
+    end
+
+    return PulseqSection{:extensions}(content)
 end
