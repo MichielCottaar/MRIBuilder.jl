@@ -48,7 +48,7 @@ using Gtk
     
     @testset "Finite gradients" begin
         function plot_finite_dwi(fname)
-            sequence = DWI(bval=2., TE=:min, duration=100, voxel_size=2., scanner=Siemens_Prisma, fov=(10, 10, 10))
+            sequence = DWI(bval=2., TE=:min, voxel_size=2., scanner=Siemens_Prisma, fov=(10, 10, 10))
             f = plot_sequence(sequence)
             CairoMakie.save(fname, f)
         end
