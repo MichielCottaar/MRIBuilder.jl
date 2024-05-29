@@ -51,10 +51,14 @@ Some of these components have been given specific names (e.g., `:excitation => .
 
 The next step is to define [summary variables](@ref variables) that the user can constrain when setting up a specific instance of this sequence:
 ```julia
-diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
-echo_time(ge::DiffusionSpinEcho) = 2 * (effective_time(ge, :refocus) - effective_time(ge, :excitation))
+@defvar begin
+    diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
+    echo_time(ge::DiffusionSpinEcho) = 2 * (variables.effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
+end
 ```
 For this sequence, we can see that we define the [`diffusion_time`](@ref) as the time between the start of the first and second gradient pulse, and the [`echo_time`](@ref) as twice the time between the refocus and excitation pulses.
+These variables need to be defined within a [`@defvar`](@ref) block.
+They will be available as function calls within the [`variables`](@ref) object.
 
 In addition to these sequence-specific summary variables, there are also a lot of variables already pre-defined on individual components, such as the [`slice_thickness](@ref) of the RF pulse or the [`gradient_strength`](@ref) of the gradient pulses. To access these summary variables on a sequence-level, we need to tell MRIBuilder for which RF pulses/gradients we are interested in computing these variables:
 ```julia
