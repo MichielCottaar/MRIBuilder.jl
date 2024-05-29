@@ -119,8 +119,8 @@ function edge_times(seq::BaseSequence; tol=1e-6)
     return sort(unique_res)
 end
 
-for fn in (:gradient_strength, :amplitude, :phase, :frequency, :gradient_strength3)
-    @eval function $fn(sequence::BaseSequence, time::AbstractFloat)
+for fn in (:gradient_strength, :amplitude, :phase, :frequency)
+    @eval function variables.$fn.f(sequence::BaseSequence, time::AbstractFloat)
         (block_time, block) = sequence(time)
         return variables.$fn.f(block, block_time)
     end
