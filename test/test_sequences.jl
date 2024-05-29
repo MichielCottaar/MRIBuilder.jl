@@ -41,17 +41,17 @@
                 @test all(isapprox.(duration.(seq), [0., 0., 40., 0., 0., 0., 40., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test length([iter_instant_pulses(seq)...]) == 2
                 @test length([iter_instant_gradients(seq)...]) == 0.
-                @test TE(seq) ≈ 80.
+                @test variables.TE(seq) ≈ 80.
                 @test variables.duration(seq) ≈ 80.
                 @test 4.8 < bval(seq) < 4.9
-                @test rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
+                @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
                 @test all(isapprox.(edge_times(seq, tol=1e-3), [0., min_rise_time, 40. - min_rise_time, 40, 40 + min_rise_time, 80 - min_rise_time, 80.], atol=1e-4))
 
                 # can also maximise q-value
                 seq2 = DiffusionSpinEcho(TE=80., qval=:max)
                 @test all(isapprox.(duration.(seq), duration.(seq2), atol=1e-4, rtol=1e-4))
-                @test TE(seq) ≈ TE(seq2) atol=1e-4 rtol=1e-4
-                @test bval(seq) ≈ bval(seq2) atol=1e-4 rtol=1e-4
+                @test variables.TE(seq) ≈ variables.TE(seq2) atol=1e-4 rtol=1e-4
+                @test variables.bval(seq) ≈ variables.bval(seq2) atol=1e-4 rtol=1e-4
             end
             @testset "Set diffusion time Δ" begin
                 seq = DiffusionSpinEcho(TE=80., Δ=70., qval=:max)
@@ -77,7 +77,7 @@
         end
         @testset "DW-SE with finite RF pulses" begin
             @testset "slice-select DW-SE" begin
-                seq = DiffusionSpinEcho(TR=:min, bval=2., slice_thickness=2.)
+                seq = DiffusionSpinEcho(duration=:min, bval=2., slice_thickness=2.)
                 @test length(seq) == 9
                 @test duration(seq[1]) > 1.
                 for index in 1:9
@@ -93,7 +93,7 @@
                 @test variables.readout_times(seq)[1] > TE(seq)
             end
             @testset "voxel-wise DW-SE" begin
-                seq = DiffusionSpinEcho(TR=:min, bval=2., voxel_size=2., fov=(20, 20, 20))
+                seq = DiffusionSpinEcho(duration=:min, bval=2., voxel_size=2., fov=(20, 20, 20))
                 @test length(seq) == 9
                 @test duration(seq[1]) > 1.
                 for index in 1:9
