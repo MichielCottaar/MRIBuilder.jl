@@ -28,7 +28,7 @@
         @test variables.readout_times(seq)[1] ≈ 0.22 + 5 + 0.02 + 0.5 * 0.3125
         @test variables.readout_times(seq)[end] ≈ 0.22 + 5 + 0.02 + 1023.5 * 0.3125
 
-        @test variables.TR(seq) ≈ 0.22 + 5 + 0.02 + 1024 * 0.3125
+        @test variables.duration(seq) ≈ 0.22 + 5 + 0.02 + 1024 * 0.3125
     end
     @testset "read all v1.4.0 files in 01_from_FID_to_PRESS" begin
         path = joinpath(directory, "01_from_FID_to_PRESS_v140")
@@ -48,8 +48,8 @@
         @test variables.flip_angle(pulse) ≈ 90
         @test start_time(seq, 1, index) ≈ 0.1  # determined by RF dead time
         @test end_time(seq, 1, index) ≈ 0.6  # RF dead time + RF duration
-        @test phase(seq, 0.3) == 0
-        @test amplitude(seq, 0.3) ≈ 0.5
+        @test variables.phase(seq, 0.3) == 0
+        @test variables.amplitude(seq, 0.3) ≈ 0.5
 
         start_adc = (
             0.6 +  # end of RF pulse
@@ -94,13 +94,12 @@
                 end
                 full_filename = joinpath(path, fn)
                 seq_orig = read_sequence(full_filename)
-
                 
                 io = IOBuffer()
                 write_sequence(io, seq_orig, format=:serialize)
                 seek(io, 0)
                 seq_json = read_sequence(io, format=:serialize)
-                @test variables.TR(seq_orig) == variables.TR(seq_json)
+                @test variables.duration(seq_orig) == variables.duration(seq_json)
                 @test length(seq_orig) == length(seq_json)
                 @test all(duration.(seq_orig) .== duration.(seq_json))
                 @test iszero(length(iter_instant_gradients(seq_json)))
@@ -119,7 +118,7 @@
             write_sequence(io, seq_orig; format=:serialize)
             seek(io, 0)
             seq_json = read_sequence(io; format=:serialize)
-            @test variables.TR(seq_orig) == variables.TR(seq_json)
+            @test variables.duration(seq_orig) == variables.duration(seq_json)
             @test length(seq_orig) == length(seq_json)
             @test all(duration.(seq_orig) .== duration.(seq_json))
             @test length(iter_instant_gradients(seq_json)) == length(iter_instant_gradients(seq_json))
