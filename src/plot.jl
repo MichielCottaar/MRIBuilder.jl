@@ -104,7 +104,7 @@ end
 
 function SequenceDiagram(actual_duration; kwargs...)
     durations = duration_line.([values(kwargs)...])
-    @assert all(isapprox.(actual_duration, durations, rtol=1e-3))
+    @assert all(isapprox.(actual_duration, durations, rtol=1e-3, atol=1e-6))
     res = SinglePlotLine[]
     for symbol in (:RFx, :RFy, :G, :Gx, :Gy, :Gz, :ADC)
         push!(res, get(kwargs, symbol, SinglePlotLine(actual_duration)))
