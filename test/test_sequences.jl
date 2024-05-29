@@ -26,7 +26,7 @@
             @testset "Minimise TE" begin
                 seq = DiffusionSpinEcho(TE=:min, bval=1.)
                 @test length(seq) == 9
-                grad_duration = TE(seq) / 2
+                grad_duration = variables.TE(seq) / 2
                 @test all(isapprox.(duration.(seq), [0., 0., grad_duration, 0., 0., 0., grad_duration, 0., 0.], atol=1e-6))
                 @test length([iter_instant_pulses(seq)...]) == 2
                 @test length([iter_instant_gradients(seq)...]) == 0.
@@ -90,7 +90,7 @@
                 @test duration(seq[:gradient]) ≈ duration(seq[:gradient2])
                 @test variables.bval(seq) ≈ 2.
                 @test length(readout_times(seq)) == 1
-                @test variables.readout_times(seq)[1] > TE(seq)
+                @test variables.readout_times(seq)[1] > variables.TE(seq)
             end
             @testset "voxel-wise DW-SE" begin
                 seq = DiffusionSpinEcho(duration=:min, bval=2., voxel_size=2., fov=(20, 20, 20))
