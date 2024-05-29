@@ -260,7 +260,7 @@ for (fn, default_value) in ((:amplitude, 0.), (:phase, NaN), (:frequency, NaN))
         if isnothing(pulse)
             return $default_value
         end
-        return $fn(pulse[1], pulse[2])
+        return variables.$fn.f(pulse[1], pulse[2])
     end
 end
 
