@@ -32,7 +32,7 @@
                 @test length([iter_instant_gradients(seq)...]) == 0.
                 @test variables.bval(seq) ≈ 1.
                 @test 40. < variables.TE(seq) < 50.
-                @test variables.duration(seq) ≈ TE(seq)
+                @test variables.duration(seq) ≈ variables.TE(seq)
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
             end
             @testset "Maximise b-value" begin
