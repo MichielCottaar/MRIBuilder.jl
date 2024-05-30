@@ -91,6 +91,20 @@ struct _Variables
     variables :: Dict{Symbol, AnyVariable}
 end
 
+"""
+Main interface to all the MRIBuilder sequence variables.
+
+All variables are available as members of this object, e.g.
+`variables.echo_time` returns the echo time variable.
+New variables can be defined using [`@defvar`](@ref).
+
+Set constraints on variables by passing them on as keywords during the sequence generation,
+e.g., `seq=SpinEcho(echo_time=70)`.
+
+After sequence generation you can get the variable values by calling
+`variables.echo_time(seq)`.
+For the sequence defined above this would return 70. (or a number very close to that).
+"""
 variables = _Variables(Dict{Symbol, AnyVariable}())
 
 Base.getindex(v::_Variables, i::Symbol) = getfield(v, :variables)[i]
@@ -102,6 +116,43 @@ Base.propertynames(v::_Variables) = Tuple(keys(getfield(v, :variables)))
 Base.getproperty(v::_Variables, s::Symbol) = v[s]
 
 
+"""
+    @defvar([getter, ], function(s))
+
+Defines new [`variables`](@ref).
+
+Each variable is defined as regular Julia functions embedded within a `@defvar` macro.
+For example, to define a `variables.echo_time` variable for a `SpinEcho` sequence, one can use:
+```julia
+@defvar echo_time(ge::SpinEcho) = 2 * (variables.effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
+```
+
+Multiple variables can be defined in a single `@defvar` by including them in a code block:
+```julia
+@defvar begin
+    function var1(seq::SomeSequenceType)
+        ...
+    end
+    function var2(seq::SomeSequenceType)
+        ...
+    end
+end
+```
+
+Before the variable function definitions one can include a `getter`.
+This `getter` defines the type of the sequence component for which the variables will be defined.
+If the variable is not defined for the sequence, the variable will be extracted for those type of sequence components instead.
+The following sequence component types are provided:
+- `pulse`: use [`get_pulse`](@ref)
+- `gradient`: use [`get_gradient`](@ref)
+- `readout`: use [`get_readout`](@ref)
+- `pathway`: use [`get_pathway`](@ref)
+e.g. the following defines a `flip_angle` variable, which is marked as a property of an RF pulse.
+```julia
+@defvar pulse flip_angle(...) = ...
+```
+If after this definition, `flip_angle` is not explicitly defined for any sequence, it will be extracted for the RF pulses in that sequence instead.
+"""
 macro defvar(func_def) 
     return _defvar(func_def, nothing)
 end
