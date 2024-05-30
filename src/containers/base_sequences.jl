@@ -101,8 +101,8 @@ How often sequence should be repeated.
 nrepeat(bs::BaseSequence) = 1
 
 @defvar begin
-    variables.duration(bs::BaseSequence{0}) = 0.
-    variables.duration(bs::BaseSequence) = sum(variables.duration.(bs); init=0.)
+    duration(bs::BaseSequence{0}) = 0.
+    duration(bs::BaseSequence) = sum(variables.duration.(bs); init=0.)
 end
 
 function edge_times(seq::BaseSequence; tol=1e-6)
