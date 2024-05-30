@@ -1,7 +1,7 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
 import JuMP: @constraint
-import ...Variables: @defvar, VariableType, variables, get_free_variable, set_simple_constraints!, make_generic, adjust_internal, adjustable, gradient_orientation
+import ...Variables: @defvar, VariableType, variables, get_free_variable, set_simple_constraints!, make_generic, adjust_internal, adjustable, gradient_orientation, apply_simple_constraint!
 import ...BuildSequences: global_model
 import ..AbstractTypes: EventComponent, GradientWaveform
 
@@ -20,16 +20,18 @@ If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwis
 """
 abstract type InstantGradient{N} <: EventComponent end
 
-function (::Type{InstantGradient})(; orientation=nothing, group=nothing, variables...)
+function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=nothing, qvec=[nothing, nothing, nothing], vars...)
     if isnothing(orientation)
-        res = InstantGradient3D(nothing, group)
+        res = InstantGradient3D(get_free_variable.(qvec), group)
+        apply_simple_constraint!(variables.qval(res), qval)
     else
-        res = InstantGradient1D(nothing, orientation, group)
-        if !(res.qvec isa Number)
-            @constraint global_model() res.qvec >= 0
+        res = InstantGradient1D(get_free_variable(qval), orientation, group)
+        if !(res.qval isa Number)
+            @constraint global_model() res.qval >= 0
         end
+        apply_simple_constraint!(variables.qvec(res), qvec)
     end
-    set_simple_constraints!(res, variables)
+    set_simple_constraints!(res, vars)
     return res
 end
 
@@ -50,15 +52,6 @@ An [`InstantGradient`](@ref) with a variable orientation.
 struct InstantGradient3D <: InstantGradient{3}
     qvec :: SVector{3, VariableType}
     group :: Union{Nothing, Symbol}
-end
-
-function InstantGradient3D(; qvec=nothing, group=nothing, variables...)
-    if isnothing(qvec)
-        qvec = [nothing, nothing, nothing]
-    end
-    res = InstantGradient3D(get_free_variable.(qvec), group)
-    set_simple_constraints!(res, variables)
-    return res
 end
 
 @defvar gradient qvec(ig::InstantGradient3D) = ig.qvec
