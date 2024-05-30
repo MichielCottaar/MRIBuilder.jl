@@ -20,13 +20,13 @@ If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwis
 """
 abstract type InstantGradient{N} <: EventComponent end
 
-function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=nothing, variables...)
+function (::Type{InstantGradient})(; orientation=nothing, group=nothing, variables...)
     if isnothing(orientation)
-        res = InstantGradient3D(get_free_variable.(qval), group)
+        res = InstantGradient3D(nothing, group)
     else
-        res = InstantGradient1D(get_free_variable(qval), orientation, group)
-        if !(res.qval isa Number)
-            @constraint global_model() res.qval >= 0
+        res = InstantGradient1D(nothing, orientation, group)
+        if !(res.qvec isa Number)
+            @constraint global_model() res.qvec >= 0
         end
     end
     set_simple_constraints!(res, variables)
@@ -52,11 +52,11 @@ struct InstantGradient3D <: InstantGradient{3}
     group :: Union{Nothing, Symbol}
 end
 
-function InstantGradient3D(; qval=[nothing, nothing, nothing], group=nothing, variables...)
-    if isnothing(qval)
-        qval = [nothing, nothing, nothing]
+function InstantGradient3D(; qvec=nothing, group=nothing, variables...)
+    if isnothing(qvec)
+        qvec = [nothing, nothing, nothing]
     end
-    res = InstantGradient3D(get_free_variable.(qval), group)
+    res = InstantGradient3D(get_free_variable.(qvec), group)
     set_simple_constraints!(res, variables)
     return res
 end

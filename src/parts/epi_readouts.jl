@@ -55,7 +55,7 @@ function EPIReadout(; resolution::AbstractVector{<:Integer}, recenter=false, gro
         apply_simple_constraint!(variables.qvec(res.recenter_gradient), VariableType[sign * variables.qvec(pos)[1]/2, -ky_lines[end] * res.ky_step, 0.])
     end
     for shift in unique(ky_lines[2:end] - ky_lines[1:end-1])
-        res.blips[shift] = Trapezoid(orientation=[0, shift > 0 ? 1 : -1, 0], group=group, qval=abs(shift) * res.ky_step)
+        res.blips[shift] = Trapezoid(qvec=[0., shift * res.ky_step, 0.], group=group)
     end
     set_simple_constraints!(res, vars)
     return res
