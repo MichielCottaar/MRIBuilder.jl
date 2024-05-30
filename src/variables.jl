@@ -249,12 +249,43 @@ def_alternate_variable!(:spoiler_scale, :qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l,
 def_alternate_variable!(:qval, :qval_square, sqrt, q -> q * q, false)
 def_alternate_variable!(:qval_square, :qvec, qv -> sum(q -> q * q, qv), nothing, false)
 
+"""
+    qval(gradient)
+
+The norm of the [`qvec`](@ref).
+"""
+variables.qval
+
+"""
+    spoiler_scale(gradient)
+
+Spatial scale in mm over which the spoiler gradient will dephase by 2π.
+
+Automatically computed based on [`qvec`](@ref).
+"""
+variables.spoiler_scale
+
+
 for vec_variable in [:gradient_strength, :slew_rate]
     vec_square = Symbol(string(vec_variable) * "_square")
     vec_norm = Symbol(string(vec_variable) * "_norm")
     def_alternate_variable!(vec_norm, vec_square, sqrt, v -> v * v, false)
     def_alternate_variable!(vec_square, vec_variable, v -> v[1] * v[1] + v[2] * v[2] + v[3] * v[3], nothing, false)
 end
+
+"""
+    gradient_strength_norm(gradient)
+
+The norm of the [`gradient_strength`](@ref).
+"""
+variables.gradient_strength_norm
+
+"""
+    slew_rate_norm(gradient)
+
+The norm of the [`slew_rate`](@ref).
+"""
+variables.slew_rate_norm
 
 for name in [:slice_thickness, :bandwidth, :fov, :voxel_size]
     inv_name = Symbol("inverse_" * string(name))
@@ -268,6 +299,27 @@ for (name, alt_name) in [
 ]
     def_alternate_variable!(name, alt_name, identity, identity, false)
 end
+
+"""
+    TE(sequence)
+
+Alternative name to compute the [`variables.echo_time`](@ref) of a sequence in ms.
+"""
+variables.TE
+
+"""
+    TR(sequence)
+
+Alternative name to compute the [`variables.repetition_time`](@ref) of a sequence in ms.
+"""
+variables.TR
+
+"""
+    Δ(sequence)
+
+Alternative name to compute the [`variables.diffusion_time`](@ref) of a sequence in ms.
+"""
+variables.Δ
 
 
 """

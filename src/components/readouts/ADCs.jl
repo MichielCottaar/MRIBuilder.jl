@@ -55,7 +55,42 @@ end
     resolution(adc::ADC) = adc.resolution
 end
 
+"""
+    oversample(adc)
+
+The oversampling rate of the ADC readout.
+"""
+variables.oversample
+
+"""
+    dwell_time(adc)
+
+The dwell time of the ADC readout in ms.
+"""
+variables.dwell_time
+
+"""
+    time_to_center(adc)
+
+The time of the ADC readout to reach the center of k-space.
+"""
+variables.time_to_center
+
+"""
+    resolution(readout)
+
+Resolution of the readout.
+"""
+variables.resolution
+
 @defvar readout nsamples(adc::ADC) = variables.resolution(adc) * variables.oversample(adc)
+
+"""
+    nsamples(adc)
+
+Number of samples in an ADC.
+"""
+variables.nsamples
 
 @defvar readout_times(adc::ADC) = ((1:Int(variables.nsamples(adc))) .- 0.5) .* variables.dwell_time(adc)
 @defvar begin

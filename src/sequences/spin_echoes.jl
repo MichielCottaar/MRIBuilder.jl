@@ -57,5 +57,12 @@ get_pathway(ge::SpinEcho) = Pathway(ge, [90, 180], 1)
     delay(ge::SpinEcho) = variables.duration_transverse(ge) - variables.echo_time(ge)
 end
 
+"""
+    echo_time(sequence)
+
+Returns the echo time of a sequence in ms.
+"""
+variables.echo_time
+
 
 end

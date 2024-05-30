@@ -85,11 +85,36 @@ end
     N_right(pulse::SincPulse) = pulse.Nzeros[2]
 end
 
+"""
+    N_left(sinc_pulse)
+
+Number of zero-crossings of the [`SincPulse`](@ref) before the maximum.
+
+Also, see [`variables.N_right`](@ref)
+"""
+variables.N_left
+
+"""
+    N_left(sinc_pulse)
+
+Number of zero-crossings of the [`SincPulse`](@ref) after the maximum.
+
+Also, see [`variables.N_left`](@ref)
+"""
+variables.N_right
+
 @defvar pulse begin
     phase(pulse::SincPulse) = pulse.phase
     frequency(pulse::SincPulse) = pulse.frequency
     lobe_duration(pulse::SincPulse) = pulse.lobe_duration
 end
+
+"""
+    lobe_duration(sinc_pulse)
+
+Time between two zero-crossings of a [`SincPulse`](@ref).
+"""
+variables.lobe_duration
 
 @defvar begin
     duration(pulse::SincPulse) = (variables.N_left(pulse) + variables.N_right(pulse)) * variables.lobe_duration(pulse)

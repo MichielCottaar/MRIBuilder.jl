@@ -71,4 +71,18 @@ get_pathway(ge::DiffusionSpinEcho) = Pathway(ge, [90, 180], 1, group=:diffusion)
     diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
 end
 
+"""
+    diffusion_time(diffusion_sequence)
+
+Returns the diffusion time of a [`DiffusionSpinEcho`](@ref) in ms.
+"""
+variables.diffusion_time
+
+"""
+    delay(sequence)
+
+Returns the offset beetween the readout and the spin echo in ms.
+"""
+variables.delay
+
 end

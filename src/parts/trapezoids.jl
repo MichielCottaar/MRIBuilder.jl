@@ -113,10 +113,33 @@ get_group(pg::BaseTrapezoid) = get_group(get_gradient(pg))
     slew_rate(g::Trapezoid3D) = g.slew_rate
 end
 
+"""
+    rise_time(trapezoid)
+
+Returns the rise time of a [`Trapezoid`](@ref) gradient profile in ms.
+"""
+variables.rise_time
+
+"""
+    flat_time(trapezoid)
+
+Returns the flat time of a [`Trapezoid`](@ref) gradient profile in ms.
+"""
+variables.flat_time
+
 @defvar gradient begin
     gradient_strength(g::Trapezoid) = variables.slew_rate(g) .* variables.rise_time(g)
     δ(g::Trapezoid) = variables.rise_time(g) + variables.flat_time(g)
 end
+
+"""
+    δ(trapezoid)
+
+Returns the effective duration of a [`Trapezoid`](@ref) gradient profile in ms.
+
+Defined as [`variables.rise_time`](@ref) + [`variables.flat_time`](@ref).
+"""
+variables.δ
 
 @defvar duration(g::BaseTrapezoid) = 2 * variables.rise_time(g) + variables.flat_time(g)
 
@@ -184,6 +207,15 @@ Base.getindex(pg::SliceSelect, ::Val{:pulse}) = (0., pg.pulse)
 
 @defvar pulse inverse_slice_thickness(ss::SliceSelect) = 1e3 * variables.gradient_strength_norm(ss.trapezoid) .* variables.inverse_bandwidth(ss.pulse)
 
+"""
+    slice_thickness(slice_select)
+
+Defines the slice thickness for a RF pulse with an active gradient in mm (e.g., [`SliceSelect`](@ref)).
+
+Defines as [`variables.gradient_strength_norm`](@ref)(gradient) / [`variables.bandwidth`](@ref)(pulse)
+"""
+variables.slice_thickness
+
 get_pulse(ss::SliceSelect) = ss.pulse
 get_gradient(ss::SliceSelect) = ss.trapezoid
 @defvar effective_time(ss::SliceSelect) = variables.effective_time(ss, :pulse)
@@ -233,6 +265,29 @@ Base.getindex(lr::LineReadout, ::Val{:adc}) = ((1 - variables.ramp_overlap(lr)) 
     inverse_voxel_size(lr::LineReadout) = 1e3 * variables.duration(lr.adc) * variables.gradient_strength(lr.trapezoid)
     effective_time(lr::LineReadout) = variables.effective_time(lr, :adc)
 end
+
+"""
+    fov(readout)
+
+Defines the field of view of a readout in mm.
+"""
+variables.fov
+
+"""
+    voxel_size(readout)
+
+Defines the voxel size of a readout in mm.
+"""
+variables.voxel_size
+
+"""
+    ramp_overlap(line_readout)
+
+Return the fraction of the gradient ramp that overlaps with the ADC readout.
+
+Set to 0 to ensure that the ADC is only active during the flat time of the readout.
+"""
+variables.ramp_overlap
 
 get_readout(lr::LineReadout) = lr.adc
 get_gradient(lr::LineReadout) = lr.trapezoid

@@ -4,7 +4,7 @@ import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @constraint, @objective, objective_function
 import ...BuildSequences: global_model, global_scanner
-import ...Variables: VariableType, get_pulse, set_simple_constraints!, variables, @defvar
+import ...Variables: VariableType, get_pulse, set_simple_constraints!, variables, @defvar, gradient_orientation
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
 import ...Containers: BaseBuildingBlock
 
@@ -83,8 +83,9 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
     return res
 end
 
+gradient_orientation(spoilt::SpoiltSliceSelect) = spoilt.orientation
+
 @defvar begin
-    gradient_orientation(spoilt::SpoiltSliceSelect) = spoilt.orientation
     duration_trap1(spoilt::SpoiltSliceSelect) = 2 * spoilt.rise_time1 + spoilt.flat_time1 - spoilt.diff_time
     duration_trap2(spoilt::SpoiltSliceSelect) = 2 * spoilt.fall_time2 + spoilt.flat_time2 - spoilt.diff_time
 end
@@ -121,5 +122,19 @@ get_pulse(spoilt::SpoiltSliceSelect) = spoilt.pulse
     return [grad1, grad2, grad3]
 end
 
+"""
+    all_gradient_strengths(spoilt_slice_select)
+
+Returns the gradient strength before, during, and after the pulse in [`SpoiltSliceSelect`](@ref).
+"""
+variables.all_gradient_strengths
+
+
+"""
+    fall_time(spoilt_slice_select)
+
+Returns the time of the [`SpoiltSliceSelect`](@ref) to return to zero.
+"""
+variables.all_gradient_strengths
 
 end

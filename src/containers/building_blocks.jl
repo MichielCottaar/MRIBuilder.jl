@@ -234,6 +234,18 @@ Similarly, if `last_event` is set to something else than `nothing`, only the gra
 """
 variables.qvec
 
+"""
+    bmat_gradient(overlapping, qstart[, first_event, last_event])
+
+Computes the addition to the [`variables.bmat`](@ref) contributed by a specific building block or gradient.
+
+`qstart` represents the [`qvec`](@ref) at the start of this component.
+
+If `first_event` is set to something else than `nothing`, only the gradient waveform after this RF pulse/Readout will be considered.
+Similarly, if `last_event` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
+"""
+variables.bmat_gradient
+
 function edge_times(bb::BaseBuildingBlock)
     res = Float64[]
     for (key, event) in events(bb)
