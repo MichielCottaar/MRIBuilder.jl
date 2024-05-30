@@ -170,12 +170,12 @@ struct SliceSelect{N} <: BaseTrapezoid{N}
     pulse :: RFPulseComponent
 end
 
-function SliceSelect(pulse::RFPulseComponent; orientation=nothing, rise_time=nothing, group=nothing, slew_rate=nothing, variables...)
+function SliceSelect(pulse::RFPulseComponent; orientation=nothing, rise_time=nothing, group=nothing, slew_rate=nothing, vars...)
     res = SliceSelect(
-        Trapezoid(; orientation=orientation, rise_time=rise_time, flat_time=duration(pulse), group=group, slew_rate=slew_rate),
+        Trapezoid(; orientation=orientation, rise_time=rise_time, flat_time=variables.duration(pulse), group=group, slew_rate=slew_rate),
         pulse
     )
-    set_simple_constraints!(res, variables)
+    set_simple_constraints!(res, vars)
     return res
 end
 
@@ -225,7 +225,7 @@ function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=
 end
 
 Base.keys(::LineReadout) = (Val(:rise), Val(:adc), Val(:flat), Val(:fall))
-Base.getindex(lr::LineReadout, ::Val{:adc}) = ((1 - ramp_overlap(lr)) * rise_time(lr), lr.adc)
+Base.getindex(lr::LineReadout, ::Val{:adc}) = ((1 - variables.ramp_overlap(lr)) * variables.rise_time(lr), lr.adc)
 
 @defvar begin
     ramp_overlap(lr::LineReadout) = lr.ramp_overlap

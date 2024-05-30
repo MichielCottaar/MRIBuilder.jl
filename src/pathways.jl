@@ -27,7 +27,7 @@ The RF pulses cause mappings between these different states as described below.
     - `:refocus`/`:invert`/180: Flips the sign of the spin state (i.e., +longitudinal <-> -longitudinal, +transverse <-> -transverse)
     - `:excite`/90: Takes spin state one step along the following sequence +longitudinal -> +transverse -> -longitudinal -> -transverse -> +longitudinal
     - `:neg_excite`/270/-90: Inverse step compared with `:excite`.
-- `readout_index`: After encountering the number of pulses as defined in `pulse_effects`, continue the `PathWay` until the readout given by `index` is reached. If set to 0 the `PathWay` is terminated immediately after the last RF pulse.
+- `readout_index`: After encountering the number of pulses as defined in `pulse_effects`, continue the `Pathway` until the readout given by `index` is reached. If set to 0 the `Pathway` is terminated immediately after the last RF pulse.
 - `group`: which gradient grouping to consider for the `qvec` and `bmat`. If not set, all gradients will be considered (using their current alignment).
 
 ## Attributes
@@ -169,7 +169,7 @@ variables.bval
 """
     get_pathway(sequence)
 
-Gets the main [`PathWay`](@ref) that spins are expected to experience in the sequence.
+Gets the main [`Pathway`](@ref) that spins are expected to experience in the sequence.
 
 Multiple pathways might be returned as an array or (named)tuple.
 """

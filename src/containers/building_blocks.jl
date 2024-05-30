@@ -232,7 +232,7 @@ Computes the area under the curve for the gradient waveform in [`BaseBuildingBlo
 If `first_event` is set to something else than `nothing`, only the gradient waveform after this RF pulse/Readout will be considered.
 Similarly, if `last_event` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
 """
-qvec
+variables.qvec
 
 function edge_times(bb::BaseBuildingBlock)
     res = Float64[]

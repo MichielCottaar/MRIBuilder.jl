@@ -31,7 +31,7 @@ struct GenericPulse <: RFPulseComponent
         @assert all(time .>= 0)
         if isnothing(effective_time)
             test_res = new(Float64.(time), Float64.(amplitude), Float64.(phase), 0.)
-            effective_time = time_halfway_flip(test_res)
+            effective_time = variables.time_halfway_flip(test_res)
         end
         return new(Float64.(time), Float64.(amplitude), Float64.(phase), Float64(effective_time))
     end
@@ -56,12 +56,12 @@ function GenericPulse(pulse::GenericPulse, t1::Number, t2::Number)
     pnew = pulse.phase[use]
     if !(t1 ≈ tnew[1])
         pushfirst!(tnew, t1)
-        pushfirst!(anew, amplitude(pulse, t1))
-        pushfirst!(pnew, phase(pulse, t1))
+        pushfirst!(anew, variables.amplitude(pulse, t1))
+        pushfirst!(pnew, variables.phase(pulse, t1))
     elseif !(t2 ≈ tnew[end])
         push!(tnew, t2)
-        push!(anew, amplitude(pulse, t2))
-        push!(pnew, phase(pulse, t2))
+        push!(anew, variables.amplitude(pulse, t2))
+        push!(pnew, variables.phase(pulse, t2))
     end
     return GenericPulse(tnew .- t1, anew, pnew, pulse.effective_time - t1)
 end

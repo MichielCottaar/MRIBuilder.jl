@@ -24,7 +24,7 @@
         end
 
         # Single ADC event
-        @test length(readout_times(seq)) == 1024
+        @test length(variables.readout_times(seq)) == 1024
         @test variables.readout_times(seq)[1] ≈ 0.22 + 5 + 0.02 + 0.5 * 0.3125
         @test variables.readout_times(seq)[end] ≈ 0.22 + 5 + 0.02 + 1023.5 * 0.3125
 
@@ -56,7 +56,7 @@
             0.02 +  # RF ringdown time (added by block duration)
             29.730  # Delay until ADC start (to get start at ADC at TE=30)
         )
-        @test length(readout_times(seq)) == 8192
+        @test length(variables.readout_times(seq)) == 8192
         @test variables.readout_times(seq)[1] ≈ start_adc + 0.5 * 0.03125
         @test variables.readout_times(seq)[end] ≈ start_adc + 8191.5 * 0.03125
     end
@@ -101,7 +101,7 @@
                 seq_json = read_sequence(io, format=:serialize)
                 @test variables.duration(seq_orig) == variables.duration(seq_json)
                 @test length(seq_orig) == length(seq_json)
-                @test all(duration.(seq_orig) .== duration.(seq_json))
+                @test all(variables.duration.(seq_orig) .== variables.duration.(seq_json))
                 @test iszero(length(iter_instant_gradients(seq_json)))
                 @test iszero(length(iter_instant_pulses(seq_json)))
                 @test all(variables.readout_times(seq_json) .== variables.readout_times(seq_orig))
@@ -120,7 +120,7 @@
             seq_json = read_sequence(io; format=:serialize)
             @test variables.duration(seq_orig) == variables.duration(seq_json)
             @test length(seq_orig) == length(seq_json)
-            @test all(duration.(seq_orig) .== duration.(seq_json))
+            @test all(variables.duration.(seq_orig) .== variables.duration.(seq_json))
             @test length(iter_instant_gradients(seq_json)) == length(iter_instant_gradients(seq_json))
             @test length(iter_instant_pulses(seq_json)) == length(iter_instant_pulses(seq_json))
             @test all(variables.readout_times(seq_json) .== variables.readout_times(seq_orig))

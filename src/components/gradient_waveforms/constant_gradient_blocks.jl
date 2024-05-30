@@ -66,7 +66,7 @@ _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
 end
 
 function split_gradient(cgb::ConstantGradient, times::VariableType...)
-    durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(cgb) - times[end]]
+    durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., variables.duration(cgb) - times[end]]
     if cgb isa ConstantGradient1D
         return [ConstantGradient1D(cgb.gradient_strength, cgb.orientation, d, cgb.group) for d in durations]
     else

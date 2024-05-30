@@ -57,8 +57,8 @@ end
 @defvar gradient qvec(ig::InstantGradient3D) = ig.qvec
 
 
-variables.duration.f(::InstantGradient) = 0.
-variables.effective_time.f(::InstantGradient) = 0.
+@defvar duration(::InstantGradient) = 0.
+@defvar effective_time(::InstantGradient) = 0.
 @defvar gradient bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
 
 make_generic(ig::InstantGradient) = ig

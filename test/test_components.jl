@@ -26,7 +26,7 @@
     @testset "SincPulse" begin
         sp = SincPulse(amplitude=1., frequency=2., phase=0., lobe_duration=10., Nzeros=(2, 1))
         
-        @test duration(sp) ≈ 30.
+        @test variables.duration(sp) ≈ 30.
 
         @test variables.amplitude(sp, 20) ≈ 1.
         @test variables.amplitude(sp, 0) ≈ 0. atol=1e-8

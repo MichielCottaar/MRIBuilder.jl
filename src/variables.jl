@@ -92,7 +92,7 @@ Main module containing all the MRIBuilder sequence variables.
 
 All variables are available as members of this module, e.g.
 `variables.echo_time` returns the echo time variable.
-New variables can be defined using [`@defvar`](@ref).
+New variables can be defined using `@defvar`.
 
 Set constraints on variables by passing them on as keywords during the sequence generation,
 e.g., `seq=SpinEcho(echo_time=70)`.
@@ -358,9 +358,6 @@ function get_pathway end
 Returns the gradient orientation.
 """
 function gradient_orientation end
-
-
-@defvar function effective_time end
 
 
 function (var::Variable)(block::AbstractBlock, args...; kwargs...)

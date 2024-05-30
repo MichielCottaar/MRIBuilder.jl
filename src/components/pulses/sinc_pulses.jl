@@ -99,7 +99,7 @@ end
 end
 
 @defvar begin
-    amplitude(pulse::SincPulse, time::Number) = variables.amplitude(pulse) * normalised_function(abs((time - variables.effective_time(pulse))) / variables.lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
+    amplitude(pulse::SincPulse, time::Number) = variables.amplitude(pulse) * normalised_function(abs((time - variables.effective_time(pulse))) / variables.lobe_duration(pulse), variables.N_left(pulse), variables.N_right(pulse); apodise=pulse.apodise)
     phase(pulse::SincPulse, time::Number) = variables.phase(pulse) + variables.frequency(pulse) * (time - variables.effective_time(pulse)) * 360.
     frequency(pulse::SincPulse, time::Number) = variables.frequency(pulse)
 end

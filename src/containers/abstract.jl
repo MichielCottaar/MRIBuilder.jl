@@ -37,6 +37,7 @@ end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = variables.duration(blo
     effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + variables.effective_time(container[index], indices...)
     effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + variables.effective_time(block[2])
 end
+
 """
     effective_time(container, indices...)
 
@@ -46,7 +47,7 @@ This will crash if the component does not have an [`effective_time`](@ref) (e.g.
 
 Also see [`variables.duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
 """
-effective_time
+variables.effective_time
 
 
 """
@@ -147,8 +148,8 @@ function get_gradient end
 
 Returns all the times that the sequence will readout.
 """
-readout_times
+variables.readout_times
 
-iter(component::Tuple{<:Number, <:ReadoutComponent}, ::Val{:readout}) = [(time, nothing) for time in readout_times(component[2])]
+iter(component::Tuple{<:Number, <:ReadoutComponent}, ::Val{:readout}) = [(time, nothing) for time in variables.readout_times(component[2])]
 
 end
