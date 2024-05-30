@@ -72,7 +72,7 @@ Setting this allows us to get RF pulse or gradient-specific properties by callin
 ```@example
 using MRIBuilder
 sequence = DiffusionSpinEcho(bval=1., TE=:min, slice_thickness=2.)
-flip_angle(sequence)
+variables.flip_angle(sequence)
 ```
 Here we can see that we get the [`flip_angle`](@ref) for each of the two RF pulses defined using [`get_pulse`](@ref) above.
 
