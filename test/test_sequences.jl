@@ -128,7 +128,7 @@
                 (pulse, t_pulse) = get_pulse(seq, 35.)
                 @test 1.1 < t_pulse < 1.2
                 @test variables.flip_angle(pulse) ≈ 180.
-                @test iszero(phase(pulse))
+                @test iszero(variables.phase(pulse))
             end
         end
     end
