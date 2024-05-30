@@ -222,7 +222,7 @@ function dwi_gradients(; type=:trapezoid, optimise=false, scanner=nothing, refoc
         end
         for var_func in match
             if var_func isa Symbol
-                var_func = variables[var_func]
+                var_func = getproperty(variables, var_func)
             end
             apply_simple_constraint!(var_func(g1), var_func(g2))
         end

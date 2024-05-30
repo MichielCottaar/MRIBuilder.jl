@@ -87,14 +87,10 @@ Check whether variable is defined for a specific sub-type.
 """
 variable_defined_for(var::Variable, ::Val{T}) where {T <: AbstractBlock} = hasmethod(var.f, (T, ))
 
-struct _Variables
-    variables :: Dict{Symbol, AnyVariable}
-end
-
 """
-Main interface to all the MRIBuilder sequence variables.
+Main module containing all the MRIBuilder sequence variables.
 
-All variables are available as members of this object, e.g.
+All variables are available as members of this module, e.g.
 `variables.echo_time` returns the echo time variable.
 New variables can be defined using [`@defvar`](@ref).
 
@@ -105,15 +101,8 @@ After sequence generation you can get the variable values by calling
 `variables.echo_time(seq)`.
 For the sequence defined above this would return 70. (or a number very close to that).
 """
-variables = _Variables(Dict{Symbol, AnyVariable}())
-
-Base.getindex(v::_Variables, i::Symbol) = getfield(v, :variables)[i]
-Base.keys(v::_Variables) = keys(getfield(v, :variables))
-Base.values(v::_Variables) = values(getfield(v, :variables))
-
-Base.propertynames(v::_Variables) = Tuple(keys(getfield(v, :variables)))
-
-Base.getproperty(v::_Variables, s::Symbol) = v[s]
+baremodule variables
+end
 
 
 """
@@ -217,11 +206,14 @@ function _defvar(func_def, getter=nothing)
     expressions = Expr[]
     for func_name in func_names
         push!(expressions, quote
-            $(esc(func_name)) = if $(QuoteNode(func_name)) in keys(variables)
-                variables[$(QuoteNode(func_name))]
-            else
+            $(esc(func_name)) = try
+                variables.$(func_name)
+            catch e
+                if !(e isa UndefVarError)
+                    rethrow()
+                end
                 function $(func_name) end
-                getfield(variables, :variables)[$(QuoteNode(func_name))] = Variable($(QuoteNode(func_name)), $(func_name), $getter)
+                variables.$(func_name) = Variable($(QuoteNode(func_name)), $(func_name), $getter)
             end
             if $(esc(func_name)) isa AlternateVariable
                 error("$($(esc(func_name)).name) is defined through $($(esc(func_name)).other_var). Please define that variable instead.")
@@ -251,11 +243,11 @@ end
 
 Duration of the sequence or building block in ms.
 """ 
-duration
+variables.duration
 
 
 function def_alternate_variable!(name::Symbol, other_var::Symbol, from_other::Function, to_other::Union{Nothing, Function}, inverse::Bool)
-    getfield(variables, :variables)[name] = AlternateVariable(name, other_var, from_other, to_other, inverse)
+    setproperty!(variables, name, AlternateVariable(name, other_var, from_other, to_other, inverse))
 end
 
 def_alternate_variable!(:spoiler_scale, :qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
@@ -402,7 +394,7 @@ function (var::Variable)(event::Tuple{<:VariableType, <:AbstractBlock}, args...;
 end
 
 function (var::AlternateVariable)(args...; kwargs...)
-    other_var = variables[var.other_var]
+    other_var = getproperty(variables, var.other_var)
     apply_from_other(res::VariableType) = var.from_other(res)
     function apply_from_other(res::AbstractVector{<:VariableType}) 
         try
@@ -451,7 +443,7 @@ function set_simple_constraints!(block::AbstractBlock, kwargs)
     real_kwargs = Dict(key => value for (key, value) in kwargs if !isnothing(value))
 
     for (key, value) in real_kwargs
-        var = variables[key]
+        var = getproperty(variables, key)
         if var isa AlternateVariable
             if var.other_var in keys(real_kwargs)
                 error("Set constraints on both $key and $(var.other_var), however they are equivalent.")
@@ -461,7 +453,7 @@ function set_simple_constraints!(block::AbstractBlock, kwargs)
             invert_value(::Val{:min}) = var.inverse ? Val(:max) : Val(:min)
             invert_value(::Val{:max}) = var.inverse ? Val(:min) : Val(:max)
             invert_value(value::AbstractVector) = invert_value.(value)
-            apply_simple_constraint!(variables[var.other_var](block), invert_value(value))
+            apply_simple_constraint!(getproperty(variables, var.other_var)(block), invert_value(value))
         else
             apply_simple_constraint!(var(block), value)
         end
