@@ -1,6 +1,5 @@
 module Abstract
-import ...Variables: AbstractBlock, duration, effective_time, gradient_strength, amplitude, phase, VariableType, get_pulse, get_gradient
-import ...Components.Readouts: readout_times
+import ...Variables: AbstractBlock, variables, VariableType, get_pulse, get_gradient, @defvar
 import ...Components: BaseComponent, InstantPulse, InstantGradient, ReadoutComponent, NoGradient, RFPulseComponent, GradientWaveform
 
 """
@@ -16,7 +15,7 @@ abstract type ContainerBlock <: AbstractBlock end
 
 Returns the start time of component with given `indices` with respect to the start of the [`ContainerBlock`](@ref).
 
-Also see [`duration`](@ref), [`end_time`](@ref), and [`effective_time`](@ref)
+Also see [`variables.duration`](@ref), [`end_time`](@ref), and [`variables.effective_time`](@ref)
 """
 function start_time(container::ContainerBlock, index1, index2, indices...)
     start_time(container, index1) + start_time(container[index1], index2, indices...)
@@ -28,23 +27,27 @@ end
 
 Returns the start time of component with given `indices` with respect to the start of the [`ContainerBlock`](@ref).
 
-Also see [`duration`](@ref), [`start_time`](@ref), and [`effective_time`](@ref)
+Also see [`variables.duration`](@ref), [`start_time`](@ref), and [`variables.effective_time`](@ref)
 """
 end_time(container::ContainerBlock, index, indices...) = start_time(container, index) + end_time(container[index], indices...)
-end_time(block::AbstractBlock) = duration(block)
-end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = duration(block[2])
+end_time(block::AbstractBlock) = variables.duration(block)
+end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = variables.duration(block[2])
+
+@defvar begin
+    effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + variables.effective_time(container[index], indices...)
+    effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + variables.effective_time(block[2])
+end
 
 """
     effective_time(container, indices...)
 
 Returns the start time of component with given `indices` with respect to the start of the [`ContainerBlock`](@ref).
 
-This will crash if the component does not have an [`effective_time`](@ref) (e.g., if it is (part of) a gradient waveform).
+This will crash if the component does not have an [`variables.effective_time`](@ref) (e.g., if it is (part of) a gradient waveform).
 
-Also see [`duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
+Also see [`variables.duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
 """
-effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + effective_time(container[index], indices...)
-effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effective_time(block[2])
+variables.effective_time
 
 
 """
@@ -52,7 +55,7 @@ effective_time(block::Tuple{<:VariableType, <:AbstractBlock}) = block[1] + effec
 
 Returns the gradient strength at a particular time within the sequence.
 """
-function gradient_strength end
+gradient_strength = variables.gradient_strength
 
 
 """
@@ -60,7 +63,7 @@ function gradient_strength end
 
 Returns the RF amplitude at a particular time within the sequence in kHz.
 """
-function amplitude end
+amplitude = variables.amplitude
 
 
 """
@@ -70,7 +73,7 @@ Returns the RF phase at a particular time within the sequence in degrees.
 
 NaN is returned if there is no pulse activate at that `time`.
 """
-function phase end
+phase = variables.phase
 
 """
     frequency(sequence, time)
@@ -79,7 +82,7 @@ Returns the RF frequency at a particular time within the sequence in kHz.
 
 NaN is returned if there is no pulse activate at that `time`.
 """
-function frequency end
+frequency = variables.frequency
 
 """
     iter(sequence, get_type)
@@ -139,12 +142,14 @@ This function will return a tuple with 2 elements:
 """
 function get_gradient end
 
+@defvar readout_times(container::ContainerBlock) = [time for (time, _) in iter(container, Val(:readout))]
 """
     readout_times(sequence)
 
 Returns all the times that the sequence will readout.
 """
-readout_times(container::ContainerBlock) = [time for (time, _) in iter(container, Val(:readout))]
-iter(component::Tuple{<:Number, <:ReadoutComponent}, ::Val{:readout}) = [(time, nothing) for time in readout_times(component[2])]
+variables.readout_times
+
+iter(component::Tuple{<:Number, <:ReadoutComponent}, ::Val{:readout}) = [(time, nothing) for time in variables.readout_times(component[2])]
 
 end

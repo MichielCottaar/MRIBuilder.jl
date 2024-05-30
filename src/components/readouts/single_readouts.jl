@@ -1,8 +1,8 @@
 module SingleReadouts
 import JuMP: @constraint
 import ...AbstractTypes: ReadoutComponent
-import ....Variables: duration, effective_time, make_generic
-import ..ADCs: ADC, readout_times
+import ....Variables: make_generic, variables, @defvar
+import ..ADCs: ADC
 
 """
     SingleReadout()
@@ -26,9 +26,11 @@ function SingleReadout(; duration=nothing, kwargs...)
     return SingleReadout(:prevent_loop)
 end
 
-duration(::SingleReadout) = 0.
-effective_time(::SingleReadout) = 0.
-readout_times(::SingleReadout) = [0.]
+@defvar begin
+    duration(::SingleReadout) = 0.
+    effective_time(::SingleReadout) = 0.
+    readout_times(::SingleReadout) = [0.]
+end
 
 make_generic(::SingleReadout) = ADC(1, 0., 0., 0.)
 end

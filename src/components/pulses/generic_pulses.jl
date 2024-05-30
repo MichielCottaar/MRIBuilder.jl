@@ -2,7 +2,7 @@ module GenericPulses
 
 import Polynomials: fit
 import ...AbstractTypes: RFPulseComponent, split_timestep
-import ....Variables: duration, amplitude, effective_time, flip_angle, make_generic, phase, frequency, adjust_internal
+import ....Variables: make_generic, variables, @defvar, adjust_internal
 
 
 """
@@ -31,7 +31,7 @@ struct GenericPulse <: RFPulseComponent
         @assert all(time .>= 0)
         if isnothing(effective_time)
             test_res = new(Float64.(time), Float64.(amplitude), Float64.(phase), 0.)
-            effective_time = time_halfway_flip(test_res)
+            effective_time = variables.time_halfway_flip(test_res)
         end
         return new(Float64.(time), Float64.(amplitude), Float64.(phase), Float64(effective_time))
     end
@@ -56,31 +56,34 @@ function GenericPulse(pulse::GenericPulse, t1::Number, t2::Number)
     pnew = pulse.phase[use]
     if !(t1 ≈ tnew[1])
         pushfirst!(tnew, t1)
-        pushfirst!(anew, amplitude(pulse, t1))
-        pushfirst!(pnew, phase(pulse, t1))
+        pushfirst!(anew, variables.amplitude(pulse, t1))
+        pushfirst!(pnew, variables.phase(pulse, t1))
     elseif !(t2 ≈ tnew[end])
         push!(tnew, t2)
-        push!(anew, amplitude(pulse, t2))
-        push!(pnew, phase(pulse, t2))
+        push!(anew, variables.amplitude(pulse, t2))
+        push!(pnew, variables.phase(pulse, t2))
     end
     return GenericPulse(tnew .- t1, anew, pnew, pulse.effective_time - t1)
 end
 
 GenericPulse(pulse::RFPulseComponent, t1::Number, t2::Number) = GenericPulse(make_generic(pulse), t1, t2)
 
-duration(fp::GenericPulse) = maximum(fp.time)
-amplitude(fp::GenericPulse) = maximum(abs.(fp.amplitude))
-effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]
-phase(pulse::GenericPulse) = pulse.phase[findmax(abs.(pulse.amplitude))[2]]
-flip_angle(pulse::GenericPulse) = sum(get_weights(pulse) .* pulse.amplitude) * 360
-function time_halfway_flip(pulse::GenericPulse)
-    w = get_weights(pulse)
-    flip_so_far = cumsum(w .* pulse.amplitude)
-    return pulse.time[findfirst(f -> f >= flip_so_far[end] / 2, flip_so_far)]
+@defvar duration(fp::GenericPulse) = maximum(fp.time)
+@defvar effective_time(pulse::GenericPulse) = pulse.time[findmax(abs.(pulse.amplitude))]
+
+@defvar pulse begin
+    amplitude(fp::GenericPulse) = maximum(abs.(fp.amplitude))
+    phase(pulse::GenericPulse) = pulse.phase[findmax(abs.(pulse.amplitude))[2]]
+    flip_angle(pulse::GenericPulse) = sum(get_weights(pulse) .* pulse.amplitude) * 360
+    function time_halfway_flip(pulse::GenericPulse)
+        w = get_weights(pulse)
+        flip_so_far = cumsum(w .* pulse.amplitude)
+        return pulse.time[findfirst(f -> f >= flip_so_far[end] / 2, flip_so_far)]
+    end
 end
 
 for fn in (:amplitude, :phase)
-    @eval function $fn(fp::GenericPulse, time::Number)
+    @eval function variables.$fn.f(fp::GenericPulse, time::Number)
         i2 = findfirst(t->t > time, fp.time)
         if isnothing(i2)
             @assert time ≈ fp.time[end]
@@ -97,7 +100,7 @@ for fn in (:amplitude, :phase)
 end
 
 
-function frequency(gp::GenericPulse, time::Number)
+@defvar pulse function frequency(gp::GenericPulse, time::Number)
     i2 = findfirst(t -> t > time, gp.time)
     if isnothing(i2)
         @assert time ≈ gp.time[end]

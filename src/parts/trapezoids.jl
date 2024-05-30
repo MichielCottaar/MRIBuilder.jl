@@ -6,8 +6,7 @@ module Trapezoids
 import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ...Variables: qval, rise_time, flat_time, slew_rate, gradient_strength, variables, duration, δ, get_free_variable, VariableType, inverse_bandwidth, effective_time, qval_square, duration, set_simple_constraints!, scanner_constraints!, inverse_slice_thickness
-import ...Variables: Variables, all_variables_symbols, dwell_time, inverse_fov, inverse_voxel_size, fov, voxel_size, get_gradient, get_pulse, get_readout, gradient_orientation, ramp_overlap, adjustable, adjust_internal
+import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType, get_gradient, get_pulse, get_readout, adjustable, adjust_internal
 import ...BuildSequences: global_model
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ...Containers: BaseBuildingBlock
@@ -38,13 +37,13 @@ Defines a trapezoidal pulsed gradient
 Variables can be set during construction or afterwards as an attribute.
 If not set, they will be determined during the sequence optimisation.
 ### Timing variables
-- [`rise_time`](@ref): Time of the gradient to reach from 0 to maximum in ms. If explicitly set to 0, the scanner slew rate will be ignored.
-- [`flat_time`](@ref): Time that the gradient stays at maximum strength in ms.
-- [`δ`](@ref): effective pulse duration (`rise_time` + `flat_time`) in ms.
-- [`duration`](@ref): total pulse duration (2 * `rise_time` + `flat_time`) in ms.
+- [`variables.rise_time`](@ref): Time of the gradient to reach from 0 to maximum in ms. If explicitly set to 0, the scanner slew rate will be ignored.
+- [`variables.flat_time`](@ref): Time that the gradient stays at maximum strength in ms.
+- [`variables.δ`](@ref): effective pulse duration (`rise_time` + `flat_time`) in ms.
+- [`variables.duration`](@ref): total pulse duration (2 * `rise_time` + `flat_time`) in ms.
 ### Gradient variables
-- [`gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
-- [`qval`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
+- [`variables.gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
+- [`variables.qvec`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
 
 The `bvalue` can be constrained for multiple gradient pulses by creating a `Pathway`.
 """
@@ -97,9 +96,9 @@ end
 
 Base.keys(::Trapezoid) = (Val(:rise), Val(:flat), Val(:fall))
 
-Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(N == 3 ? zeros(3) : 0., slew_rate(pg), gradient_orientation(pg), rise_time(pg), get_group(pg))
-Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(gradient_strength(pg), gradient_orientation(pg), flat_time(pg), get_group(pg))
-Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(gradient_strength(pg), -slew_rate(pg), gradient_orientation(pg), rise_time(pg), get_group(pg))
+Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(zeros(3), variables.slew_rate(pg), variables.rise_time(pg), get_group(pg))
+Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(variables.gradient_strength(pg), variables.flat_time(pg), get_group(pg))
+Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(variables.gradient_strength(pg), -variables.slew_rate(pg), variables.rise_time(pg), get_group(pg))
 gradient_orientation(::BaseTrapezoid{3}) = nothing
 gradient_orientation(pg::BaseTrapezoid{1}) = gradient_orientation(get_gradient(pg))
 gradient_orientation(pg::Trapezoid{1}) = pg.orientation
@@ -107,14 +106,44 @@ gradient_orientation(pg::Trapezoid{1}) = pg.orientation
 get_group(pg::Trapezoid) = pg.group
 get_group(pg::BaseTrapezoid) = get_group(get_gradient(pg))
 
-rise_time(pg::Trapezoid) = pg.rise_time
-flat_time(pg::Trapezoid) = pg.flat_time
-gradient_strength(g::Trapezoid) = slew_rate(g) .* rise_time(g)
-slew_rate(g::Trapezoid) = g.slew_rate
-δ(g::Trapezoid) = rise_time(g) + flat_time(g)
-duration(g::BaseTrapezoid) = 2 * rise_time(g) + flat_time(g)
+@defvar gradient begin
+    rise_time(pg::Trapezoid) = pg.rise_time
+    flat_time(pg::Trapezoid) = pg.flat_time
+    slew_rate(g::Trapezoid1D) = g.slew_rate .* g.orientation
+    slew_rate(g::Trapezoid3D) = g.slew_rate
+end
 
-qval(g::BaseTrapezoid, ::Nothing, ::Nothing) = δ(g) .* gradient_strength(g) .* 2π
+"""
+    rise_time(trapezoid)
+
+Returns the rise time of a [`Trapezoid`](@ref) gradient profile in ms.
+"""
+variables.rise_time
+
+"""
+    flat_time(trapezoid)
+
+Returns the flat time of a [`Trapezoid`](@ref) gradient profile in ms.
+"""
+variables.flat_time
+
+@defvar gradient begin
+    gradient_strength(g::Trapezoid) = variables.slew_rate(g) .* variables.rise_time(g)
+    δ(g::Trapezoid) = variables.rise_time(g) + variables.flat_time(g)
+end
+
+"""
+    δ(trapezoid)
+
+Returns the effective duration of a [`Trapezoid`](@ref) gradient profile in ms.
+
+Defined as [`variables.rise_time`](@ref) + [`variables.flat_time`](@ref).
+"""
+variables.δ
+
+@defvar duration(g::BaseTrapezoid) = 2 * variables.rise_time(g) + variables.flat_time(g)
+
+@defvar qvec(g::BaseTrapezoid, ::Nothing, ::Nothing) = variables.δ(g) .* variables.gradient_strength(g) .* 2π
 
 adjustable(::BaseTrapezoid) = :gradient
 
@@ -164,23 +193,32 @@ struct SliceSelect{N} <: BaseTrapezoid{N}
     pulse :: RFPulseComponent
 end
 
-function SliceSelect(pulse::RFPulseComponent; orientation=nothing, rise_time=nothing, group=nothing, slew_rate=nothing, variables...)
+function SliceSelect(pulse::RFPulseComponent; orientation=nothing, rise_time=nothing, group=nothing, slew_rate=nothing, vars...)
     res = SliceSelect(
-        Trapezoid(; orientation=orientation, rise_time=rise_time, flat_time=duration(pulse), group=group, slew_rate=slew_rate),
+        Trapezoid(; orientation=orientation, rise_time=rise_time, flat_time=variables.duration(pulse), group=group, slew_rate=slew_rate),
         pulse
     )
-    set_simple_constraints!(res, variables)
+    set_simple_constraints!(res, vars)
     return res
 end
 
 Base.keys(::SliceSelect) = (Val(:rise), Val(:flat), Val(:pulse), Val(:fall))
 Base.getindex(pg::SliceSelect, ::Val{:pulse}) = (0., pg.pulse)
 
-inverse_slice_thickness(ss::SliceSelect) = 1e3 * gradient_strength(ss.trapezoid) .* inverse_bandwidth(ss.pulse)
+@defvar pulse inverse_slice_thickness(ss::SliceSelect) = 1e3 * variables.gradient_strength_norm(ss.trapezoid) .* variables.inverse_bandwidth(ss.pulse)
+
+"""
+    slice_thickness(slice_select)
+
+Defines the slice thickness for a RF pulse with an active gradient in mm (e.g., [`SliceSelect`](@ref)).
+
+Defines as [`variables.gradient_strength_norm`](@ref)(gradient) / [`variables.bandwidth`](@ref)(pulse)
+"""
+variables.slice_thickness
 
 get_pulse(ss::SliceSelect) = ss.pulse
 get_gradient(ss::SliceSelect) = ss.trapezoid
-effective_time(ss::SliceSelect) = effective_time(ss, :pulse)
+@defvar effective_time(ss::SliceSelect) = variables.effective_time(ss, :pulse)
 
 """
     LineReadout(adc; ramp_overlap=1., orientation=nothing, group=nothing, variables...)
@@ -194,8 +232,8 @@ Parameters and variables are identical as for [`Trapezoid`](@ref) with the addit
 - `ramp_overlap`: how much the gradient ramp should overlap with the ADC. 0 for no overlap, 1 for full overlap (default: 1). Can be set to `nothing` to become a free variable.
 
 ## Variables
-- [`fov`](@ref): FOV of the output image along this single k-space line in mm.
-- [`voxel_size`](@ref): size of each voxel along this single k-space line in mm.
+- [`variables.fov`](@ref): FOV of the output image along this single k-space line in mm.
+- [`variables.voxel_size`](@ref): size of each voxel along this single k-space line in mm.
 """
 struct LineReadout{N} <: BaseTrapezoid{N}
     trapezoid :: Trapezoid{N}
@@ -203,28 +241,53 @@ struct LineReadout{N} <: BaseTrapezoid{N}
     ramp_overlap :: VariableType
 end
 
-function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=nothing, variables...)
+function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=nothing, vars...)
     res = LineReadout(
         Trapezoid(; orientation=orientation, group=group),
         adc,
         get_free_variable(ramp_overlap)
     )
-    set_simple_constraints!(res, variables)
+    set_simple_constraints!(res, vars)
     if !(res.ramp_overlap isa Number)
         @constraint global_model() res.ramp_overlap >= 0
         @constraint global_model() res.ramp_overlap <= 1
     end
-    @constraint global_model() (res.ramp_overlap * rise_time(res.trapezoid) * 2 + flat_time(res.trapezoid)) == duration(res.adc)
+    @constraint global_model() (res.ramp_overlap * variables.rise_time(res.trapezoid) * 2 + variables.flat_time(res.trapezoid)) == variables.duration(res.adc)
     return res
 end
 
 Base.keys(::LineReadout) = (Val(:rise), Val(:adc), Val(:flat), Val(:fall))
-Base.getindex(lr::LineReadout, ::Val{:adc}) = ((1 - ramp_overlap(lr)) * rise_time(lr), lr.adc)
+Base.getindex(lr::LineReadout, ::Val{:adc}) = ((1 - variables.ramp_overlap(lr)) * variables.rise_time(lr), lr.adc)
 
-ramp_overlap(lr::LineReadout) = lr.ramp_overlap
-inverse_fov(lr::LineReadout) = 1e3 * dwell_time(lr.adc) * gradient_strength(lr.trapezoid) * lr.adc.oversample
-inverse_voxel_size(lr::LineReadout) = 1e3 * duration(lr.adc) * gradient_strength(lr.trapezoid)
-effective_time(lr::LineReadout) = effective_time(lr, :adc)
+@defvar begin
+    ramp_overlap(lr::LineReadout) = lr.ramp_overlap
+    inverse_fov(lr::LineReadout) = 1e3 * variables.dwell_time(lr.adc) * variables.gradient_strength_norm(lr.trapezoid) * lr.adc.oversample
+    inverse_voxel_size(lr::LineReadout) = 1e3 * variables.duration(lr.adc) * variables.gradient_strength(lr.trapezoid)
+    effective_time(lr::LineReadout) = variables.effective_time(lr, :adc)
+end
+
+"""
+    fov(readout)
+
+Defines the field of view of a readout in mm.
+"""
+variables.fov
+
+"""
+    voxel_size(readout)
+
+Defines the voxel size of a readout in mm.
+"""
+variables.voxel_size
+
+"""
+    ramp_overlap(line_readout)
+
+Return the fraction of the gradient ramp that overlaps with the ADC readout.
+
+Set to 0 to ensure that the ADC is only active during the flat time of the readout.
+"""
+variables.ramp_overlap
 
 get_readout(lr::LineReadout) = lr.adc
 get_gradient(lr::LineReadout) = lr.trapezoid

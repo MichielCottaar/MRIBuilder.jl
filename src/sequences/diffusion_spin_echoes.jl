@@ -2,10 +2,10 @@ module DiffusionSpinEchoes
 import ...Containers: Sequence
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler, refocus_pulse, dwi_gradients
 import ...Containers: start_time
-import ...Variables: get_pulse, get_readout, echo_time, duration_transverse, delay, effective_time, diffusion_time, Δ, TR, TE, repetition_time, get_gradient
+import ...Variables: get_pulse, get_readout, get_gradient, variables, @defvar
 import ...Pathways: Pathway, get_pathway
 import ...BuildSequences: build_sequence
-import ...Scanners: Default_Scanner
+import ...Scanners: Default_Scanner, Scanner
 
 const DiffusionSpinEcho = Sequence{:DiffusionSpinEcho}
 const DW_SE = DiffusionSpinEcho
@@ -22,20 +22,19 @@ By default, an instant excitation pulse and readout event are used.
 If image parameters are provided, this will switch to a sinc pulse and EPI readout.
 
 ## Parameters
-- [`excitation`](@ref): properties of the excitation pulse as described in [`excitation_pulse`](@ref).
-- [`gradient`](@ref): properties of the diffusion-weighting gradients as described in [`dwi_gradients`](@ref).
-- [`refocus`](@ref): properties of the refocus pulse as described in [`refocus_pulse`](@ref).
-- [`readout`](@ref): properties of the readout as described in [`readout_event`](@ref).
-- [`spoiler`](@ref): if set adds a spoiler [`gradient_spoiler`](@ref) gradient after the readout (e.g., `spoiler=()` to add a gradient in the z-direction of the `FOV` coordinate system that fully dephases spins over 1 mm).
-- Image parameters ([`resolution`](@ref)/[`fov`](@ref)/[`voxel_size`](@ref)/[`slice_thickness`](@ref)): describe the properties of the resulting image. See [`interpret_image_size`](@ref) for details.
-- [`optim`](@ref): parameters to pass on to the Ipopt optimiser (see https://coin-or.github.io/Ipopt/OPTIONS.html).
-- [`scanner`](@ref): Sets the [`Scanner`](@ref) used to constraint the gradient parameters. If not set, the [`Default_Scanner`](@ref) will be used.
+- `excitation`: properties of the excitation pulse as described in [`excitation_pulse`](@ref).
+- `gradient`: properties of the diffusion-weighting gradients as described in [`dwi_gradients`](@ref).
+- `refocus`: properties of the refocus pulse as described in [`refocus_pulse`](@ref).
+- `readout`: properties of the readout as described in [`readout_event`](@ref).
+- Image parameters ([`variables.resolution`](@ref)/[`variables.fov`](@ref)/[`variables.voxel_size`](@ref)/[`variables.slice_thickness`](@ref)): describe the properties of the resulting image. See [`interpret_image_size`](@ref) for details.
+- `optim`: parameters to pass on to the Ipopt optimiser (see https://coin-or.github.io/Ipopt/OPTIONS.html).
+- `scanner`: Sets the [`Scanner`](@ref) used to constraint the gradient parameters. If not set, the [`Default_Scanner`](@ref) will be used.
 
 ## Variables
-- [`TE`](@ref)/[`echo_time`](@ref): echo time between excitation pulse and spin echo in ms.
-- [`delay`](@ref): delay between the readout and the peak of the spin echo in ms (positive number indicates that readout is after the spin echo). Defaults to zero.
-- [`TR`](@ref)/[`repetition_time`](@ref)/[`duration`](@ref): total duration of the sequence from start of excitation pulse to end of readout or spoiler in ms.
-- [`Δ`](@ref)/[`diffusion_time`](@ref): Time from the start of one diffusion-weighted gradient till the other in ms.
+- [`variables.TE`](@ref)/[`variables.echo_time`](@ref): echo time between excitation pulse and spin echo in ms.
+- [`variables.delay`](@ref): delay between the readout and the peak of the spin echo in ms (positive number indicates that readout is after the spin echo). Defaults to zero.
+- [`variables.duration`](@ref): total duration of the sequence from start of excitation pulse to end of readout or spoiler in ms.
+- [`variables.Δ`](@ref)/[`variables.diffusion_time`](@ref): Time from the start of one diffusion-weighted gradient till the other in ms.
 """
 function DiffusionSpinEcho(; delay=0., excitation=(), gradient=(), refocus=(), readout=(), optim=(), spoiler=nothing, resolution=nothing, fov=nothing, voxel_size=nothing, slice_thickness=nothing, scanner=Default_Scanner, variables...)
     build_sequence(scanner; optim...) do
@@ -62,10 +61,27 @@ end
 
 get_pulse(ge::DiffusionSpinEcho) = (excitation=ge[:excitation], refocus=ge[:refocus])
 get_gradient(ge::DiffusionSpinEcho) = (gradient=ge[:gradient], gradient2=ge[:gradient2])
-get_readout(ge::DiffusionSpinEcho) = ge.readout
+get_readout(ge::DiffusionSpinEcho) = ge[:readout]
 get_pathway(ge::DiffusionSpinEcho) = Pathway(ge, [90, 180], 1, group=:diffusion)
-echo_time(ge::DiffusionSpinEcho) = 2 * (effective_time(ge, :refocus) - effective_time(ge, :excitation))
-delay(ge::DiffusionSpinEcho) = duration_transverse(ge) - echo_time(ge)
-diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
+
+@defvar begin
+    echo_time(ge::DiffusionSpinEcho) = 2 * (variables.effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
+    delay(ge::DiffusionSpinEcho) = variables.duration_transverse(ge) - variables.echo_time(ge)
+    diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
+end
+
+"""
+    diffusion_time(diffusion_sequence)
+
+Returns the diffusion time of a [`DiffusionSpinEcho`](@ref) in ms.
+"""
+variables.diffusion_time
+
+"""
+    delay(sequence)
+
+Returns the offset beetween the readout and the spin echo in ms.
+"""
+variables.delay
 
 end

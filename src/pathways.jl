@@ -2,8 +2,8 @@ module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
-import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
-import ..Variables: qvec, qval, qval3, bmat_gradient, VariableType, effective_time, duration, TR, bmat, bval, area_under_curve, duration_dephase, duration_transverse, VariableNotAvailable
+import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks, ContainerBlock
+import ..Variables: VariableType, get_pathway, variables, @defvar, AbstractBlock
 
 
 """
@@ -14,7 +14,7 @@ Describes how a specific spin/isochromat might experience the sequence.
 Only a single pathway through the RF pulses is considered,
 so that at every point in time the spins are in one of the following four states:
 - +longitudinal: initial relaxed state
-- +transverse: excited state. During this time gradients will affect the [`area_under_curve`](@ref) (or [`qval`](@ref)) and [`bval`](@ref).
+- +transverse: excited state. During this time gradients will affect the [`variables.area_under_curve`](@ref) (or [`variables.qval`](@ref)) and [`variables.bval`](@ref).
 - -longitudinal: inverse state
 - -transverse: inverse excited state. During this time all gradients will have the inverse effect compared with +transverse.
 
@@ -27,25 +27,24 @@ The RF pulses cause mappings between these different states as described below.
     - `:refocus`/`:invert`/180: Flips the sign of the spin state (i.e., +longitudinal <-> -longitudinal, +transverse <-> -transverse)
     - `:excite`/90: Takes spin state one step along the following sequence +longitudinal -> +transverse -> -longitudinal -> -transverse -> +longitudinal
     - `:neg_excite`/270/-90: Inverse step compared with `:excite`.
-- `readout_index`: After encountering the number of pulses as defined in `pulse_effects`, continue the `PathWay` until the readout given by `index` is reached. If set to 0 the `PathWay` is terminated immediately after the last RF pulse.
-- `group`: which gradient grouping to consider for the `qvec` and `bmat`. If not set, all gradients will be considered (using their current alignment).
+- `readout_index`: After encountering the number of pulses as defined in `pulse_effects`, continue the `Pathway` until the readout given by `index` is reached. If set to 0 the `Pathway` is terminated immediately after the last RF pulse.
+- `group`: which gradient grouping to consider for the `net_dephasing` and `bmat`. If not set, all gradients will be considered (using their current alignment).
 
 ## Attributes
 Over the pathway the following values are computed. Each can be accessed by calling the appropriate function:
 
 ### Timings
-- [`duration_state`](@ref): The total amount of time spent in a specific state in this pathway (+longitudinal, +transverse, -longitudinal, or -transverse)
-- [`duration_transverse`](@ref): The total amount of time the spins spent in the transverse plane in ms. This can be used to quantify the expected effect of T2-decay.
-- [`duration_dephase`](@ref): The total amount of time the spins spent in the +transverse relative to -transverse state in ms. The absolute value of this can be used to quantify the expected effect of T2'-decay.
+- [`variables.duration_state`](@ref): The total amount of time spent in a specific state in this pathway (+longitudinal, +transverse, -longitudinal, or -transverse)
+- [`variables.duration_transverse`](@ref): The total amount of time the spins spent in the transverse plane in ms. This can be used to quantify the expected effect of T2-decay.
+- [`variables.duration_dephase`](@ref): The total amount of time the spins spent in the +transverse relative to -transverse state in ms. The absolute value of this can be used to quantify the expected effect of T2'-decay.
 
 ### Effect of gradients
 The area under curve, q-values, and b-values are computed separately for each group of gradients (depending on the `group` keyword set during construction).
-- [`qvec`](@ref): Net displacement vector in k-space/q-space.
-- [`qval`](@ref)/[`area_under_curve`](@ref): size of the displacement in k-space/q-space. For a spoiled pathway, this should be large compared with 1/voxel size; for unspoiled pathways it should be (close to) zero.
-- [`bmat`](@ref): Net diffusion weighting due to gradients along the `Pathway` in matrix form.
-- [`bval`](@ref): Net diffusion weighting due to gradients along the `Pathway` as a single number.
+- [`variables.net_dephasing`](@ref): Net displacement vector in k-space/q-space.
+- [`variables.bmat`](@ref): Net diffusion weighting due to gradients along the `Pathway` in matrix form.
+- [`variables.bval`](@ref): Net diffusion weighting due to gradients along the `Pathway` as a single number.
 """
-struct Pathway
+struct Pathway <: AbstractBlock
     # user provided
     sequence :: Sequence
     pulse_effects :: Vector{<:Union{Symbol, Number}}
@@ -71,6 +70,9 @@ function Pathway(sequence::Sequence, pulse_effects::AbstractVector, readout_inde
     )
 end
 
+@defvar pathway function duration_state(pathway::Pathway, transverse, positive)
+    return pathway.duration_states[duration_state_index(transverse, positive)]
+end
 
 """
     duration_state(pathway::Pathway, transverse::Bool, positive::Bool)
@@ -83,47 +85,49 @@ The requested state can be set using `transverse` and `positive` as follows:
 - `transverse=false`, `positive=false`: -longitudinal
 - `transverse=true`, `positive=false`: -transverse
 """
-function duration_state(pathway::Pathway, transverse, positive)
-    return pathway.duration_states[duration_state_index(transverse, positive)]
-end
+variables.duration_state
 
+@defvar pathway function duration_transverse(pathway::Pathway)
+    return variables.duration_state(pathway, true, true) + variables.duration_state(pathway, true, false)
+end
 """
     duration_transverse(pathway::Pathway)
 
 Returns the total amount of time that spins following the given [`Pathway`](@ref) spent in the transverse plane.
 This determines the amount of T2-weighting as ``e^{t/T_2}``, where ``t`` is the `duration_transverse`.
 
-Also see [`duration_dephase`](@ref) for T2'-weighting.
+Also see [`variables.duration_dephase`](@ref) for T2'-weighting.
 """
-function duration_transverse(pathway::Pathway)
-    return duration_state(pathway, true, true) + duration_state(pathway, true, false)
-end
+variables.duration_transverse
 
+@defvar pathway function duration_dephase(pathway::Pathway)
+    return variables.duration_state(pathway, true, true) - variables.duration_state(pathway, true, false)
+end
 """
     duration_dephase(pathway::Pathway)
 
 Returns the net time that spins following the given [`Pathway`](@ref) spent in the +transverse versus the -transverse state.
 This determines the amount of T2'-weighting as ``e^{t/T_2'}``, where ``t`` is the `duration_dephase`.
 
-Also see [`duration_transverse`](@ref) for T2-weighting.
+Also see [`variables.duration_transverse`](@ref) for T2-weighting.
 """
-function duration_dephase(pathway::Pathway)
-    return duration_state(pathway, true, true) - duration_state(pathway, true, false)
-end
+variables.duration_dephase
 
 
+@defvar pathway net_dephasing(pathway::Pathway) = pathway.qvec
 """
-    qvec(pathway::Pathway)
+    net_dephasing(pathway::Pathway)
 
-Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref).
+Return net displacement vector in k-space/q-space experienced by the spins following a specific [`Pathway`](@ref) in kHz/um.
 
 Only gradients active while the spins are in the transverse plane are considered.
 
 Returns a NamedTuple with the `qvec` for all gradient groups.
 """
-qvec(pathway::Pathway) = pathway.qvec
+variables.net_dephasing
 
 
+@defvar pathway area_under_curve(pathway::Pathway) = norm(variables.net_dephasing(pathway))
 """
     area_under_curve(pathway::Pathway)
 
@@ -133,9 +137,10 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `area_under_curve` for all gradient groups.
 """
-area_under_curve(pathway::Pathway) = norm(qvec(pathway))
+variables.area_under_curve
 
 
+@defvar pathway bmat(pathway::Pathway) = pathway.bmat
 """
     bmat(pathway::Pathway)
 
@@ -145,8 +150,9 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `bmat` for all gradient groups.
 """
-bmat(pathway::Pathway)  = pathway.bmat
+variables.bmat
 
+@defvar pathway bval(pathway::Pathway) = tr(variables.bmat(pathway))
 """
     bval(pathway::Pathway)
 
@@ -156,38 +162,17 @@ Only gradients active while the spins are in the transverse plane will contribut
 
 Returns a NamedTuple with the `bval` for all gradient groups.
 """
-bval(pathway::Pathway) = tr(bmat(pathway))
+variables.bval
 
 
 """
     get_pathway(sequence)
 
-Gets the main [`PathWay`](@ref) that spins are expected to experience in the sequence.
+Gets the main [`Pathway`](@ref) that spins are expected to experience in the sequence.
 
 Multiple pathways might be returned as an array or (named)tuple.
 """
 function get_pathway end
-
-for fn in (:qvec, :area_under_curve, :bmat, :bval, :duration_dephase, :duration_transverse)
-    @eval function $fn(seq::Sequence)
-        pathway = try
-            get_pathway(seq)
-        catch e
-            if e isa MethodError
-                throw(VariableNotAvailable(typeof(seq), $fn))
-            end
-            rethrow()
-        end
-        if pathway isa Pathway
-            return $fn(pathway)
-        elseif pathway isa AbstractVector || pathway isa Tuple
-            return $fn.(pathway)
-        elseif pathway isa NumedTuple
-            return NamedTuple(k => $fn(v) for (k, v) in pairs(pathway))
-        end
-        error("get_pathway returned unexpected type for $seq")
-    end
-end
 
 
 """
@@ -276,7 +261,7 @@ For individual pulses and gradients, the following behaviour is implemented:
 - If a pulse is encountered, call [`update_walker_pulse!`](@ref)`(walker, pulse_effects, pulse_effective_time)`
 - If a gradient is encountered, call [`update_walker_gradient!`](@ref)(gradient, walker, gradient_start_time)
 
-For overlapping gradients/pulses, one should first encounter the part of the gradient before the [`effective_time`](@ref) of the pulse,
+For overlapping gradients/pulses, one should first encounter the part of the gradient before the [`variables.effective_time`](@ref) of the pulse,
 then apply the pulse, and then the rest of the gradient.
 This effective time can be passed on to [`update_walker_gradient!`](@ref) to allow part of the gradient waveform to be applied.
 
@@ -285,7 +270,7 @@ The function should return `true` if the `Pathway` has reached its end (i.e., th
 function walk_pathway!(seq::Sequence, walker::PathwayWalker, pulse_effects::Vector{Symbol}, nreadout::Ref{Int}) 
     current_TR = 0
     nwait = length(pulse_effects) + nreadout[]
-    while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * TR(seq)))
+    while !(walk_pathway!(seq, walker, pulse_effects, nreadout, current_TR * variables.duration(seq)))
         new_nwait = length(pulse_effects) + nreadout[]
         if nwait == new_nwait
             not_seen = iszero(length(pulse_effects)) ? "readout" : "pulse"
@@ -334,7 +319,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
         # apply gradients up till interrupt
         for (_, part) in waveform_sequence(block, current_index, index_inter)
             update_walker_gradient!(part, walker, current_time)
-            current_time = current_time + duration(part)
+            current_time = current_time + variables.duration(part)
         end 
 
         # apply interrupt
@@ -353,7 +338,7 @@ function walk_pathway!(block::BaseBuildingBlock, walker::PathwayWalker, pulse_ef
     # apply remaining gradients
     for (_, part) in waveform_sequence(block, current_index, nothing)
         update_walker_gradient!(part, walker, current_time)
-        current_time = current_time + duration(part)
+        current_time = current_time + variables.duration(part)
     end
     return false
 end
@@ -471,7 +456,7 @@ The following steps will be taken:
 - update the appropriate `walker.qvec` and `walker.bmat` based on the gradient waveform. This will require appropriate `qvec`/`bmat` functions to be defined for the gradient building block.
 - update `walker.last_gradient_time` to the time at the end of the gradient.
 
-This requires [`bmat_gradient`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientWaveform`](@ref).
+This requires [`variables.bmat_gradient`](@ref) and [`variables.qvec`](@ref) to be implemented for the [`GradientWaveform`](@ref).
 """
 update_walker_gradient!(gradient::NoGradient, walker::PathwayWalker, gradient_start_time::VariableType) = nothing
 
@@ -486,9 +471,9 @@ function update_walker_gradient!(gradient::GradientWaveform, walker::PathwayWalk
 
         # update qvec/bmat during gradient
         tracker = walker.gradient_trackers[key]
-        tracker.bmat = tracker.bmat .+ bmat_gradient(gradient, tracker.qvec)
-        tracker.qvec = tracker.qvec .+ qval3(gradient)
-        tracker.last_gradient_time = gradient_start_time + duration(gradient)
+        tracker.bmat = tracker.bmat .+ variables.bmat_gradient(gradient, tracker.qvec)
+        tracker.qvec = tracker.qvec .+ variables.qvec(gradient)
+        tracker.last_gradient_time = gradient_start_time + variables.duration(gradient)
     end
 end
 
@@ -496,15 +481,11 @@ end
     update_walker_instant_gradient!(gradient, walker)
 """
 function update_walker_instant_gradient!(gradient::InstantGradient{N}, walker::PathwayWalker, gradient_start_time::VariableType) where {N}
-    if N == 1
-        qvec3 = qval(gradient) .* gradient.orientation
-    else
-        qvec3 = qval(gradient)
-    end
+    qvec3 = variables.qvec(gradient)
     for key in (isnothing(gradient.group) ? [nothing] : [nothing, gradient.group])
         update_gradient_tracker_till_time!(walker, key, gradient_start_time)
         tracker = walker.gradient_trackers[key]
-        tracker.qvec = tracker.qvec  .+ qvec3
+        tracker.qvec = tracker.qvec .+ qvec3
     end
 end
 

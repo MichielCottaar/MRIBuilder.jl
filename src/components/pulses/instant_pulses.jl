@@ -2,7 +2,7 @@ module InstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, make_generic, get_free_variable, adjust_internal
+import ....Variables: VariableType, make_generic, get_free_variable, adjust_internal, variables, @defvar
 
 """
     InstantPulse(; flip_angle=nothing, phase=nothing, group=nothing)
@@ -13,8 +13,8 @@ Return an instant RF pulse that rotates all spins by `flip_angle` around an axis
 - `group`: name of the group to which this pulse belongs. This is used for scaling or adding phases/off-resonance frequencies.
 
 ## Variables
-- [`flip_angle`](@ref): angle by which spins are rotated in degrees.
-- [`phase`](@ref): angle of axis around which spins are rotated in degrees.
+- [`variables.flip_angle`](@ref): angle by which spins are rotated in degrees.
+- [`variables.phase`](@ref): angle of axis around which spins are rotated in degrees.
 """
 struct InstantPulse <: RFPulseComponent
     flip_angle :: VariableType
@@ -32,11 +32,13 @@ function InstantPulse(; flip_angle=nothing, phase=nothing, group=nothing)
     return res
 end
 
-flip_angle(instant::InstantPulse) = instant.flip_angle
-phase(instant::InstantPulse) = instant.phase
-duration(::InstantPulse) = 0.
-effective_time(::InstantPulse) = 0.
-inverse_bandwidth(::InstantPulse) = 0.
+@defvar begin
+    flip_angle(instant::InstantPulse) = instant.flip_angle
+    phase(instant::InstantPulse) = instant.phase
+    duration(::InstantPulse) = 0.
+    effective_time(::InstantPulse) = 0.
+    inverse_bandwidth(::InstantPulse) = 0.
+end
 
 
 make_generic(block::InstantPulse) = block

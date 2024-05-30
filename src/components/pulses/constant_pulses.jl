@@ -2,7 +2,7 @@ module ConstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
 import ..GenericPulses: GenericPulse
 
 """
@@ -14,11 +14,11 @@ Represents an radio-frequency pulse with a constant amplitude and frequency (i.e
 - `group`: name of the group to which this pulse belongs. This is used for scaling or adding phases/off-resonance frequencies.
 
 ## Variables
-- [`flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
-- [`duration`](@ref): duration of the RF pulse in ms.
-- [`amplitude`](@ref): amplitude of the RF pulse in kHz.
-- [`phase`](@ref): phase at the start of the RF pulse in degrees.
-- [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
+- [`variables.flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
+- [`variables.duration`](@ref): duration of the RF pulse in ms.
+- [`variables.amplitude`](@ref): amplitude of the RF pulse in kHz.
+- [`variables.phase`](@ref): phase at the start of the RF pulse in degrees.
+- [`variables.frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
 """
 struct ConstantPulse <: RFPulseComponent
     amplitude :: VariableType
@@ -38,26 +38,32 @@ function ConstantPulse(; amplitude=nothing, duration=nothing, phase=nothing, fre
     return res
 end
 
-amplitude(pulse::ConstantPulse) = pulse.amplitude
-duration(pulse::ConstantPulse) = pulse.duration
-phase(pulse::ConstantPulse) = pulse.phase
-frequency(pulse::ConstantPulse) = pulse.frequency
-flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
-inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
-effective_time(pulse::ConstantPulse) = duration(pulse) / 2
+@defvar duration(pulse::ConstantPulse) = pulse.duration
+@defvar effective_time(pulse::ConstantPulse) = variables.duration(pulse) / 2
 
-amplitude(pulse::ConstantPulse, time::Number) = amplitude(pulse)
-phase(pulse::ConstantPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse)) * 360.
-frequency(pulse::ConstantPulse, time::Number) = frequency(pulse)
+@defvar pulse begin
+    amplitude(pulse::ConstantPulse) = pulse.amplitude
+    phase(pulse::ConstantPulse) = pulse.phase
+    frequency(pulse::ConstantPulse) = pulse.frequency
+    amplitude(pulse::ConstantPulse, time::Number) = variables.amplitude(pulse)
+end
+
+@defvar pulse begin
+    flip_angle(pulse::ConstantPulse) = variables.amplitude(pulse) * variables.duration(pulse) * 360
+    inverse_bandwidth(pulse::ConstantPulse) = variables.duration(pulse) * 4
+
+    phase(pulse::ConstantPulse, time::Number) = variables.phase(pulse) + variables.frequency(pulse) * (time - variables.effective_time(pulse)) * 360.
+    frequency(pulse::ConstantPulse, time::Number) = variables.frequency(pulse)
+end
 
 function make_generic(block::ConstantPulse)
-    d = duration(block)
-    final_phase = phase(block) + d * frequency(block) * 360
+    d = variables.duration(block)
+    final_phase = variables.phase(block) + d * variables.frequency(block) * 360
     return GenericPulse(
         [0., d], 
-        [amplitude(block), amplitude(block)],
-        [phase(block), final_phase],
-        effective_time(block)
+        [variables.amplitude(block), variables.amplitude(block)],
+        [variables.phase(block), final_phase],
+        variables.effective_time(block)
     )
 end
 

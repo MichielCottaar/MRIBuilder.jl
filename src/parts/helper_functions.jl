@@ -8,7 +8,7 @@ import ..EPIReadouts: EPIReadout
 import ...BuildSequences: global_model, build_sequence, global_scanner
 import ...Containers: Sequence
 import ...Components: SincPulse, ConstantPulse, InstantPulse, SingleReadout, InstantGradient
-import ...Variables: qvec, flat_time, rise_time, qval, apply_simple_constraint!, variables
+import ...Variables: variables, apply_simple_constraint!
 
 
 function _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
@@ -215,14 +215,14 @@ function dwi_gradients(; type=:trapezoid, optimise=false, scanner=nothing, refoc
         (g1, g2) = [func_dict[type](;
             group=group, orientation=o, Dict(key => get_index(value, i) for (key, value) in pairs(real_variables))...
             ) for (i, o) in enumerate((orientation, other_orientation))]
-        if !isnothing(orientation) || refocus
-            apply_simple_constraint!(qval(g1), qval(g2))
+        if refocus
+            apply_simple_constraint!(variables.qvec(g1), variables.qvec(g2))
         else
-            apply_simple_constraint!(qval(g1), -qval(g2))
+            apply_simple_constraint!(variables.qvec(g1), -variables.qvec(g2))
         end
         for var_func in match
             if var_func isa Symbol
-                var_func = variables[var_func]
+                var_func = getproperty(variables, var_func)
             end
             apply_simple_constraint!(var_func(g1), var_func(g2))
         end
@@ -296,7 +296,7 @@ Returns two DWI gradients that are guaranteed to cancel each other out.
 - `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
 
 ## Variables
-- [`spoiler_scale`](@ref): maximum spoiler scale (before applying any reductions due to `scale`).
+- [`variables.spoiler_scale`](@ref): maximum spoiler scale (before applying any reductions due to `scale`).
 - Any other parameters expected by [`Trapezoid`](@ref).
 """
 function gradient_spoiler(; optimise=false, scanner=nothing, orientation=[0, 0, 1], group=:FOV, spoiler_scale=1., duration=:min, variables...)

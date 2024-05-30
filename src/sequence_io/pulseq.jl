@@ -7,7 +7,7 @@ import ..PulseqIO.Types: PulseqSequence, PulseqBlock, PulseqTrapezoid, PulseqGra
 import ...Containers: Sequence, BuildingBlock, BaseBuildingBlock, events, waveform, iter_blocks
 import ...Components: GenericPulse, ADC, RFPulseComponent
 import ...Scanners: Scanner
-import ...Variables: duration, nsamples, dwell_time, make_generic
+import ...Variables: variables, make_generic
 
 function Sequence(pulseq::PulseqSequence; scanner=nothing, B0=nothing)
     if isnothing(scanner)
@@ -54,7 +54,7 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
 
     grads = [pulseq.gx, pulseq.gy, pulseq.gz]
     min_duration = max(
-        maximum(e[1] + duration(e[2]) for e in events; init=0.),
+        maximum(e[1] + variables.duration(e[2]) for e in events; init=0.),
         maximum(vcat(_control_times.(grads, GradientRasterTime)...); init=0.)
     )
 
@@ -145,8 +145,8 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
                 error("Pulseq does not support a single building block containing multiple ADC events.")
             end
             adc = PulseqADC(
-                nsamples(event),
-                div(dwell_time(event), AdcRasterTime, RoundNearest),
+                variables.nsamples(event),
+                div(variables.dwell_time(event), AdcRasterTime, RoundNearest),
                 Int(div(delay, 1e-3, RoundNearest)),
                 0., 0.
             )
@@ -172,7 +172,7 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
     end
     
     return PulseqBlock(
-        Int(div(1e-3 * duration(block), BlockDurationRaster, RoundNearest)),
+        Int(div(1e-3 * variables.duration(block), BlockDurationRaster, RoundNearest)),
         rf,
         grads...,
         adc,

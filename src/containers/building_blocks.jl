@@ -5,11 +5,10 @@ module BuildingBlocks
 import LinearAlgebra: norm
 import JuMP: @constraint
 import StaticArrays: SVector
-import ..Abstract: ContainerBlock, start_time, readout_times, end_time, iter
+import ..Abstract: ContainerBlock, start_time, end_time, iter
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient, edge_times
-import ...Variables: qval, bmat_gradient, effective_time, get_free_variable, qval3, slew_rate, gradient_strength, amplitude, phase, frequency
-import ...Variables: VariableType, duration, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient, gradient_orientation
+import ...Variables: VariableType, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient, gradient_orientation, variables, @defvar, get_free_variable
 
 """
 Basic BuildingBlock, which can consist of a gradient waveforms with any number of RF pulses/readouts overlaid
@@ -20,7 +19,7 @@ Main interface:
 - [`waveform_sequence`](@ref) returns just the gradient waveform as a sequence of [`GradientWaveform`](@ref) objects.
 - [`waveform`](@ref) returns just the gradient waveform as a sequence of (time, gradient_strength) tuples.
 - [`events`](@ref) returns the RF pulses and readouts.
-- [`qval`](@ref) returns area under curve for (part of) the gradient waveform.
+- [`variables.qvec`](@ref) returns area under curve for (part of) the gradient waveform.
 
 Sub-types need to implement:
 - `Base.keys`: returns sequence of keys to all the components.
@@ -102,17 +101,17 @@ function waveform(bb::BaseBuildingBlock)
     end
     tol = sqrt(eps(Float64))
     for (_, block) in waveform_sequence(bb)
-        new_time = result[end][1] + max(duration(block), 0)
+        new_time = result[end][1] + max(variables.duration(block), 0)
         prev_grad = result[end][2]
         if block isa NoGradient
             @assert all(abs.(prev_grad) .<= 1e-12) "$(typeof(bb)) inserts NoGradient before the gradient is zero. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad))
         elseif block isa ConstantGradient
-            @assert all(isapprox.(gradient_strength(block), prev_grad, atol=tol, rtol=tol)) "$(typeof(bb)) inserts ConstantGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
+            @assert all(isapprox.(variables.gradient_strength(block), prev_grad, atol=tol, rtol=tol)) "$(typeof(bb)) inserts ConstantGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
             push!(result, (new_time, prev_grad))
         elseif block isa ChangingGradient
             @assert all(isapprox.(block.gradient_strength_start, prev_grad, atol=tol, rtol=tol)) "$(typeof(bb)) inserts ChangingGradient that does not match previous gradient strength. This is probably caused by an improper implementation of this BuildingBlock."
-            push!(result, (new_time, prev_grad .+ slew_rate(block) .* duration(block)))
+            push!(result, (new_time, prev_grad .+ variables.slew_rate(block) .* variables.duration(block)))
         else
             error("Unrecognised block type in BuildingBlock: $(typeof(bb)).")
         end
@@ -133,7 +132,7 @@ function start_time(building_block::BaseBuildingBlock, index)
         component = building_block[key]
         if component isa GradientWaveform
             prev_time = time
-            time += duration(component)
+            time += variables.duration(component)
         end
         if equal_key(key, index)
             delay = component isa Tuple ? component[1] : 0.
@@ -143,7 +142,7 @@ function start_time(building_block::BaseBuildingBlock, index)
     error("Building block with index '$index' not found")
 end
 
-duration(bb::BaseBuildingBlock) = sum([duration(wv) for (_, wv) in waveform_sequence(bb)])
+@defvar duration(bb::BaseBuildingBlock) = sum([variables.duration(wv) for (_, wv) in waveform_sequence(bb)])
 
 # Pathway support
 """
@@ -169,14 +168,14 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
         if equal_key(key, first)
             @assert !started
             started = true
-            current_start = effective_time(bb[key])
+            current_start = variables.effective_time(bb[key])
         end
         if equal_key(key, last)
             @assert started
             if isnothing(current_start)
-                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], effective_time(bb[key]))[1]))
+                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], variables.effective_time(bb[key]))[1]))
             else
-                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], current_start, effective_time(bb[key]))[2]))
+                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], current_start, variables.effective_time(bb[key]))[2]))
             end
             return parts
         end
@@ -191,53 +190,67 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
     return parts
 end
 
+@defvar begin
+    function qvec(bb::BaseBuildingBlock, index1, index2)
+        if (!isnothing(index1)) && (index1 == index2)
+            return 0.
+        end
+        res = sum([variables.qvec(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
+
+        t1 = isnothing(index1) ? 0. : start_time(bb, index1)
+        t2 = isnothing(index2) ? variables.duration(bb) : start_time(bb, index2)
+        for (key, event) in events(bb)
+            if event isa InstantGradient && (t1 <= start_time(bb, key) <= t2)
+                res = res .+ variables.qvec(event)
+            end
+        end
+        return res
+    end
+    qvec(bb::BaseBuildingBlock) = variables.qvec(bb, nothing, nothing)
+
+    function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
+        if (!isnothing(index1)) && (index1 == index2)
+            return zeros(3, 3)
+        end
+        result = Matrix{VariableType}(zeros(3, 3))
+        qcurrent = Vector{VariableType}(qstart)
+
+        for (_, part) in waveform_sequence(bb, index1, index2)
+            result = result .+ variables.bmat_gradient(part, qcurrent)
+            qcurrent = qcurrent .+ variables.qvec(part, qcurrent)
+        end
+        return result
+    end
+    bmat_gradient(bb::BaseBuildingBlock, qstart) = variables.bmat_gradient(bb, qstart, nothing, nothing)
+end
 
 """
-    qval(overlapping[, first_event, last_event])
+    qvec(overlapping[, first_event, last_event])
 
 Computes the area under the curve for the gradient waveform in [`BaseBuildingBlock`](@ref).
 
 If `first_event` is set to something else than `nothing`, only the gradient waveform after this RF pulse/Readout will be considered.
 Similarly, if `last_event` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
 """
-function qval(bb::BaseBuildingBlock, index1, index2)
-    if (!isnothing(index1)) && (index1 == index2)
-        return 0.
-    end
-    res = sum([qval(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
+variables.qvec
 
-    t1 = isnothing(index1) ? 0. : start_time(bb, index1)
-    t2 = isnothing(index2) ? duration(bb) : start_time(bb, index2)
-    for (key, event) in events(bb)
-        if event isa InstantGradient && (t1 <= start_time(bb, key) <= t2)
-            res = res .+ qval(event)
-        end
-    end
-    return res
-end
-qval(bb::BaseBuildingBlock) = qval(bb, nothing, nothing)
+"""
+    bmat_gradient(overlapping, qstart[, first_event, last_event])
 
-function bmat_gradient(bb::BaseBuildingBlock, qstart, index1, index2)
-    if (!isnothing(index1)) && (index1 == index2)
-        return zeros(3, 3)
-    end
-    result = Matrix{VariableType}(zeros(3, 3))
-    qcurrent = Vector{VariableType}(qstart)
+Computes the addition to the [`variables.bmat`](@ref) contributed by a specific building block or gradient.
 
-    for (_, part) in waveform_sequence(bb, index1, index2)
-        result = result .+ bmat_gradient(part, qcurrent)
-        qcurrent = qcurrent .+ qval3(part, qcurrent)
-    end
-    return result
-end
-bmat_gradient(bb::BaseBuildingBlock, qstart) = bmat_gradient(bb, qstart, nothing, nothing)
+`qstart` represents the [`variables.qvec`](@ref) at the start of this component.
+
+If `first_event` is set to something else than `nothing`, only the gradient waveform after this RF pulse/Readout will be considered.
+Similarly, if `last_event` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
+"""
+variables.bmat_gradient
 
 function edge_times(bb::BaseBuildingBlock)
     res = Float64[]
     for (key, event) in events(bb)
         append!(res, edge_times(event) .+ start_time(bb, key))
     end
-    @show res
     for (time, _) in waveform(bb)
         push!(res, time)
     end
@@ -254,12 +267,12 @@ function get_pulse(bb::BaseBuildingBlock, time::Number)
 end
 
 for (fn, default_value) in ((:amplitude, 0.), (:phase, NaN), (:frequency, NaN))
-    @eval function $fn(bb::BaseBuildingBlock, time::Number)
+    @eval function variables.$fn.f(bb::BaseBuildingBlock, time::Number)
         pulse = get_pulse(bb, time)
         if isnothing(pulse)
             return $default_value
         end
-        return $fn(pulse[1], pulse[2])
+        return variables.$fn.f(pulse[1], pulse[2])
     end
 end
 
@@ -270,12 +283,12 @@ function get_gradient(bb::BaseBuildingBlock, time::Number)
             return (block, time - start_time(bb, key))
         end
     end
-    error("$bb with duration $(duration(bb)) does not define a gradient at time $time.")
+    error("$bb with duration $(variables.duration(bb)) does not define a gradient at time $time.")
 end
 
-function gradient_strength(bb::BaseBuildingBlock, time::Number)
+@defvar function gradient_strength(bb::BaseBuildingBlock, time::Number)
     (grad, time) = get_gradient(bb, time)
-    return gradient_strength(grad, time)
+    return variables.gradient_strength(grad, time)
 end
 
 """
@@ -353,7 +366,7 @@ function get_readout(bb::BuildingBlock)
     error("BuildingBlock contains more than one readout. Not sure which one to return.")
 end
 
-function effective_time(bb::BuildingBlock)
+@defvar function effective_time(bb::BuildingBlock)
     index = [i for (i, r) in events(bb) if r isa Union{RFPulseComponent, ReadoutComponent}]
     if length(index) == 0 
         error("BuildingBlock does not contain any RF pulse or readout events, so `effective_time` is not defined.")
@@ -361,13 +374,13 @@ function effective_time(bb::BuildingBlock)
         error("BuildingBlock contains multiple RF pulse or readout events, so `effective_time` is not defined.")
     end
     index = index[1]
-    return effective_time(bb, index)
+    return variables.effective_time(bb, index)
 end
 
 """
 An empty BuildingBlock representing dead time.
 
-It only has a single variable, namely its [`duration`](@ref).
+It only has a single variable, namely its [`variables.duration`](@ref).
 """
 struct Wait <: BaseBuildingBlock
     duration :: VariableType
@@ -380,7 +393,7 @@ struct Wait <: BaseBuildingBlock
     end
 end
 
-duration(wb::Wait) = wb.duration
+@defvar duration(wb::Wait) = wb.duration
 Base.keys(::Wait) = (Val(:empty),)
 Base.getindex(wb::Wait, ::Val{:empty}) = NoGradient(wb.duration)
 

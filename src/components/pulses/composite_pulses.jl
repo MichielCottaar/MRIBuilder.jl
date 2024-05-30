@@ -2,7 +2,7 @@ module CompositePulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep, edge_times
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
 import ..GenericPulses: GenericPulse
 
 """
@@ -63,23 +63,26 @@ function wait_times(comp::CompositePulse)
     comp.pulse_time - (d[1:end-1] + d[2:end]) / 2
 end
 
-duration(pulse::CompositePulse) = (
-    0.5 * duration(pulse.pulses[1]) + 
-    0.5 * duration(pulse.pulses[end]) + 
-    pulse.pulse_time * (length(pulse) - 1)
-)
-flip_angle(pulse::CompositePulse) = sum(flip_angle.(pulse.pulses))
-effective_time(pulse::CompositePulse) = duration(pulse) / 2
+@defvar duration(pulse::CompositePulse) = (
+        0.5 * variables.duration(pulse.pulses[1]) + 
+        0.5 * variables.duration(pulse.pulses[end]) + 
+        pulse.pulse_time * (length(pulse) - 1)
+    )
+
+@defvar begin
+    flip_angle(pulse::CompositePulse) = sum(variables.flip_angle.(pulse.pulses))
+    effective_time(pulse::CompositePulse) = variables.duration(pulse) / 2
+end
 
 
 function get_pulse_index(comp::CompositePulse, time::Number)
-    t_first_center = 0.5 * duration(comp.pulses[1])
+    t_first_center = 0.5 * variables.duration(comp.pulses[1])
     index = Int(div(time - t_first_center, comp.pulse_time, RoundNearest)) + 1
     if index < 1 || index > length(comp)
         return (index, 0.)
     else
         relative_to_center = time - t_first_center - (index - 1) * comp.pulse_time
-        relative_to_start = relative_to_center + 0.5 * duration(comp.pulses[index])
+        relative_to_start = relative_to_center + 0.5 * variables.duration(comp.pulses[index])
         return (index, relative_to_start)
     end
 end
@@ -89,11 +92,11 @@ for (fn, default) in [
     (:phase, NaN),
     (:frequency, NaN),
 ]
-    @eval function $fn(pulse::CompositePulse, time::Number)
+    @eval function variables.$fn.f(pulse::CompositePulse, time::Number)
         (index, rtime) = get_pulse_index(pulse, time)
         if (
             index < 1 || index > length(pulse) ||
-            rtime < 0 || rtime > duration(pulse.pulses[index])
+            rtime < 0 || rtime > variables.duration(pulse.pulses[index])
         )
             return $default
         end
@@ -103,9 +106,9 @@ end
 
 function edge_times(comp::CompositePulse)
     res = Float64[]
-    t1 = duration(comp.pulses[1]) * 0.5
+    t1 = variables.duration(comp.pulses[1]) * 0.5
     for (index, pulse) in enumerate(comp.pulses)
-        d = duration(pulse)
+        d = variables.duration(pulse)
         push!(res, t1 - d/2 + comp.pulse_time * (index - 1))
         push!(res, t1 + d/2 + comp.pulse_time * (index - 1))
     end
@@ -115,12 +118,12 @@ end
 
 function make_generic(comp::CompositePulse)
     sub_generics = make_generic.(comp.pulses)
-    t1 = duration(comp.pulses[1]) * 0.5
+    t1 = variables.duration(comp.pulses[1]) * 0.5
     times = Float64[]
     amplitude = Float64[]
     phase = Float64[]
     for (index, generic) in enumerate(sub_generics)
-        start_time = t1 + (index - 1) * comp.pulse_time - duration(comp.pulses[index]) / 2
+        start_time = t1 + (index - 1) * comp.pulse_time - variables.duration(comp.pulses[index]) / 2
         push!(times, start_time)
         push!(amplitude, 0.)
         push!(phase, generic.phase[1])

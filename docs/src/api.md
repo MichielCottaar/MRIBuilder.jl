@@ -3,6 +3,9 @@ CollapsedDocStrings = true
 ```
 
 # MRIBuilder.jl internal API
+```@docs
+MRIBuilder
+```
 ## Type diagram
 ```@eval
 import MRIBuilder.Variables: AbstractBlock
@@ -31,6 +34,7 @@ Modules = [
     MRIBuilder.Components.Pulses.InstantPulses,
     MRIBuilder.Components.Pulses.ConstantPulses,
     MRIBuilder.Components.Pulses.SincPulses,
+    MRIBuilder.Components.Pulses.CompositePulses,
     MRIBuilder.Components.Readouts,
     MRIBuilder.Components.Readouts.ADCs,
     MRIBuilder.Components.Readouts.SingleReadouts,
@@ -63,6 +67,13 @@ Modules = [
 Modules = [
     MRIBuilder.SequenceIO,
     MRIBuilder.SequenceIO.Pulseq,
+    MRIBuilder.SequenceIO.PulseqIO,
+    MRIBuilder.SequenceIO.PulseqIO.Types,
+    MRIBuilder.SequenceIO.PulseqIO.Parsers,
+    MRIBuilder.SequenceIO.PulseqIO.BasicParsers,
+    MRIBuilder.SequenceIO.PulseqIO.Components,
+    MRIBuilder.SequenceIO.PulseqIO.SectionsIO,
+    MRIBuilder.SequenceIO.PulseqIO.ParseSections,
 ]
 ```
 

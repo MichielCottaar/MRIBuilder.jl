@@ -4,11 +4,11 @@ Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, repetition_time, VariableType, duration, variables, VariableNotAvailable, Variables, set_simple_constraints!, TR, make_generic, gradient_strength, amplitude, phase, gradient_strength3, get_gradient, get_pulse, frequency, gradient_orientation, get_gradient
+import ...Variables: get_free_variable, VariableType, variables, set_simple_constraints!, make_generic, get_gradient, get_pulse, get_gradient, @defvar
 import ...BuildSequences: global_model, global_scanner
 import ...Components: EventComponent, NoGradient, edge_times
 import ...Scanners: Scanner, B0
-import ..Abstract: ContainerBlock, start_time, readout_times
+import ..Abstract: ContainerBlock, start_time
 import ..BuildingBlocks: Wait, BuildingBlock, BaseBuildingBlock
 
 """
@@ -35,15 +35,15 @@ function Base.getindex(bs::BaseSequence{N}, index::Integer) where {N}
 end
 
 function (sequence::BaseSequence{N})(time::AbstractFloat) where {N}
-    var_time = mod(time, duration(sequence))
+    var_time = mod(time, variables.duration(sequence))
     for block in sequence
-        var_time -= duration(block)
+        var_time -= variables.duration(block)
         if var_time < 0
-            return (var_time + duration(block), block)
+            return (var_time + variables.duration(block), block)
         end
     end
     if abs(var_time) <= 1e-6
-        return (duration(sequence[N]) + var_time, sequence[N])
+        return (variables.duration(sequence[N]) + var_time, sequence[N])
     end
     error("Total duration of building blocks does not match duration of the sequence.")
 end
@@ -60,11 +60,11 @@ function start_time(bs::BaseSequence{N}, index::Integer) where {N}
         throw(BoundsError(bs, index))
     end
     base_index = ((index - 1) % N) + 1
-    base_time = sum(i -> duration(bs[i]), 1:base_index-1; init=0.)
+    base_time = sum(i -> variables.duration(bs[i]), 1:base_index-1; init=0.)
     if iszero(nTR)
         return base_time
     else
-        return nTR * repetition_time(bs) + base_time
+        return nTR * variables.duration(bs) + base_time
     end
 end
 
@@ -100,11 +100,10 @@ How often sequence should be repeated.
 """
 nrepeat(bs::BaseSequence) = 1
 
-repetition_time(bs::BaseSequence) = duration(bs)
-
-
-duration(bs::BaseSequence{0}) = 0.
-duration(bs::BaseSequence) = sum(duration.(bs); init=0.)
+@defvar begin
+    duration(bs::BaseSequence{0}) = 0.
+    duration(bs::BaseSequence) = sum(variables.duration.(bs); init=0.)
+end
 
 function edge_times(seq::BaseSequence; tol=1e-6)
     res = Float64[]
@@ -120,13 +119,19 @@ function edge_times(seq::BaseSequence; tol=1e-6)
     return sort(unique_res)
 end
 
-for fn in (:gradient_strength, :amplitude, :phase, :frequency, :gradient_strength3, :get_gradient, :get_pulse)
+for fn in (:gradient_strength, :amplitude, :phase, :frequency)
+    @eval function variables.$fn.f(sequence::BaseSequence, time::AbstractFloat)
+        (block_time, block) = sequence(time)
+        return variables.$fn.f(block, block_time)
+    end
+end
+
+for fn in (:get_gradient, :get_pulse)
     @eval function $fn(sequence::BaseSequence, time::AbstractFloat)
         (block_time, block) = sequence(time)
         return $fn(block, block_time)
     end
 end
-
 """
     Sequence(blocks; name=:Sequence, variables...)
     Sequence(blocks...; name=:Sequence, variables...)
@@ -136,11 +141,8 @@ Defines an MRI sequence from a vector of building blocks.
 ## Arguments
 - `blocks`: The actual building blocks that will be played in sequence. All the building blocks must be of type [`ContainerBlock`](@ref), which means that they cannot only contain actual [`BaseBuildingBlock`](@ref) objects, but also other [`BaseSequence`](@ref) objects.
     Objects of a different type are converted into a [`ContainerBlock`](@ref) internally:
-    - numbers/`nothing`/`:min`/`:max` : replaced with a [`Wait`](@ref) block with the appropriate constraint/objective added to its [`duration`](@ref).
+    - numbers/`nothing`/`:min`/`:max` : replaced with a [`Wait`](@ref) block with the appropriate constraint/objective added to its [`variables.duration`](@ref).
     - RF pulse or readout: will be embedded within a [`BuildingBlock`](@ref) of the appropriate length
-
-## Variables
-- [`repetition_time`](@ref)/[`TR`](@ref): how long between repeats in ms. This is always set to the total length of the sequence. If you want to add some down-time between repeats, you can simply add a [`Wait`](@ref) block of the appropriate length at the end of the sequence.
 
 Specific named sequences might define additional variables.
 """
@@ -179,7 +181,7 @@ Converst object into something that can be included in the sequence:
 to_block(cb::ContainerBlock) = cb
 to_block(s::Symbol) = to_block(Val(s))
 to_block(s::Union{VariableType, Nothing, Val{:min}, Val{:max}}) = Wait(s)
-to_block(ec::EventComponent) = BuildingBlock([NoGradient(duration(ec)), (0., ec)])
+to_block(ec::EventComponent) = BuildingBlock([NoGradient(variables.duration(ec)), (0., ec)])
 
 
 function make_generic(seq::BaseSequence)

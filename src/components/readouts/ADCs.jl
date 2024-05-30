@@ -2,7 +2,7 @@ module ADCs
 import JuMP: @constraint, value
 import ...AbstractTypes: ReadoutComponent
 import ....BuildSequences: global_model, fixed
-import ....Variables: oversample, nsamples, dwell_time, duration, effective_time, resolution, VariableType, apply_simple_constraint!, set_simple_constraints!, get_free_variable, make_generic
+import ....Variables: VariableType, apply_simple_constraint!, set_simple_constraints!, get_free_variable, make_generic, variables, @defvar
 
 
 """
@@ -39,28 +39,69 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
     @constraint global_model() res.dwell_time >= 0
     @constraint global_model() res.oversample >= 1
     if center_halfway
-        apply_simple_constraint!(duration(res), 2 * res.time_to_center)
+        apply_simple_constraint!(variables.duration(res), 2 * res.time_to_center)
     else
         @constraint global_model() res.time_to_center >= 0
-        @constraint global_model() res.time_to_center <= duration(res)
+        @constraint global_model() res.time_to_center <= variables.duration(res)
     end
     set_simple_constraints!(res, kwargs)
     return res
 end
 
-readout_times(adc::ADC) = ((1:Int(nsamples(adc))) .- 0.5) .* dwell_time(adc)
-oversample(adc::ADC) = adc.oversample
-nsamples(adc::ADC) = resolution(adc) * oversample(adc)
-dwell_time(adc::ADC) = adc.dwell_time
-duration(adc::ADC) = nsamples(adc) * dwell_time(adc)
-time_to_center(adc::ADC) = adc.time_to_center
-effective_time(adc::ADC) = time_to_center(adc)
-resolution(adc::ADC) = adc.resolution
+@defvar readout begin
+    oversample(adc::ADC) = adc.oversample
+    dwell_time(adc::ADC) = adc.dwell_time
+    time_to_center(adc::ADC) = adc.time_to_center
+    resolution(adc::ADC) = adc.resolution
+end
+
+"""
+    oversample(adc)
+
+The oversampling rate of the ADC readout.
+"""
+variables.oversample
+
+"""
+    dwell_time(adc)
+
+The dwell time of the ADC readout in ms.
+"""
+variables.dwell_time
+
+"""
+    time_to_center(adc)
+
+The time of the ADC readout to reach the center of k-space.
+"""
+variables.time_to_center
+
+"""
+    resolution(readout)
+
+Resolution of the readout.
+"""
+variables.resolution
+
+@defvar readout nsamples(adc::ADC) = variables.resolution(adc) * variables.oversample(adc)
+
+"""
+    nsamples(adc)
+
+Number of samples in an ADC.
+"""
+variables.nsamples
+
+@defvar readout_times(adc::ADC) = ((1:Int(variables.nsamples(adc))) .- 0.5) .* variables.dwell_time(adc)
+@defvar begin
+    duration(adc::ADC) = variables.nsamples(adc) * variables.dwell_time(adc)
+    effective_time(adc::ADC) = variables.time_to_center(adc)
+end
 
 function fixed(adc::ADC)
     # round nsamples during fixing
-    r = Int(round(value(resolution(adc)), RoundNearest))
-    n = Int(round(value(nsamples(adc)), RoundNearest))
+    r = Int(round(value(variables.resolution(adc)), RoundNearest))
+    n = Int(round(value(variables.nsamples(adc)), RoundNearest))
     if iszero(n)
         return ADC(0, NaN, NaN, NaN)
     end

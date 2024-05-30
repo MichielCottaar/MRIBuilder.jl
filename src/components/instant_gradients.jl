@@ -1,7 +1,7 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
 import JuMP: @constraint
-import ...Variables: VariableType, duration, qval, bmat_gradient, get_free_variable, set_simple_constraints!, effective_time, make_generic, adjust_internal, adjustable, gradient_orientation, spoiler_scale
+import ...Variables: @defvar, VariableType, variables, get_free_variable, set_simple_constraints!, make_generic, adjust_internal, adjustable, gradient_orientation, apply_simple_constraint!
 import ...BuildSequences: global_model
 import ..AbstractTypes: EventComponent, GradientWaveform
 
@@ -15,21 +15,23 @@ If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwis
 - `group`: name of the group to which this gradient belongs (used for scaling and rotating).
 
 ## Variables
-- [`qval`](@ref): Spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um (scalar if `orientation` is set and vector otherwise).
-- [`spoiler_scale`](@ref): Length-scale on which spins will be dephased by exactly 2π in mm.
+- [`variables.qvec`](@ref): Spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
+- [`variables.spoiler_scale`](@ref): Length-scale on which spins will be dephased by exactly 2π in mm.
 """
 abstract type InstantGradient{N} <: EventComponent end
 
-function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=nothing, variables...)
+function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=nothing, qvec=[nothing, nothing, nothing], vars...)
     if isnothing(orientation)
-        res = InstantGradient3D(get_free_variable.(qval), group)
+        res = InstantGradient3D(get_free_variable.(qvec), group)
+        apply_simple_constraint!(variables.qval(res), qval)
     else
         res = InstantGradient1D(get_free_variable(qval), orientation, group)
         if !(res.qval isa Number)
             @constraint global_model() res.qval >= 0
         end
+        apply_simple_constraint!(variables.qvec(res), qvec)
     end
-    set_simple_constraints!(res, variables)
+    set_simple_constraints!(res, vars)
     return res
 end
 
@@ -42,7 +44,7 @@ struct InstantGradient1D <: InstantGradient{1}
     group :: Union{Nothing, Symbol}
 end
 
-qval(ig::InstantGradient1D) = ig.qval
+@defvar gradient qvec(ig::InstantGradient1D) = ig.qval .* ig.orientation
 
 """
 An [`InstantGradient`](@ref) with a variable orientation.
@@ -52,21 +54,12 @@ struct InstantGradient3D <: InstantGradient{3}
     group :: Union{Nothing, Symbol}
 end
 
-function InstantGradient3D(; qval=[nothing, nothing, nothing], group=nothing, variables...)
-    if isnothing(qval)
-        qval = [nothing, nothing, nothing]
-    end
-    res = InstantGradient3D(get_free_variable.(qval), group)
-    set_simple_constraints!(res, variables)
-    return res
-end
-
-qval(ig::InstantGradient3D) = ig.qvec
+@defvar gradient qvec(ig::InstantGradient3D) = ig.qvec
 
 
-duration(::InstantGradient) = 0.
-effective_time(::InstantGradient) = 0.
-bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
+@defvar duration(::InstantGradient) = 0.
+@defvar effective_time(::InstantGradient) = 0.
+@defvar gradient bmat_gradient(::InstantGradient, qstart=nothing) = zero(SMatrix{3, 3, Float64, 3})
 
 make_generic(ig::InstantGradient) = ig
 

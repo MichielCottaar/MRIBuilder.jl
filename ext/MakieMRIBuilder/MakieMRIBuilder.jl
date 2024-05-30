@@ -3,7 +3,7 @@ using Makie
 import MakieCore
 import MakieCore: @recipe, theme, generic_plot_attributes!, Attributes, automatic
 import MRIBuilder.Plot: SequenceDiagram, range_full, normalise, plot_sequence
-import MRIBuilder: BaseSequence, BaseBuildingBlock, duration
+import MRIBuilder: BaseSequence, BaseBuildingBlock, variables
 
 @recipe(Plot_Sequence, sequence) do scene
     attr = Attributes(
@@ -53,7 +53,7 @@ function Makie.plot!(scene:: Plot_Sequence)
                 current_y += (upper - lower) + 0.1
             end
         end
-        Makie.lines!(scene, [-duration(sequence) / 10., 0], [current_y/2, current_y/2], color=(:red, 0.))
+        Makie.lines!(scene, [-variables.duration(sequence) / 10., 0], [current_y/2, current_y/2], color=(:red, 0.))
     end
     
 end

@@ -2,7 +2,7 @@ module SincPulses
 import JuMP: @constraint
 import QuadGK: quadgk
 import ....BuildSequences: global_model
-import ....Variables: duration, amplitude, effective_time, flip_angle, phase, inverse_bandwidth, VariableType, set_simple_constraints!, frequency, make_generic, get_free_variable, adjust_internal, bandwidth
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
 import ...AbstractTypes: RFPulseComponent, split_timestep
 import ..GenericPulses: GenericPulse
 
@@ -17,12 +17,12 @@ Represents a radio-frequency pulse with a sinc-like amplitude and constant frequ
 - `group`: name of the group to which this pulse belongs. This is used for scaling or adding phases/off-resonance frequencies.
 
 ## Variables
-- [`flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
-- [`duration`](@ref): duration of the RF pulse in ms.
-- [`amplitude`](@ref): amplitude of the RF pulse in kHz.
-- [`phase`](@ref): phase at the start of the RF pulse in degrees.
-- [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
-- [`bandwidth`](@ref): width of the rectangular function in frequency space (in kHz). If the `duration` is short (compared with 1/`bandwidth`), this bandwidth will only be approximate.
+- [`variables.flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
+- [`variables.duration`](@ref): duration of the RF pulse in ms.
+- [`variables.amplitude`](@ref): amplitude of the RF pulse in kHz.
+- [`variables.phase`](@ref): phase at the start of the RF pulse in degrees.
+- [`variables.frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
+- [`variables.bandwidth`](@ref): width of the rectangular function in frequency space (in kHz). If the `duration` is short (compared with 1/`bandwidth`), this bandwidth will only be approximate.
 """
 struct SincPulse <: RFPulseComponent
     apodise :: Bool
@@ -79,31 +79,66 @@ function integral_nzero(Nzeros, apodise)
     return quadgk(f, 0, Nzeros)[1]
 end
 
-amplitude(pulse::SincPulse) = pulse.amplitude
-N_left(pulse::SincPulse) = pulse.Nzeros[1]
-N_right(pulse::SincPulse) = pulse.Nzeros[2]
-duration(pulse::SincPulse) = (N_left(pulse) + N_right(pulse)) * lobe_duration(pulse)
-phase(pulse::SincPulse) = pulse.phase
-frequency(pulse::SincPulse) = pulse.frequency
-flip_angle(pulse::SincPulse) = (pulse.norm_flip_angle[1] + pulse.norm_flip_angle[2]) * amplitude(pulse) * lobe_duration(pulse) * 360
-lobe_duration(pulse::SincPulse) = pulse.lobe_duration
-inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
-effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
+@defvar pulse begin
+    amplitude(pulse::SincPulse) = pulse.amplitude
+    N_left(pulse::SincPulse) = pulse.Nzeros[1]
+    N_right(pulse::SincPulse) = pulse.Nzeros[2]
+end
 
-amplitude(pulse::SincPulse, time::Number) = amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
-phase(pulse::SincPulse, time::Number) = phase(pulse) + frequency(pulse) * (time - effective_time(pulse)) * 360.
-frequency(pulse::SincPulse, time::Number) = frequency(pulse)
+"""
+    N_left(sinc_pulse)
+
+Number of zero-crossings of the [`SincPulse`](@ref) before the maximum.
+
+Also, see [`variables.N_right`](@ref)
+"""
+variables.N_left
+
+"""
+    N_left(sinc_pulse)
+
+Number of zero-crossings of the [`SincPulse`](@ref) after the maximum.
+
+Also, see [`variables.N_left`](@ref)
+"""
+variables.N_right
+
+@defvar pulse begin
+    phase(pulse::SincPulse) = pulse.phase
+    frequency(pulse::SincPulse) = pulse.frequency
+    lobe_duration(pulse::SincPulse) = pulse.lobe_duration
+end
+
+"""
+    lobe_duration(sinc_pulse)
+
+Time between two zero-crossings of a [`SincPulse`](@ref).
+"""
+variables.lobe_duration
+
+@defvar begin
+    duration(pulse::SincPulse) = (variables.N_left(pulse) + variables.N_right(pulse)) * variables.lobe_duration(pulse)
+    flip_angle(pulse::SincPulse) = (pulse.norm_flip_angle[1] + pulse.norm_flip_angle[2]) * variables.amplitude(pulse) * variables.lobe_duration(pulse) * 360
+    inverse_bandwidth(pulse::SincPulse) = variables.lobe_duration(pulse)
+    effective_time(pulse::SincPulse) = variables.N_left(pulse) * variables.lobe_duration(pulse)
+end
+
+@defvar begin
+    amplitude(pulse::SincPulse, time::Number) = variables.amplitude(pulse) * normalised_function(abs((time - variables.effective_time(pulse))) / variables.lobe_duration(pulse), variables.N_left(pulse), variables.N_right(pulse); apodise=pulse.apodise)
+    phase(pulse::SincPulse, time::Number) = variables.phase(pulse) + variables.frequency(pulse) * (time - variables.effective_time(pulse)) * 360.
+    frequency(pulse::SincPulse, time::Number) = variables.frequency(pulse)
+end
 
 function make_generic(block::SincPulse)
-    normed_times = -N_left(block):0.1:N_right(block) + 1e-5
-    times = max.(0., (normed_times .+ N_left(block))) .* lobe_duration(block)
-    amplitudes = amplitude(block) .* (normalised_function.(normed_times, N_left(block), N_right(block); apodise=block.apodise))
-    phases = [frequency(block) .* lobe_duration(block)] .* normed_times .* 360
-    return GenericPulse(times, amplitudes, phases, effective_time(block))
+    normed_times = -variables.N_left(block):0.1:variables.N_right(block) + 1e-5
+    times = max.(0., (normed_times .+ variables.N_left(block))) .* variables.lobe_duration(block)
+    amplitudes = variables.amplitude(block) .* (normalised_function.(normed_times, variables.N_left(block), variables.N_right(block); apodise=block.apodise))
+    phases = [variables.frequency(block) .* variables.lobe_duration(block)] .* normed_times .* 360
+    return GenericPulse(times, amplitudes, phases, variables.effective_time(block))
 end
 
 function split_timestep(block::SincPulse, precision)
-    max_second_derivative = π^2/3 * (amplitude(block) / lobe_duration(block))^2
+    max_second_derivative = π^2/3 * (variables.amplitude(block) / variables.lobe_duration(block))^2
     return sqrt(2 * precision / max_second_derivative)
 end
 
