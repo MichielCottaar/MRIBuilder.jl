@@ -17,12 +17,12 @@ Represents a radio-frequency pulse with a sinc-like amplitude and constant frequ
 - `group`: name of the group to which this pulse belongs. This is used for scaling or adding phases/off-resonance frequencies.
 
 ## Variables
-- [`flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
-- [`duration`](@ref): duration of the RF pulse in ms.
-- [`amplitude`](@ref): amplitude of the RF pulse in kHz.
-- [`phase`](@ref): phase at the start of the RF pulse in degrees.
-- [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
-- [`bandwidth`](@ref): width of the rectangular function in frequency space (in kHz). If the `duration` is short (compared with 1/`bandwidth`), this bandwidth will only be approximate.
+- [`variables.flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
+- [`variables.duration`](@ref): duration of the RF pulse in ms.
+- [`variables.amplitude`](@ref): amplitude of the RF pulse in kHz.
+- [`variables.phase`](@ref): phase at the start of the RF pulse in degrees.
+- [`variables.frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
+- [`variables.bandwidth`](@ref): width of the rectangular function in frequency space (in kHz). If the `duration` is short (compared with 1/`bandwidth`), this bandwidth will only be approximate.
 """
 struct SincPulse <: RFPulseComponent
     apodise :: Bool

@@ -141,7 +141,7 @@ Defines an MRI sequence from a vector of building blocks.
 ## Arguments
 - `blocks`: The actual building blocks that will be played in sequence. All the building blocks must be of type [`ContainerBlock`](@ref), which means that they cannot only contain actual [`BaseBuildingBlock`](@ref) objects, but also other [`BaseSequence`](@ref) objects.
     Objects of a different type are converted into a [`ContainerBlock`](@ref) internally:
-    - numbers/`nothing`/`:min`/`:max` : replaced with a [`Wait`](@ref) block with the appropriate constraint/objective added to its [`duration`](@ref).
+    - numbers/`nothing`/`:min`/`:max` : replaced with a [`Wait`](@ref) block with the appropriate constraint/objective added to its [`variables.duration`](@ref).
     - RF pulse or readout: will be embedded within a [`BuildingBlock`](@ref) of the appropriate length
 
 Specific named sequences might define additional variables.

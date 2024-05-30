@@ -2,10 +2,9 @@
 Defines the functions that can be called on parts of an MRI sequence to query or constrain any variables.
 
 In addition this defines:
-- [`variables`](@ref): dictionary containing all variables.
+- [`variables`](@ref): module containing all variables.
 - [`VariableType`](@ref): parent type for any variables (whether number or JuMP variable).
 - [`get_free_variable`](@ref): helper function to create new JuMP variables.
-- [`VariableNotAvailable`](@ref): error raised if variable is not defined for specific [`AbstractBlock`](@ref).
 - [`set_simple_constraints!`](@ref): call [`apply_simple_constraint!`](@ref) for each keyword argument.
 - [`apply_simple_constraint!`](@ref): set a simple equality constraint.
 - [`get_pulse`](@ref)/[`get_gradient`](@ref)/[`get_readout`](@ref): Used to get the pulse/gradient/readout part of a building block
@@ -252,7 +251,7 @@ def_alternate_variable!(:qval_square, :qvec, qv -> sum(q -> q * q, qv), nothing,
 """
     qval(gradient)
 
-The norm of the [`qvec`](@ref).
+The norm of the [`variables.qvec`](@ref).
 """
 variables.qval
 
@@ -261,7 +260,7 @@ variables.qval
 
 Spatial scale in mm over which the spoiler gradient will dephase by 2π.
 
-Automatically computed based on [`qvec`](@ref).
+Automatically computed based on [`variables.qvec`](@ref).
 """
 variables.spoiler_scale
 
@@ -276,14 +275,14 @@ end
 """
     gradient_strength_norm(gradient)
 
-The norm of the [`gradient_strength`](@ref).
+The norm of the [`variables.gradient_strength`](@ref).
 """
 variables.gradient_strength_norm
 
 """
     slew_rate_norm(gradient)
 
-The norm of the [`slew_rate`](@ref).
+The norm of the [`variables.slew_rate`](@ref).
 """
 variables.slew_rate_norm
 
@@ -555,7 +554,7 @@ function make_generic end
 """
     scanner_constraints!(block)
 
-Constraints [`gradient_strength`](@ref) and [`slew_rate`](@ref) to be less than the [`global_scanner`](@ref) maximum.
+Constraints [`variables.gradient_strength`](@ref) and [`variables.slew_rate`](@ref) to be less than the [`global_scanner`](@ref) maximum.
 """
 function scanner_constraints!(bb::AbstractBlock)
     for (var, max_value) in [

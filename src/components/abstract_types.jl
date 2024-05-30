@@ -6,7 +6,7 @@ Super-type for all individual components that form an MRI sequence (i.e., RF pul
 
 RF pulses, instant gradients, and readouts are grouped together into [`EventComponent`](@ref).
 
-These all should have a [`duration`](@ref) in addition to any other relevant [`variables`](@ref).
+These all should have a [`variables.duration`](@ref) in addition to any other relevant [`variables`](@ref).
 """
 abstract type BaseComponent <: AbstractBlock end
 
@@ -39,7 +39,7 @@ variables.gradient_strength
 """
 Super-type for all RF pulses, instant gradients and readouts that might play out during a gradient waveform.
 
-These all have an [`effective_time`](@ref), which should quantify at what single time one can approximate the RF pulse or readout to have taken place.
+These all have an [`variables.effective_time`](@ref), which should quantify at what single time one can approximate the RF pulse or readout to have taken place.
 """
 abstract type EventComponent <: BaseComponent end
 

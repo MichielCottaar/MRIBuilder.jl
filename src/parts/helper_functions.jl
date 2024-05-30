@@ -296,7 +296,7 @@ Returns two DWI gradients that are guaranteed to cancel each other out.
 - `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
 
 ## Variables
-- [`spoiler_scale`](@ref): maximum spoiler scale (before applying any reductions due to `scale`).
+- [`variables.spoiler_scale`](@ref): maximum spoiler scale (before applying any reductions due to `scale`).
 - Any other parameters expected by [`Trapezoid`](@ref).
 """
 function gradient_spoiler(; optimise=false, scanner=nothing, orientation=[0, 0, 1], group=:FOV, spoiler_scale=1., duration=:min, variables...)

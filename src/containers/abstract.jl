@@ -15,7 +15,7 @@ abstract type ContainerBlock <: AbstractBlock end
 
 Returns the start time of component with given `indices` with respect to the start of the [`ContainerBlock`](@ref).
 
-Also see [`variables.duration`](@ref), [`end_time`](@ref), and [`effective_time`](@ref)
+Also see [`variables.duration`](@ref), [`end_time`](@ref), and [`variables.effective_time`](@ref)
 """
 function start_time(container::ContainerBlock, index1, index2, indices...)
     start_time(container, index1) + start_time(container[index1], index2, indices...)
@@ -27,7 +27,7 @@ end
 
 Returns the start time of component with given `indices` with respect to the start of the [`ContainerBlock`](@ref).
 
-Also see [`variables.duration`](@ref), [`start_time`](@ref), and [`effective_time`](@ref)
+Also see [`variables.duration`](@ref), [`start_time`](@ref), and [`variables.effective_time`](@ref)
 """
 end_time(container::ContainerBlock, index, indices...) = start_time(container, index) + end_time(container[index], indices...)
 end_time(block::AbstractBlock) = variables.duration(block)
@@ -43,7 +43,7 @@ end
 
 Returns the start time of component with given `indices` with respect to the start of the [`ContainerBlock`](@ref).
 
-This will crash if the component does not have an [`effective_time`](@ref) (e.g., if it is (part of) a gradient waveform).
+This will crash if the component does not have an [`variables.effective_time`](@ref) (e.g., if it is (part of) a gradient waveform).
 
 Also see [`variables.duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
 """

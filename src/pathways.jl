@@ -2,7 +2,7 @@ module Pathways
 import LinearAlgebra: norm, tr
 import StaticArrays: SVector, SMatrix
 import ..Components: NoGradient, RFPulseComponent, ReadoutComponent, InstantGradient, GradientWaveform
-import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks
+import ..Containers: BaseSequence, Sequence, BaseBuildingBlock, waveform, events, waveform_sequence, start_time, AlternativeBlocks, ContainerBlock
 import ..Variables: VariableType, get_pathway, variables, @defvar, AbstractBlock
 
 
@@ -14,7 +14,7 @@ Describes how a specific spin/isochromat might experience the sequence.
 Only a single pathway through the RF pulses is considered,
 so that at every point in time the spins are in one of the following four states:
 - +longitudinal: initial relaxed state
-- +transverse: excited state. During this time gradients will affect the [`area_under_curve`](@ref) (or [`qval`](@ref)) and [`bval`](@ref).
+- +transverse: excited state. During this time gradients will affect the [`variables.area_under_curve`](@ref) (or [`variables.qval`](@ref)) and [`variables.bval`](@ref).
 - -longitudinal: inverse state
 - -transverse: inverse excited state. During this time all gradients will have the inverse effect compared with +transverse.
 
@@ -28,22 +28,21 @@ The RF pulses cause mappings between these different states as described below.
     - `:excite`/90: Takes spin state one step along the following sequence +longitudinal -> +transverse -> -longitudinal -> -transverse -> +longitudinal
     - `:neg_excite`/270/-90: Inverse step compared with `:excite`.
 - `readout_index`: After encountering the number of pulses as defined in `pulse_effects`, continue the `Pathway` until the readout given by `index` is reached. If set to 0 the `Pathway` is terminated immediately after the last RF pulse.
-- `group`: which gradient grouping to consider for the `qvec` and `bmat`. If not set, all gradients will be considered (using their current alignment).
+- `group`: which gradient grouping to consider for the `net_dephasing` and `bmat`. If not set, all gradients will be considered (using their current alignment).
 
 ## Attributes
 Over the pathway the following values are computed. Each can be accessed by calling the appropriate function:
 
 ### Timings
-- [`duration_state`](@ref): The total amount of time spent in a specific state in this pathway (+longitudinal, +transverse, -longitudinal, or -transverse)
-- [`duration_transverse`](@ref): The total amount of time the spins spent in the transverse plane in ms. This can be used to quantify the expected effect of T2-decay.
-- [`duration_dephase`](@ref): The total amount of time the spins spent in the +transverse relative to -transverse state in ms. The absolute value of this can be used to quantify the expected effect of T2'-decay.
+- [`variables.duration_state`](@ref): The total amount of time spent in a specific state in this pathway (+longitudinal, +transverse, -longitudinal, or -transverse)
+- [`variables.duration_transverse`](@ref): The total amount of time the spins spent in the transverse plane in ms. This can be used to quantify the expected effect of T2-decay.
+- [`variables.duration_dephase`](@ref): The total amount of time the spins spent in the +transverse relative to -transverse state in ms. The absolute value of this can be used to quantify the expected effect of T2'-decay.
 
 ### Effect of gradients
 The area under curve, q-values, and b-values are computed separately for each group of gradients (depending on the `group` keyword set during construction).
-- [`qvec`](@ref): Net displacement vector in k-space/q-space.
-- [`qval`](@ref)/[`area_under_curve`](@ref): size of the displacement in k-space/q-space. For a spoiled pathway, this should be large compared with 1/voxel size; for unspoiled pathways it should be (close to) zero.
-- [`bmat`](@ref): Net diffusion weighting due to gradients along the `Pathway` in matrix form.
-- [`bval`](@ref): Net diffusion weighting due to gradients along the `Pathway` as a single number.
+- [`variables.net_dephasing`](@ref): Net displacement vector in k-space/q-space.
+- [`variables.bmat`](@ref): Net diffusion weighting due to gradients along the `Pathway` in matrix form.
+- [`variables.bval`](@ref): Net diffusion weighting due to gradients along the `Pathway` as a single number.
 """
 struct Pathway <: AbstractBlock
     # user provided
@@ -97,7 +96,7 @@ end
 Returns the total amount of time that spins following the given [`Pathway`](@ref) spent in the transverse plane.
 This determines the amount of T2-weighting as ``e^{t/T_2}``, where ``t`` is the `duration_transverse`.
 
-Also see [`duration_dephase`](@ref) for T2'-weighting.
+Also see [`variables.duration_dephase`](@ref) for T2'-weighting.
 """
 variables.duration_transverse
 
@@ -110,7 +109,7 @@ end
 Returns the net time that spins following the given [`Pathway`](@ref) spent in the +transverse versus the -transverse state.
 This determines the amount of T2'-weighting as ``e^{t/T_2'}``, where ``t`` is the `duration_dephase`.
 
-Also see [`duration_transverse`](@ref) for T2-weighting.
+Also see [`variables.duration_transverse`](@ref) for T2-weighting.
 """
 variables.duration_dephase
 
@@ -262,7 +261,7 @@ For individual pulses and gradients, the following behaviour is implemented:
 - If a pulse is encountered, call [`update_walker_pulse!`](@ref)`(walker, pulse_effects, pulse_effective_time)`
 - If a gradient is encountered, call [`update_walker_gradient!`](@ref)(gradient, walker, gradient_start_time)
 
-For overlapping gradients/pulses, one should first encounter the part of the gradient before the [`effective_time`](@ref) of the pulse,
+For overlapping gradients/pulses, one should first encounter the part of the gradient before the [`variables.effective_time`](@ref) of the pulse,
 then apply the pulse, and then the rest of the gradient.
 This effective time can be passed on to [`update_walker_gradient!`](@ref) to allow part of the gradient waveform to be applied.
 
@@ -457,7 +456,7 @@ The following steps will be taken:
 - update the appropriate `walker.qvec` and `walker.bmat` based on the gradient waveform. This will require appropriate `qvec`/`bmat` functions to be defined for the gradient building block.
 - update `walker.last_gradient_time` to the time at the end of the gradient.
 
-This requires [`bmat_gradient`](@ref) and [`qvec`](@ref) to be implemented for the [`GradientWaveform`](@ref).
+This requires [`variables.bmat_gradient`](@ref) and [`variables.qvec`](@ref) to be implemented for the [`GradientWaveform`](@ref).
 """
 update_walker_gradient!(gradient::NoGradient, walker::PathwayWalker, gradient_start_time::VariableType) = nothing
 

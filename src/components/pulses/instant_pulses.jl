@@ -13,8 +13,8 @@ Return an instant RF pulse that rotates all spins by `flip_angle` around an axis
 - `group`: name of the group to which this pulse belongs. This is used for scaling or adding phases/off-resonance frequencies.
 
 ## Variables
-- [`flip_angle`](@ref): angle by which spins are rotated in degrees.
-- [`phase`](@ref): angle of axis around which spins are rotated in degrees.
+- [`variables.flip_angle`](@ref): angle by which spins are rotated in degrees.
+- [`variables.phase`](@ref): angle of axis around which spins are rotated in degrees.
 """
 struct InstantPulse <: RFPulseComponent
     flip_angle :: VariableType

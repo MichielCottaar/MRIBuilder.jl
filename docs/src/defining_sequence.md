@@ -56,11 +56,10 @@ The next step is to define [summary variables](@ref variables) that the user can
     echo_time(ge::DiffusionSpinEcho) = 2 * (variables.effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
 end
 ```
-For this sequence, we can see that we define the [`diffusion_time`](@ref) as the time between the start of the first and second gradient pulse, and the [`echo_time`](@ref) as twice the time between the refocus and excitation pulses.
+For this sequence, we can see that we define the [`variables.diffusion_time`](@ref) as the time between the start of the first and second gradient pulse, and the [`variables.echo_time`](@ref) as twice the time between the refocus and excitation pulses.
 These variables need to be defined within a [`@defvar`](@ref) block.
-They will be available as function calls within the [`variables`](@ref) object.
 
-In addition to these sequence-specific summary variables, there are also a lot of variables already pre-defined on individual components, such as the [`slice_thickness](@ref) of the RF pulse or the [`gradient_strength`](@ref) of the gradient pulses. To access these summary variables on a sequence-level, we need to tell MRIBuilder for which RF pulses/gradients we are interested in computing these variables:
+In addition to these sequence-specific summary variables, there are also a lot of variables already pre-defined on individual components, such as the [`variables.slice_thickness](@ref) of the RF pulse or the [`variables.gradient_strength`](@ref) of the gradient pulses. To access these summary variables on a sequence-level, we need to tell MRIBuilder for which RF pulses/gradients we are interested in computing these variables:
 ```julia
 get_pulse(seq::DiffusionSpinEcho) = (excitation=seq[:excitation], refocus=seq[:refocus])
 get_gradient(seq::DiffusionSpinEcho) = (gradient=seq[:gradient], gradient2=seq[:gradient2])
@@ -74,7 +73,7 @@ using MRIBuilder
 sequence = DiffusionSpinEcho(bval=1., TE=:min, slice_thickness=2.)
 variables.flip_angle(sequence)
 ```
-Here we can see that we get the [`flip_angle`](@ref) for each of the two RF pulses defined using [`get_pulse`](@ref) above.
+Here we can see that we get the [`variables.flip_angle`](@ref) for each of the two RF pulses defined using [`get_pulse`](@ref) above.
 
 The final component to defining summary variables is to define one or more default coherence pathways using [`get_pathway`]:
 ```julia
@@ -84,8 +83,8 @@ Here the coherence [`Pathway`](@ref) sets out what a specific set of spins might
 In this case the sequence experiences two RF pulses and is excited by the first pulse and flipped by the second (`[90, 180]`).
 It is then observed during the first readout (`1`). 
 For such a [`Pathway`](@ref) we can compute:
-- the time that the spin spends in each longitudinal and transverse direction, which is particularly useful in the transverse direction to compute the amount of T2-weighting ([`duration_transverse`](@ref)) and the amount of time spent dephasing to compute the amount of T2*-weighting ([`duration_dephase`](@ref)).
-- the diffusion weighting experienced ([`bval`](@ref), [`bmat`](@ref), and [`qvec`](@ref))
+- the time that the spin spends in each longitudinal and transverse direction, which is particularly useful in the transverse direction to compute the amount of T2-weighting ([`variables.duration_transverse`](@ref)) and the amount of time spent dephasing to compute the amount of T2*-weighting ([`variables.duration_dephase`](@ref)).
+- the diffusion weighting experienced ([`variables.bval`](@ref), [`variables.bmat`](@ref), and [`variables.net_dephasing`](@ref))
 By defining a default pathway for the sequence, the user can now put constraints on any or all of these variables.
 
 

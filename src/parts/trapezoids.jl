@@ -37,13 +37,13 @@ Defines a trapezoidal pulsed gradient
 Variables can be set during construction or afterwards as an attribute.
 If not set, they will be determined during the sequence optimisation.
 ### Timing variables
-- [`rise_time`](@ref): Time of the gradient to reach from 0 to maximum in ms. If explicitly set to 0, the scanner slew rate will be ignored.
-- [`flat_time`](@ref): Time that the gradient stays at maximum strength in ms.
-- [`δ`](@ref): effective pulse duration (`rise_time` + `flat_time`) in ms.
-- [`duration`](@ref): total pulse duration (2 * `rise_time` + `flat_time`) in ms.
+- [`variables.rise_time`](@ref): Time of the gradient to reach from 0 to maximum in ms. If explicitly set to 0, the scanner slew rate will be ignored.
+- [`variables.flat_time`](@ref): Time that the gradient stays at maximum strength in ms.
+- [`variables.δ`](@ref): effective pulse duration (`rise_time` + `flat_time`) in ms.
+- [`variables.duration`](@ref): total pulse duration (2 * `rise_time` + `flat_time`) in ms.
 ### Gradient variables
-- [`gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
-- [`qval`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
+- [`variables.gradient_strength`](@ref): Maximum gradient strength achieved during the pulse in kHz/um
+- [`variables.qvec`](@ref): Spatial scale on which spins will be dephased due to this pulsed gradient in rad/um (given by `δ` * `gradient_strength`).
 
 The `bvalue` can be constrained for multiple gradient pulses by creating a `Pathway`.
 """
@@ -232,8 +232,8 @@ Parameters and variables are identical as for [`Trapezoid`](@ref) with the addit
 - `ramp_overlap`: how much the gradient ramp should overlap with the ADC. 0 for no overlap, 1 for full overlap (default: 1). Can be set to `nothing` to become a free variable.
 
 ## Variables
-- [`fov`](@ref): FOV of the output image along this single k-space line in mm.
-- [`voxel_size`](@ref): size of each voxel along this single k-space line in mm.
+- [`variables.fov`](@ref): FOV of the output image along this single k-space line in mm.
+- [`variables.voxel_size`](@ref): size of each voxel along this single k-space line in mm.
 """
 struct LineReadout{N} <: BaseTrapezoid{N}
     trapezoid :: Trapezoid{N}

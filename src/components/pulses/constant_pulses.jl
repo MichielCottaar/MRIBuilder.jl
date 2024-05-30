@@ -14,11 +14,11 @@ Represents an radio-frequency pulse with a constant amplitude and frequency (i.e
 - `group`: name of the group to which this pulse belongs. This is used for scaling or adding phases/off-resonance frequencies.
 
 ## Variables
-- [`flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
-- [`duration`](@ref): duration of the RF pulse in ms.
-- [`amplitude`](@ref): amplitude of the RF pulse in kHz.
-- [`phase`](@ref): phase at the start of the RF pulse in degrees.
-- [`frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
+- [`variables.flip_angle`](@ref): rotation expected for on-resonance spins in degrees.
+- [`variables.duration`](@ref): duration of the RF pulse in ms.
+- [`variables.amplitude`](@ref): amplitude of the RF pulse in kHz.
+- [`variables.phase`](@ref): phase at the start of the RF pulse in degrees.
+- [`variables.frequency`](@ref): frequency of the RF pulse relative to the Larmor frequency (in kHz).
 """
 struct ConstantPulse <: RFPulseComponent
     amplitude :: VariableType

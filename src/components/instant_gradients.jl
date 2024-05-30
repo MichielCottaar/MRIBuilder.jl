@@ -15,8 +15,8 @@ If the `orientation` is set an [`InstantGradient1D`](@ref) is returned, otherwis
 - `group`: name of the group to which this gradient belongs (used for scaling and rotating).
 
 ## Variables
-- [`qval`](@ref): Spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um (scalar if `orientation` is set and vector otherwise).
-- [`spoiler_scale`](@ref): Length-scale on which spins will be dephased by exactly 2π in mm.
+- [`variables.qvec`](@ref): Spatial frequency on which spins will be dephased due to this pulsed gradient in rad/um.
+- [`variables.spoiler_scale`](@ref): Length-scale on which spins will be dephased by exactly 2π in mm.
 """
 abstract type InstantGradient{N} <: EventComponent end
 

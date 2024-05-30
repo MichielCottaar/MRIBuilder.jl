@@ -19,7 +19,7 @@ Main interface:
 - [`waveform_sequence`](@ref) returns just the gradient waveform as a sequence of [`GradientWaveform`](@ref) objects.
 - [`waveform`](@ref) returns just the gradient waveform as a sequence of (time, gradient_strength) tuples.
 - [`events`](@ref) returns the RF pulses and readouts.
-- [`qval`](@ref) returns area under curve for (part of) the gradient waveform.
+- [`variables.qvec`](@ref) returns area under curve for (part of) the gradient waveform.
 
 Sub-types need to implement:
 - `Base.keys`: returns sequence of keys to all the components.
@@ -239,7 +239,7 @@ variables.qvec
 
 Computes the addition to the [`variables.bmat`](@ref) contributed by a specific building block or gradient.
 
-`qstart` represents the [`qvec`](@ref) at the start of this component.
+`qstart` represents the [`variables.qvec`](@ref) at the start of this component.
 
 If `first_event` is set to something else than `nothing`, only the gradient waveform after this RF pulse/Readout will be considered.
 Similarly, if `last_event` is set to something else than `nothing`, only the gradient waveform up to this RF pulse/Readout will be considered.
@@ -380,7 +380,7 @@ end
 """
 An empty BuildingBlock representing dead time.
 
-It only has a single variable, namely its [`duration`](@ref).
+It only has a single variable, namely its [`variables.duration`](@ref).
 """
 struct Wait <: BaseBuildingBlock
     duration :: VariableType

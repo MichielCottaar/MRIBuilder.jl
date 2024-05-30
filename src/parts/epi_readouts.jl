@@ -11,16 +11,16 @@ import ...Pathways: PathwayWalker, update_walker_till_time!, walk_pathway!
 Defines an (accelerated) EPI readout.
 
 ## Parameters
-- [`resolution`](@ref): Resolution of the final image in the frequency- and phase-encode directions.
+- [`variables.resolution`](@ref): Resolution of the final image in the frequency- and phase-encode directions.
 - `recenter`: if true, the signal will be recentred in k-space after the EPI readout.
 - `group`: name of the group used to rotate the readout gradients (default: :FOV).
 
 ## Variables:
-- [`voxel_size`](@ref): size of the voxel in the frequency- and phase-encode directions.
-- [`fov`](@ref): size of the FOV in the frequency- and phase-encode directions.
-- [`ramp_overlap`](@ref): what fraction of the gradient ramp should overlap with the readout.
-- [`oversample`](@ref): by how much to oversample in the frequency-encode direcion.
-- [`dwell_time`](@ref): dwell time in the frequency-encode direction
+- [`variables.voxel_size`](@ref): size of the voxel in the frequency- and phase-encode directions.
+- [`variables.fov`](@ref): size of the FOV in the frequency- and phase-encode directions.
+- [`variables.ramp_overlap`](@ref): what fraction of the gradient ramp should overlap with the readout.
+- [`variables.oversample`](@ref): by how much to oversample in the frequency-encode direcion.
+- [`variables.dwell_time`](@ref): dwell time in the frequency-encode direction
 """
 struct EPIReadout{N} <: BaseSequence{N}
     start_gradient :: Trapezoid
