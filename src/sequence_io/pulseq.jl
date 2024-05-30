@@ -172,7 +172,7 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
     end
     
     return PulseqBlock(
-        Int(div(1e-3 * duration(block), BlockDurationRaster, RoundNearest)),
+        Int(div(1e-3 * variables.duration(block), BlockDurationRaster, RoundNearest)),
         rf,
         grads...,
         adc,

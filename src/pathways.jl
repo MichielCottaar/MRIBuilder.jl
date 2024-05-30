@@ -86,10 +86,10 @@ The requested state can be set using `transverse` and `positive` as follows:
 - `transverse=false`, `positive=false`: -longitudinal
 - `transverse=true`, `positive=false`: -transverse
 """
-duration_state
+variables.duration_state
 
 @defvar pathway function duration_transverse(pathway::Pathway)
-    return duration_state(pathway, true, true) + duration_state(pathway, true, false)
+    return variables.duration_state(pathway, true, true) + variables.duration_state(pathway, true, false)
 end
 """
     duration_transverse(pathway::Pathway)
@@ -99,10 +99,10 @@ This determines the amount of T2-weighting as ``e^{t/T_2}``, where ``t`` is the 
 
 Also see [`duration_dephase`](@ref) for T2'-weighting.
 """
-duration_transverse
+variables.duration_transverse
 
 @defvar pathway function duration_dephase(pathway::Pathway)
-    return duration_state(pathway, true, true) - duration_state(pathway, true, false)
+    return variables.duration_state(pathway, true, true) - variables.duration_state(pathway, true, false)
 end
 """
     duration_dephase(pathway::Pathway)
@@ -112,7 +112,7 @@ This determines the amount of T2'-weighting as ``e^{t/T_2'}``, where ``t`` is th
 
 Also see [`duration_transverse`](@ref) for T2-weighting.
 """
-duration_dephase
+variables.duration_dephase
 
 
 @defvar pathway net_dephasing(pathway::Pathway) = pathway.qvec
@@ -125,10 +125,10 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `qvec` for all gradient groups.
 """
-net_dephasing
+variables.net_dephasing
 
 
-@defvar pathway area_under_curve(pathway::Pathway) = norm(qvec(pathway))
+@defvar pathway area_under_curve(pathway::Pathway) = norm(variables.net_dephasing(pathway))
 """
     area_under_curve(pathway::Pathway)
 
@@ -138,10 +138,10 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `area_under_curve` for all gradient groups.
 """
-area_under_curve
+variables.area_under_curve
 
 
-@defvar pathway bmat(pathway::Pathway)  = pathway.bmat
+@defvar pathway bmat(pathway::Pathway) = pathway.bmat
 """
     bmat(pathway::Pathway)
 
@@ -151,9 +151,9 @@ Only gradients active while the spins are in the transverse plane are considered
 
 Returns a NamedTuple with the `bmat` for all gradient groups.
 """
-bmat
+variables.bmat
 
-@defvar pathway bval(pathway::Pathway) = tr(bmat(pathway))
+@defvar pathway bval(pathway::Pathway) = tr(variables.bmat(pathway))
 """
     bval(pathway::Pathway)
 
@@ -163,7 +163,7 @@ Only gradients active while the spins are in the transverse plane will contribut
 
 Returns a NamedTuple with the `bval` for all gradient groups.
 """
-bval
+variables.bval
 
 
 """

@@ -5,7 +5,7 @@ module BuildingBlocks
 import LinearAlgebra: norm
 import JuMP: @constraint
 import StaticArrays: SVector
-import ..Abstract: ContainerBlock, start_time, readout_times, end_time, iter
+import ..Abstract: ContainerBlock, start_time, end_time, iter
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient, edge_times
 import ...Variables: VariableType, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient, gradient_orientation, variables, @defvar, get_free_variable
@@ -101,7 +101,7 @@ function waveform(bb::BaseBuildingBlock)
     end
     tol = sqrt(eps(Float64))
     for (_, block) in waveform_sequence(bb)
-        new_time = result[end][1] + max(duration(block), 0)
+        new_time = result[end][1] + max(variables.duration(block), 0)
         prev_grad = result[end][2]
         if block isa NoGradient
             @assert all(abs.(prev_grad) .<= 1e-12) "$(typeof(bb)) inserts NoGradient before the gradient is zero. This is probably caused by an improper implementation of this BuildingBlock."
@@ -132,7 +132,7 @@ function start_time(building_block::BaseBuildingBlock, index)
         component = building_block[key]
         if component isa GradientWaveform
             prev_time = time
-            time += duration(component)
+            time += variables.duration(component)
         end
         if equal_key(key, index)
             delay = component isa Tuple ? component[1] : 0.
@@ -168,14 +168,14 @@ function waveform_sequence(bb::BaseBuildingBlock, first, last)
         if equal_key(key, first)
             @assert !started
             started = true
-            current_start = effective_time(bb[key])
+            current_start = variables.effective_time(bb[key])
         end
         if equal_key(key, last)
             @assert started
             if isnothing(current_start)
-                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], effective_time(bb[key]))[1]))
+                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], variables.effective_time(bb[key]))[1]))
             else
-                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], current_start, effective_time(bb[key]))[2]))
+                push!(parts, (current_grad_key, split_gradient(bb[current_grad_key], current_start, variables.effective_time(bb[key]))[2]))
             end
             return parts
         end
@@ -198,7 +198,7 @@ end
         res = sum([variables.qvec(wv) for (_, wv) in waveform_sequence(bb, index1, index2)])
 
         t1 = isnothing(index1) ? 0. : start_time(bb, index1)
-        t2 = isnothing(index2) ? duration(bb) : start_time(bb, index2)
+        t2 = isnothing(index2) ? variables.duration(bb) : start_time(bb, index2)
         for (key, event) in events(bb)
             if event isa InstantGradient && (t1 <= start_time(bb, key) <= t2)
                 res = res .+ variables.qvec(event)
@@ -271,7 +271,7 @@ function get_gradient(bb::BaseBuildingBlock, time::Number)
             return (block, time - start_time(bb, key))
         end
     end
-    error("$bb with duration $(duration(bb)) does not define a gradient at time $time.")
+    error("$bb with duration $(variables.duration(bb)) does not define a gradient at time $time.")
 end
 
 @defvar function gradient_strength(bb::BaseBuildingBlock, time::Number)

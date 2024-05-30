@@ -1,5 +1,5 @@
 module Abstract
-import ...Variables: AbstractBlock, variables, VariableType, get_pulse, get_gradient, @defvar, duration
+import ...Variables: AbstractBlock, variables, VariableType, get_pulse, get_gradient, @defvar
 import ...Components: BaseComponent, InstantPulse, InstantGradient, ReadoutComponent, NoGradient, RFPulseComponent, GradientWaveform
 
 """
@@ -15,7 +15,7 @@ abstract type ContainerBlock <: AbstractBlock end
 
 Returns the start time of component with given `indices` with respect to the start of the [`ContainerBlock`](@ref).
 
-Also see [`duration`](@ref), [`end_time`](@ref), and [`effective_time`](@ref)
+Also see [`variables.duration`](@ref), [`end_time`](@ref), and [`effective_time`](@ref)
 """
 function start_time(container::ContainerBlock, index1, index2, indices...)
     start_time(container, index1) + start_time(container[index1], index2, indices...)
@@ -27,11 +27,11 @@ end
 
 Returns the start time of component with given `indices` with respect to the start of the [`ContainerBlock`](@ref).
 
-Also see [`duration`](@ref), [`start_time`](@ref), and [`effective_time`](@ref)
+Also see [`variables.duration`](@ref), [`start_time`](@ref), and [`effective_time`](@ref)
 """
 end_time(container::ContainerBlock, index, indices...) = start_time(container, index) + end_time(container[index], indices...)
-end_time(block::AbstractBlock) = duration(block)
-end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = duration(block[2])
+end_time(block::AbstractBlock) = variables.duration(block)
+end_time(block::Tuple{<:VariableType, <:AbstractBlock}) = variables.duration(block[2])
 
 @defvar begin
     effective_time(container::ContainerBlock, index, indices...) = start_time(container, index) + variables.effective_time(container[index], indices...)
@@ -44,7 +44,7 @@ Returns the start time of component with given `indices` with respect to the sta
 
 This will crash if the component does not have an [`effective_time`](@ref) (e.g., if it is (part of) a gradient waveform).
 
-Also see [`duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
+Also see [`variables.duration`](@ref), [`start_time`](@ref), and [`end_time`](@ref)
 """
 effective_time
 

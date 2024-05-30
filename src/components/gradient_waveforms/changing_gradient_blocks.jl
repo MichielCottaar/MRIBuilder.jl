@@ -63,22 +63,22 @@ _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
         #   g1^2 * duration^3 / 3 +
         #   g1 * (g2 - g1) * duration^3 / 4 +
         #   (g2 - g1)^2 * duration^3 / 10
-        grad_aver = 2 .* grad_start(cgb) .+ grad_end(cgb)
+        grad_aver = 2 .* variables.grad_start(cgb) .+ variables.grad_end(cgb)
         return (
-            _mult(qstart, qstart) .* duration(cgb) .+
-            duration(cgb)^2 .* _mult(qstart, grad_aver) .* 2π ./ 3 .+
+            _mult(qstart, qstart) .* variables.duration(cgb) .+
+            variables.duration(cgb)^2 .* _mult(qstart, grad_aver) .* 2π ./ 3 .+
             variables.bmat_gradient(cgb)
         )
     end
 
     function bmat_gradient(cgb::ChangingGradient)
-        gs = grad_start(cgb)
-        diff = slew_rate(cgb) .* duration(cgb)
+        gs = variables.grad_start(cgb)
+        diff = variables.slew_rate(cgb) .* variables.duration(cgb)
         return (2π)^2 .* (
             _mult(gs, gs) ./ 3 .+
             _mult(gs, diff) ./ 4 .+
             _mult(diff, diff) ./ 10
-        ) .* duration(cgb)^3
+        ) .* variables.duration(cgb)^3
     end
 end
 
@@ -95,7 +95,7 @@ For N times this returns a vector with the N+1 replacement [`ConstantGradient`](
 """
 function split_gradient(cgb::ChangingGradient, times::VariableType...)
     all_times = [0., times...]
-    durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(cgb) - times[end]]
+    durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., variables.duration(cgb) - times[end]]
     if cgb isa ChangingGradient1D
         return [ChangingGradient1D(cgb.gradient_strength .+ cgb.slew_rate .* t, cgb.slew_rate, cgb.orientation, d, cgb.group) for (t, d) in zip(all_times, durations)]
     else

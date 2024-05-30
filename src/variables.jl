@@ -179,7 +179,7 @@ function _defvar(func_def, getter=nothing)
             fn_def = MacroTools.splitdef(ex)
             push!(func_names, fn_def[:name])
             new_def = Dict{Symbol, Any}()
-            new_def[:name] = Expr(:., fn_def[:name], QuoteNode(:f))
+            new_def[:name] = Expr(:., Expr(:., :variables, QuoteNode(fn_def[:name])), QuoteNode(:f))
             new_def[:args] = esc.(fn_def[:args])
             new_def[:kwargs] = esc.(fn_def[:kwargs])
             new_def[:body] = esc(fn_def[:body])
@@ -206,24 +206,19 @@ function _defvar(func_def, getter=nothing)
     expressions = Expr[]
     for func_name in func_names
         push!(expressions, quote
-            $(esc(func_name)) = try
-                variables.$(func_name)
-            catch e
-                if !(e isa UndefVarError)
-                    rethrow()
-                end
+            if !($(QuoteNode(func_name)) in names(variables; all=true))
                 function $(func_name) end
                 variables.$(func_name) = Variable($(QuoteNode(func_name)), $(func_name), $getter)
             end
-            if $(esc(func_name)) isa AlternateVariable
-                error("$($(esc(func_name)).name) is defined through $($(esc(func_name)).other_var). Please define that variable instead.")
+            if variables.$(func_name) isa AlternateVariable
+                error("$($(esc(func_name)).name) is defined through $(variables.$(func_name).other_var). Please define that variable instead.")
             end
-            if !isnothing($getter) && $(esc(func_name)).getter != $getter
-                if isnothing($(esc(func_name)).getter)
-                    $(esc(func_name)).getter = $getter
+            if !isnothing($getter) && variables.$(func_name).getter != $getter
+                if isnothing(variables.$(func_name).getter)
+                    variables.$(func_name).getter = $getter
                 else
-                    name = $(esc(func_name)).name
-                    error("$(name) is already defined as a variable for $($(esc(func_name)).getter). Cannot switch to $($getter).")
+                    name = variables.$(func_name).name
+                    error("$(name) is already defined as a variable for $(variables.$(func_name).getter). Cannot switch to $($getter).")
                 end
             end
         end

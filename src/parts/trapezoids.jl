@@ -96,9 +96,9 @@ end
 
 Base.keys(::Trapezoid) = (Val(:rise), Val(:flat), Val(:fall))
 
-Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(zeros(3), slew_rate(pg), rise_time(pg), get_group(pg))
-Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(gradient_strength(pg), flat_time(pg), get_group(pg))
-Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(gradient_strength(pg), -slew_rate(pg), rise_time(pg), get_group(pg))
+Base.getindex(pg::BaseTrapezoid{N}, ::Val{:rise}) where {N} = ChangingGradient(zeros(3), variables.slew_rate(pg), variables.rise_time(pg), get_group(pg))
+Base.getindex(pg::BaseTrapezoid, ::Val{:flat}) = ConstantGradient(variables.gradient_strength(pg), variables.flat_time(pg), get_group(pg))
+Base.getindex(pg::BaseTrapezoid, ::Val{:fall}) = ChangingGradient(variables.gradient_strength(pg), -variables.slew_rate(pg), variables.rise_time(pg), get_group(pg))
 gradient_orientation(::BaseTrapezoid{3}) = nothing
 gradient_orientation(pg::BaseTrapezoid{1}) = gradient_orientation(get_gradient(pg))
 gradient_orientation(pg::Trapezoid{1}) = pg.orientation
@@ -114,11 +114,11 @@ get_group(pg::BaseTrapezoid) = get_group(get_gradient(pg))
 end
 
 @defvar gradient begin
-    gradient_strength(g::Trapezoid) = slew_rate(g) .* rise_time(g)
-    δ(g::Trapezoid) = rise_time(g) + flat_time(g)
+    gradient_strength(g::Trapezoid) = variables.slew_rate(g) .* variables.rise_time(g)
+    δ(g::Trapezoid) = variables.rise_time(g) + variables.flat_time(g)
 end
 
-@defvar duration(g::BaseTrapezoid) = 2 * rise_time(g) + flat_time(g)
+@defvar duration(g::BaseTrapezoid) = 2 * variables.rise_time(g) + variables.flat_time(g)
 
 @defvar qvec(g::BaseTrapezoid, ::Nothing, ::Nothing) = variables.δ(g) .* variables.gradient_strength(g) .* 2π
 
@@ -209,18 +209,18 @@ struct LineReadout{N} <: BaseTrapezoid{N}
     ramp_overlap :: VariableType
 end
 
-function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=nothing, variables...)
+function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=nothing, vars...)
     res = LineReadout(
         Trapezoid(; orientation=orientation, group=group),
         adc,
         get_free_variable(ramp_overlap)
     )
-    set_simple_constraints!(res, variables)
+    set_simple_constraints!(res, vars)
     if !(res.ramp_overlap isa Number)
         @constraint global_model() res.ramp_overlap >= 0
         @constraint global_model() res.ramp_overlap <= 1
     end
-    @constraint global_model() (res.ramp_overlap * rise_time(res.trapezoid) * 2 + flat_time(res.trapezoid)) == duration(res.adc)
+    @constraint global_model() (res.ramp_overlap * variables.rise_time(res.trapezoid) * 2 + variables.flat_time(res.trapezoid)) == variables.duration(res.adc)
     return res
 end
 

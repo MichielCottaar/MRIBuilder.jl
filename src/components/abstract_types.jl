@@ -1,5 +1,5 @@
 module AbstractTypes
-import ...Variables: AbstractBlock, duration, variables, adjustable, gradient_orientation
+import ...Variables: AbstractBlock, variables, adjustable, gradient_orientation
 
 """
 Super-type for all individual components that form an MRI sequence (i.e., RF pulse, gradient waveform, or readout event).
@@ -67,6 +67,6 @@ Edges are defined as any time, when:
 
 Edges that are within `tol` ms of each other are considered to be one edge (default: 1 ns).
 """
-edge_times(comp::BaseComponent) = [0., duration(comp)]
+edge_times(comp::BaseComponent) = [0., variables.duration(comp)]
 
 end

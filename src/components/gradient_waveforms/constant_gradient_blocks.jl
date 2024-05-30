@@ -47,8 +47,8 @@ _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
 
 @defvar begin
     function bmat_gradient(cgb::ConstantGradient)
-        grad = 2π .* gradient_strength(cgb)
-        return _mult(grad, grad) .* duration(cgb)^3 ./3
+        grad = 2π .* variables.gradient_strength(cgb)
+        return _mult(grad, grad) .* variables.duration(cgb)^3 ./3
     end
 
     function bmat_gradient(cgb::ConstantGradient, qstart::AbstractVector)
@@ -56,10 +56,10 @@ _mult(g1::AbstractVector, g2::AbstractVector) = g1 .* permutedims(g2)
         #   qstart^2 * duration +
         #   qstart * grad * duration^2 +
         #   grad * grad * duration^3 / 3 +
-        grad = 2π .* gradient_strength(cgb)
+        grad = 2π .* variables.gradient_strength(cgb)
         return (
-            _mult(qstart, qstart) .* duration(cgb) .+
-            _mult(qstart, grad) .* duration(cgb)^2 .+
+            _mult(qstart, qstart) .* variables.duration(cgb) .+
+            _mult(qstart, grad) .* variables.duration(cgb)^2 .+
             variables.bmat_gradient(cgb)
         )
     end

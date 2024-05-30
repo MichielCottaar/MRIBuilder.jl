@@ -12,9 +12,15 @@ Internally, MRIBuilder will then optimise the `BuildingBlock` free parameters to
 This optimisation uses the [Ipopt](https://github.com/coin-or/Ipopt) optimiser accessed through the [JuMP.jl](https://jump.dev/JuMP.jl/stable/) library.
 
 ## [Summary variables](@id variables)
+All variables are available as members of the [`variables`](@ref) structure.
 ```@meta
 CollapsedDocStrings = true
 ```
+```@docs
+variables.
+```
+
+## Variables interface
 ```@autodocs
 Modules = [
     MRIBuilder.Variables,

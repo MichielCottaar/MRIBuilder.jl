@@ -39,10 +39,10 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
     @constraint global_model() res.dwell_time >= 0
     @constraint global_model() res.oversample >= 1
     if center_halfway
-        apply_simple_constraint!(duration(res), 2 * res.time_to_center)
+        apply_simple_constraint!(variables.duration(res), 2 * res.time_to_center)
     else
         @constraint global_model() res.time_to_center >= 0
-        @constraint global_model() res.time_to_center <= duration(res)
+        @constraint global_model() res.time_to_center <= variables.duration(res)
     end
     set_simple_constraints!(res, kwargs)
     return res
@@ -55,18 +55,18 @@ end
     resolution(adc::ADC) = adc.resolution
 end
 
-@defvar readout nsamples(adc::ADC) = resolution(adc) * oversample(adc)
+@defvar readout nsamples(adc::ADC) = variables.resolution(adc) * variables.oversample(adc)
 
-@defvar readout_times(adc::ADC) = ((1:Int(nsamples(adc))) .- 0.5) .* dwell_time(adc)
+@defvar readout_times(adc::ADC) = ((1:Int(variables.nsamples(adc))) .- 0.5) .* variables.dwell_time(adc)
 @defvar begin
-    duration(adc::ADC) = nsamples(adc) * dwell_time(adc)
-    effective_time(adc::ADC) = time_to_center(adc)
+    duration(adc::ADC) = variables.nsamples(adc) * variables.dwell_time(adc)
+    effective_time(adc::ADC) = variables.time_to_center(adc)
 end
 
 function fixed(adc::ADC)
     # round nsamples during fixing
-    r = Int(round(value(resolution(adc)), RoundNearest))
-    n = Int(round(value(nsamples(adc)), RoundNearest))
+    r = Int(round(value(variables.resolution(adc)), RoundNearest))
+    n = Int(round(value(variables.nsamples(adc)), RoundNearest))
     if iszero(n)
         return ADC(0, NaN, NaN, NaN)
     end

@@ -26,12 +26,12 @@ end
 
 @defvar gradient begin
     bmat_gradient(::NoGradient) = 0.
-    bmat_gradient(ngb::NoGradient, qstart::VariableType) = qstart^2 * duration(ngb)
-    bmat_gradient(ngb::NoGradient, qstart::AbstractVector{<:VariableType}) = @. qstart * permutedims(qstart) * duration(ngb)
+    bmat_gradient(ngb::NoGradient, qstart::VariableType) = qstart^2 * variables.duration(ngb)
+    bmat_gradient(ngb::NoGradient, qstart::AbstractVector{<:VariableType}) = @. qstart * permutedims(qstart) * variables.duration(ngb)
 end
 
 function split_gradient(ngb::NoGradient, times::VariableType...)
-    durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., duration(ngb) - times[end]]
+    durations = [times[1], [t[2] - t[1] for t in zip(times[1:end-1], times[2:end])]..., variables.duration(ngb) - times[end]]
     return [NoGradient(d) for d in durations]
 end
 

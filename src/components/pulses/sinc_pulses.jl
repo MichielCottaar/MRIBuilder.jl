@@ -92,28 +92,28 @@ end
 end
 
 @defvar begin
-    duration(pulse::SincPulse) = (N_left(pulse) + N_right(pulse)) * lobe_duration(pulse)
-    flip_angle(pulse::SincPulse) = (pulse.norm_flip_angle[1] + pulse.norm_flip_angle[2]) * amplitude(pulse) * lobe_duration(pulse) * 360
-    inverse_bandwidth(pulse::SincPulse) = lobe_duration(pulse)
-    effective_time(pulse::SincPulse) = N_left(pulse) * lobe_duration(pulse)
+    duration(pulse::SincPulse) = (variables.N_left(pulse) + variables.N_right(pulse)) * variables.lobe_duration(pulse)
+    flip_angle(pulse::SincPulse) = (pulse.norm_flip_angle[1] + pulse.norm_flip_angle[2]) * variables.amplitude(pulse) * variables.lobe_duration(pulse) * 360
+    inverse_bandwidth(pulse::SincPulse) = variables.lobe_duration(pulse)
+    effective_time(pulse::SincPulse) = variables.N_left(pulse) * variables.lobe_duration(pulse)
 end
 
 @defvar begin
-    amplitude(pulse::SincPulse, time::Number) = variables.amplitude(pulse) * normalised_function(abs((time - effective_time(pulse))) / lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
-    phase(pulse::SincPulse, time::Number) = variables.phase(pulse) + variables.frequency(pulse) * (time - effective_time(pulse)) * 360.
+    amplitude(pulse::SincPulse, time::Number) = variables.amplitude(pulse) * normalised_function(abs((time - variables.effective_time(pulse))) / variables.lobe_duration(pulse), N_left(pulse), N_right(pulse); apodise=pulse.apodise)
+    phase(pulse::SincPulse, time::Number) = variables.phase(pulse) + variables.frequency(pulse) * (time - variables.effective_time(pulse)) * 360.
     frequency(pulse::SincPulse, time::Number) = variables.frequency(pulse)
 end
 
 function make_generic(block::SincPulse)
-    normed_times = -N_left(block):0.1:N_right(block) + 1e-5
-    times = max.(0., (normed_times .+ N_left(block))) .* lobe_duration(block)
-    amplitudes = amplitude(block) .* (normalised_function.(normed_times, N_left(block), N_right(block); apodise=block.apodise))
-    phases = [frequency(block) .* lobe_duration(block)] .* normed_times .* 360
-    return GenericPulse(times, amplitudes, phases, effective_time(block))
+    normed_times = -variables.N_left(block):0.1:variables.N_right(block) + 1e-5
+    times = max.(0., (normed_times .+ variables.N_left(block))) .* variables.lobe_duration(block)
+    amplitudes = variables.amplitude(block) .* (normalised_function.(normed_times, variables.N_left(block), variables.N_right(block); apodise=block.apodise))
+    phases = [variables.frequency(block) .* variables.lobe_duration(block)] .* normed_times .* 360
+    return GenericPulse(times, amplitudes, phases, variables.effective_time(block))
 end
 
 function split_timestep(block::SincPulse, precision)
-    max_second_derivative = π^2/3 * (amplitude(block) / lobe_duration(block))^2
+    max_second_derivative = π^2/3 * (variables.amplitude(block) / variables.lobe_duration(block))^2
     return sqrt(2 * precision / max_second_derivative)
 end
 

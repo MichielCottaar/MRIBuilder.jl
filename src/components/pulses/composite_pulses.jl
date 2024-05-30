@@ -76,13 +76,13 @@ end
 
 
 function get_pulse_index(comp::CompositePulse, time::Number)
-    t_first_center = 0.5 * duration(comp.pulses[1])
+    t_first_center = 0.5 * variables.duration(comp.pulses[1])
     index = Int(div(time - t_first_center, comp.pulse_time, RoundNearest)) + 1
     if index < 1 || index > length(comp)
         return (index, 0.)
     else
         relative_to_center = time - t_first_center - (index - 1) * comp.pulse_time
-        relative_to_start = relative_to_center + 0.5 * duration(comp.pulses[index])
+        relative_to_start = relative_to_center + 0.5 * variables.duration(comp.pulses[index])
         return (index, relative_to_start)
     end
 end
@@ -96,7 +96,7 @@ for (fn, default) in [
         (index, rtime) = get_pulse_index(pulse, time)
         if (
             index < 1 || index > length(pulse) ||
-            rtime < 0 || rtime > duration(pulse.pulses[index])
+            rtime < 0 || rtime > variables.duration(pulse.pulses[index])
         )
             return $default
         end
@@ -106,9 +106,9 @@ end
 
 function edge_times(comp::CompositePulse)
     res = Float64[]
-    t1 = duration(comp.pulses[1]) * 0.5
+    t1 = variables.duration(comp.pulses[1]) * 0.5
     for (index, pulse) in enumerate(comp.pulses)
-        d = duration(pulse)
+        d = variables.duration(pulse)
         push!(res, t1 - d/2 + comp.pulse_time * (index - 1))
         push!(res, t1 + d/2 + comp.pulse_time * (index - 1))
     end
@@ -118,12 +118,12 @@ end
 
 function make_generic(comp::CompositePulse)
     sub_generics = make_generic.(comp.pulses)
-    t1 = duration(comp.pulses[1]) * 0.5
+    t1 = variables.duration(comp.pulses[1]) * 0.5
     times = Float64[]
     amplitude = Float64[]
     phase = Float64[]
     for (index, generic) in enumerate(sub_generics)
-        start_time = t1 + (index - 1) * comp.pulse_time - duration(comp.pulses[index]) / 2
+        start_time = t1 + (index - 1) * comp.pulse_time - variables.duration(comp.pulses[index]) / 2
         push!(times, start_time)
         push!(amplitude, 0.)
         push!(phase, generic.phase[1])

@@ -39,7 +39,7 @@ function ConstantPulse(; amplitude=nothing, duration=nothing, phase=nothing, fre
 end
 
 @defvar duration(pulse::ConstantPulse) = pulse.duration
-@defvar effective_time(pulse::ConstantPulse) = duration(pulse) / 2
+@defvar effective_time(pulse::ConstantPulse) = variables.duration(pulse) / 2
 
 @defvar pulse begin
     amplitude(pulse::ConstantPulse) = pulse.amplitude
@@ -49,21 +49,21 @@ end
 end
 
 @defvar pulse begin
-    flip_angle(pulse::ConstantPulse) = amplitude(pulse) * duration(pulse) * 360
-    inverse_bandwidth(pulse::ConstantPulse) = duration(pulse) * 4
+    flip_angle(pulse::ConstantPulse) = variables.amplitude(pulse) * variables.duration(pulse) * 360
+    inverse_bandwidth(pulse::ConstantPulse) = variables.duration(pulse) * 4
 
     phase(pulse::ConstantPulse, time::Number) = variables.phase(pulse) + variables.frequency(pulse) * (time - variables.effective_time(pulse)) * 360.
     frequency(pulse::ConstantPulse, time::Number) = variables.frequency(pulse)
 end
 
 function make_generic(block::ConstantPulse)
-    d = duration(block)
-    final_phase = phase(block) + d * frequency(block) * 360
+    d = variables.duration(block)
+    final_phase = variables.phase(block) + d * variables.frequency(block) * 360
     return GenericPulse(
         [0., d], 
-        [amplitude(block), amplitude(block)],
-        [phase(block), final_phase],
-        effective_time(block)
+        [variables.amplitude(block), variables.amplitude(block)],
+        [variables.phase(block), final_phase],
+        variables.effective_time(block)
     )
 end
 
