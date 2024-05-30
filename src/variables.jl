@@ -270,38 +270,46 @@ function get_free_variable(::Val{:max}; kwargs...)
 end
 
 """
-    get_pulse(building_block)
+    get_pulse(sequence)
 
-Get the pulse played out during the building block.
+Get the main pulses played out during the sequence.
 
-Any `pulse` variables not explicitly defined for this building block will be passed on to the pulse.
+This has to be defined for individual sequences to work.
+
+Any `pulse` variables not explicitly defined for this sequence will be passed on to the pulse.
 """
 function get_pulse end
 
 """
-    get_gradient(building_block)
+    get_gradient(sequence)
 
-Get the gradient played out during the building block.
+Get the main gradients played out during the sequence.
 
-Any `gradient` variables not explicitly defined for this building block will be passed on to the gradient.
+This has to be defined for individual sequences to work.
+
+Any `gradient` variables not explicitly defined for this sequence will be passed on to the gradient.
 """
 function get_gradient end
 
 """
-    get_readout(building_block)
+    get_readout(sequence)
 
-Get the readout played out during the building block.
+Get the main readout events played out during the sequence.
 
-Any `readout` variables not explicitly defined for this building block will be passed on to the readout.
+This has to be defined for individual sequences to work.
+
+Any `readout` variables not explicitly defined for this sequence will be passed on to the readout.
 """
 function get_readout end
 
 """
     get_pathway(sequence)
 
-Get the default spin pathway for the sequence.
+Get the default spin pathway(s) for the sequence.
 
-Any `pathway` variables not explicitly defined for this building block will be passed on to the pathway.
+This has to be defined for individual sequences to work.
+
+Any `pathway` variables not explicitly defined for this sequence will be passed on to the pathway.
 """
 function get_pathway end
 
