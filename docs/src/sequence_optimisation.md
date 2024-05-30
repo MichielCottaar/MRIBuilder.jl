@@ -16,6 +16,9 @@ All variables are available as members of the [`variables`](@ref) structure.
 ```@meta
 CollapsedDocStrings = true
 ```
+```@docs
+variables
+```
 ```@docs; canonical=false
 variables.N_left                    
 variables.N_right                   
