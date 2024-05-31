@@ -177,7 +177,7 @@ function SequenceDiagram(bbb::BaseBuildingBlock)
             kwargs[:G] = SinglePlotLine([0., variables.duration(bbb)], [0., 0.], [delay], [event.qval])
         elseif event isa InstantGradient3D
             for (index, symbol) in enumerate([:Gx, :Gy, :Gz])
-                kwargs[symbol] = SinglePlotLine([0., variables.duration(bbb)], [0., 0.], [delay], [event.qval[index]])
+                kwargs[symbol] = SinglePlotLine([0., variables.duration(bbb)], [0., 0.], [delay], [event.qvec[index]])
             end
         end
     end
