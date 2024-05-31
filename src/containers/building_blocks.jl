@@ -92,10 +92,18 @@ The gradient is linearly interpolated between these points (see [`waveform_seque
 """
 function waveform(bb::BaseBuildingBlock)
     ndim = ndim_grad(bb)
+    first_block = waveform_sequence(bb)[1][2]
+    if first_block isa NoGradient
+        first_grad = ndim == 3 ? zero(SVector{3, Float64}) : 0.
+    elseif first_block isa ConstantGradient
+        first_grad = first_block.gradient_strength
+    else
+        first_grad = first_block.gradient_strength_start
+    end
     if ndim == 3
-        result = Tuple{VariableType, SVector{3, VariableType}}[(0., zero(SVector{3, Float64}))]
+        result = Tuple{VariableType, SVector{3, VariableType}}[(0., first_grad)]
     elseif ndim == 1
-        result = Tuple{VariableType, VariableType}[(0., 0.)]
+        result = Tuple{VariableType, VariableType}[(0., first_grad)]
     else
         return []
     end
@@ -116,7 +124,6 @@ function waveform(bb::BaseBuildingBlock)
             error("Unrecognised block type in BuildingBlock: $(typeof(bb)).")
         end
     end
-    @assert all(abs.(result[end][2]) .<= 1e-12) "$(typeof(bb)) does not end up with a gradient of zero. This is probably caused by an improper implementation of this BuildingBlock."
     return result
 end
 
