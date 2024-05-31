@@ -3,19 +3,19 @@ import ..Extensions: parse_extension, get_extension_name, add_extension_definiti
 function parse_section(section::PulseqSection{:extensions}; kwargs...)
     current_extension = -1
     pre_amble = true
-    linked_list = Dict{Int, NTuple{3, Int}}()
+    linked_list = Dict{Int, NamedTuple}()
     extensions = Dict{Int, PulseqExtensionDefinition}()
     for line in section.content
         if startswith(line, "extension ")
             pre_amble = false
             (_, name, str_id) = split(line)
-            current_extension = int(str_id)
-            extensions[current_extension] = PulseqExtensionDefinition{name}(String[])
-        elseif pre_ample
-            (id, type, ref, next) = int.(split(line))
+            current_extension = parse(Int, str_id)
+            extensions[current_extension] = PulseqExtensionDefinition{Symbol(name)}(String[])
+        elseif pre_amble
+            (id, type, ref, next) = parse.(Int, split(line))
             linked_list[id] = (type=type, ref=ref, next=next)
         else
-            push!(extensions[current_extension], line)
+            push!(extensions[current_extension].content, line)
         end
     end
 
@@ -23,7 +23,7 @@ function parse_section(section::PulseqSection{:extensions}; kwargs...)
 
     function get_extension_list(key::Int)
         if iszero(key)
-            return Tuple{PulseqExtension, Int}[]
+            return []
         else
             base = get_extension_list(linked_list[key].next)
             pushfirst!(base, extension_mappers[linked_list[key].type][linked_list[key].ref])

@@ -6,7 +6,7 @@ import Interpolations: linear_interpolation
 import ..PulseqIO.Types: PulseqSequence, PulseqBlock, PulseqTrapezoid, PulseqGradient, PulseqRFPulse, PulseqShape, PulseqADC
 import ..PulseqIO.Extensions: parse_extension, get_extension_name, add_extension_definition!, PulseqExtension, PulseqExtensionDefinition
 import ...Containers: Sequence, BuildingBlock, BaseBuildingBlock, events, waveform, iter_blocks, start_time
-import ...Components: GenericPulse, ADC, RFPulseComponent, InstantPulse, InstantGradient
+import ...Components: GenericPulse, ADC, RFPulseComponent, InstantPulse, InstantGradient, InstantGradient3D
 import ...Scanners: Scanner
 import ...Variables: variables, make_generic
 
@@ -187,7 +187,7 @@ end
 
 # I/O of InstantPulse
 function parse_extension(ext::PulseqExtensionDefinition{:InstantPulse})
-    mapping = Dict{Int, InstantPulse}()
+    mapping = Dict{Int, Tuple{Float64, InstantPulse}}()
     for line in ext.content
         (id, delay, flip_angle, phase) = parse.((Int, Float64, Float64, Float64), split(line))
         mapping[id] = (delay, InstantPulse(flip_angle, phase, nothing))
@@ -212,7 +212,7 @@ end
 
 # I/O of InstantGradient
 function parse_extension(ext::PulseqExtensionDefinition{:InstantGradient})
-    mapping = Dict{Int, InstantGradient}()
+    mapping = Dict{Int, Tuple{Float64, InstantGradient3D}}()
     for line in ext.content
         (id, delay, qvec...) = parse.((Int, Float64, Float64, Float64, Float64), split(line))
         mapping[id] = (delay, InstantGradient3D([qvec...], nothing))

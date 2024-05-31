@@ -19,7 +19,7 @@ function parse_section(section::PulseqSection{:blocks}; version, rf=Dict(), grad
             _get_component(props[:gy], all_grad),
             _get_component(props[:gz], all_grad),
             _get_component(props[:adc], adc),
-            iszero(props[:ext]) ? Tuple{PulseqExtension, Int}[] : _get_component(props[:ext], extensions),
+            iszero(props[:ext]) ? [] : _get_component(props[:ext], extensions),
         ))
     end
     return res
