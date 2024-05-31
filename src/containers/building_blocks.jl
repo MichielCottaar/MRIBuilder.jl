@@ -319,7 +319,7 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
     end
 
     components = Union{GradientWaveform, Tuple{Number, EventComponent}}[]
-    for (index_grad, ((prev_time, prev_grad), (time, grad))) in enumerate(zip(waveform[1:end-1], waveform[2:end]))
+    for ((prev_time, prev_grad), (time, grad)) in zip(waveform[1:end-1], waveform[2:end])
         duration = time - prev_time
         if norm(prev_grad) <= 1e-12 && norm(grad) <= 1e-12
             push!(components, NoGradient(duration))
@@ -334,9 +334,6 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
             end
         end
     end
-    #for comp in components
-    #    scanner_constraints!(comp)
-    #end
     return BuildingBlock(components)
 end
 
