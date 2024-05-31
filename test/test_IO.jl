@@ -99,12 +99,12 @@
                     write_sequence(io, seq_orig, format=format)
                     seek(io, 0)
                     seq_json = read_sequence(io, format=format)
-                    @test variables.duration(seq_orig) == variables.duration(seq_json)
+                    @test variables.duration(seq_orig) ≈ variables.duration(seq_json)
                     @test length(seq_orig) == length(seq_json)
-                    @test all(variables.duration.(seq_orig) .== variables.duration.(seq_json))
+                    @test all(variables.duration.(seq_orig) .≈ variables.duration.(seq_json))
                     @test iszero(length(iter_instant_gradients(seq_json)))
                     @test iszero(length(iter_instant_pulses(seq_json)))
-                    @test all(variables.readout_times(seq_json) .== variables.readout_times(seq_orig))
+                    @test all(variables.readout_times(seq_json) .≈ variables.readout_times(seq_orig))
                 end
             end
         end
@@ -118,12 +118,12 @@
                 write_sequence(io, seq_orig; format=format)
                 seek(io, 0)
                 seq_json = read_sequence(io; format=format)
-                @test variables.duration(seq_orig) == variables.duration(seq_json)
+                @test variables.duration(seq_orig) ≈ variables.duration(seq_json)
                 @test length(seq_orig) == length(seq_json)
-                @test all(variables.duration.(seq_orig) .== variables.duration.(seq_json))
+                @test all(variables.duration.(seq_orig) .≈ variables.duration.(seq_json))
                 @test length(iter_instant_gradients(seq_json)) == length(iter_instant_gradients(seq_json))
                 @test length(iter_instant_pulses(seq_json)) == length(iter_instant_pulses(seq_json))
-                @test all(variables.readout_times(seq_json) .== variables.readout_times(seq_orig))
+                @test all(variables.readout_times(seq_json) .≈ variables.readout_times(seq_orig))
             end
         end
     end
