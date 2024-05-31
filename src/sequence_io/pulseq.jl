@@ -155,7 +155,7 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
             end
             adc = PulseqADC(
                 variables.nsamples(gen),
-                div(variables.dwell_time(gen), AdcRasterTime, RoundNearest),
+                div(variables.dwell_time(gen) * 1e-3, AdcRasterTime, RoundNearest),
                 Int(div(start_time(block, key), 1e-3, RoundNearest)),
                 0., 0.
             )
