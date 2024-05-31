@@ -74,7 +74,6 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
         push!(times, 0.)
     end
     waveform = [(t, _get_amplitude.(grads, t, GradientRasterTime)) for t in times]
-    @show waveform
 
     return BuildingBlock(waveform, events)
 end
