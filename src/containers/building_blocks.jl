@@ -142,7 +142,7 @@ function start_time(building_block::BaseBuildingBlock, index)
     error("Building block with index '$index' not found")
 end
 
-@defvar duration(bb::BaseBuildingBlock) = sum([variables.duration(wv) for (_, wv) in waveform_sequence(bb)])
+@defvar duration(bb::BaseBuildingBlock) = sum([variables.duration(wv) for (_, wv) in waveform_sequence(bb)]; init=0.)
 
 # Pathway support
 """
