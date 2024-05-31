@@ -129,8 +129,8 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
     ext = []
     for (key, event) in events(block)
         gen = make_generic(event)
-        if event isa InstantPulse
-            push!(ext, (Int(div(start_time(block, key), 1e-3, RoundNearest)), event))
+        if event isa Union{InstantPulse, InstantGradient}
+            push!(ext, (start_time(block, key), event))
         elseif event isa RFPulseComponent
             if !isnothing(rf)
                 error("Pulseq does not support a single building block containing multiple RF pulses.")
@@ -197,10 +197,35 @@ end
 
 get_extension_name(::Tuple{<:Number, InstantPulse}) = :InstantPulse
 
-function add_extension_definition!(content::Vector{String}, obj::Tuple{Int, InstantPulse})
+function add_extension_definition!(content::Vector{String}, obj::Tuple{Number, InstantPulse})
     to_store = (obj[1], obj[2].flip_angle, obj[2].phase)
     for line in content
-        (id, this_line...) = parse.((Int, Int, Float64, Float64), split(line))
+        (id, this_line...) = parse.((Int, Float64, Float64, Float64), split(line))
+        if all(to_store .≈ this_line)
+            return id
+        end
+    end
+    push!(content, "$(length(content) + 1) " * join(string.(to_store), " "))
+    return length(content)
+end
+
+
+# I/O of InstantGradient
+function parse_extension(ext::PulseqExtensionDefinition{:InstantGradient})
+    mapping = Dict{Int, InstantGradient}()
+    for line in ext.content
+        (id, delay, qvec...) = parse.((Int, Float64, Float64, Float64, Float64), split(line))
+        mapping[id] = (delay, InstantGradient3D([qvec...], nothing))
+    end
+    return mapping
+end
+
+get_extension_name(::Tuple{<:Number, <:InstantGradient}) = :InstantGradient
+
+function add_extension_definition!(content::Vector{String}, obj::Tuple{<:Number, <:InstantGradient})
+    to_store = (obj[1], variables.qvec(obj[2])...)
+    for line in content
+        (id, this_line...) = parse.((Int, Float64, Float64, Float64, Float64), split(line))
         if all(to_store .≈ this_line)
             return id
         end
