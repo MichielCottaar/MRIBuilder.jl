@@ -53,6 +53,8 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
         ))
     end
 
+    append!(events, pulseq.ext)
+
     grads = [pulseq.gx, pulseq.gy, pulseq.gz]
     min_duration = max(
         maximum(e[1] + variables.duration(e[2]) for e in events; init=0.),
@@ -68,6 +70,9 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
     end
 
     times = sort(unique(vcat([0., stated_duration], _control_times.(grads, GradientRasterTime)...)))
+    if length(times) == 1
+        push!(times, 0.)
+    end
     waveform = [(t, _get_amplitude.(grads, t, GradientRasterTime)) for t in times]
 
     return BuildingBlock(waveform, events)
