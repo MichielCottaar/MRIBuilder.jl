@@ -3,9 +3,10 @@ Module converting MRIBuilder sequences to and from sequences recognised by [`Pul
 """
 module Pulseq
 import Interpolations: linear_interpolation
-import ..PulseqIO.Types: PulseqSequence, PulseqBlock, PulseqTrapezoid, PulseqGradient, PulseqRFPulse, PulseqShape, PulseqADC, PulseqExtension
-import ...Containers: Sequence, BuildingBlock, BaseBuildingBlock, events, waveform, iter_blocks
-import ...Components: GenericPulse, ADC, RFPulseComponent
+import ..PulseqIO.Types: PulseqSequence, PulseqBlock, PulseqTrapezoid, PulseqGradient, PulseqRFPulse, PulseqShape, PulseqADC
+import ..PulseqIO.Extensions: parse_extension, get_extension_name, add_extension_definition!, PulseqExtension, PulseqExtensionDefinition
+import ...Containers: Sequence, BuildingBlock, BaseBuildingBlock, events, waveform, iter_blocks, start_time
+import ...Components: GenericPulse, ADC, RFPulseComponent, InstantPulse, InstantGradient
 import ...Scanners: Scanner
 import ...Variables: variables, make_generic
 
@@ -111,7 +112,7 @@ function PulseqSequence(seq::Sequence{S}) where {S}
         BlockDurationRaster=1e-9,
         RadiofrequencyRasterTime=1e-9,
         GradientRasterTime=1e-9,
-        TotalDuration=duration(seq) * 1e-3,
+        TotalDuration=variables.duration(seq) * 1e-3,
         B0=seq.scanner.B0,
     )
     blocks = [PulseqBlock(block; definitions...) for (_, block) in iter_blocks(seq)]
@@ -125,12 +126,15 @@ end
 function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTime, kwargs...)
     rf = nothing
     adc = nothing
+    ext = []
     for (key, event) in events(block)
-        if event isa RFPulseComponent
+        gen = make_generic(event)
+        if event isa InstantPulse
+            push!(ext, (Int(div(start_time(block, key), 1e-3, RoundNearest)), event))
+        elseif event isa RFPulseComponent
             if !isnothing(rf)
                 error("Pulseq does not support a single building block containing multiple RF pulses.")
             end
-            gen = make_generic(event)
             rf = PulseqRFPulse(
                 maximum(gen.amplitude) * 1e3,
                 PulseqShape(gen.amplitude ./ maximum(gen.amplitude)),
@@ -140,14 +144,14 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
                 0., 
                 0.
             )
-        elseif event isa ADC
+        elseif gen isa ADC
             if !isnothing(rf)
                 error("Pulseq does not support a single building block containing multiple ADC events.")
             end
             adc = PulseqADC(
-                variables.nsamples(event),
-                div(variables.dwell_time(event), AdcRasterTime, RoundNearest),
-                Int(div(delay, 1e-3, RoundNearest)),
+                variables.nsamples(gen),
+                div(variables.dwell_time(gen), AdcRasterTime, RoundNearest),
+                Int(div(start_time(block, key), 1e-3, RoundNearest)),
                 0., 0.
             )
         else
@@ -176,8 +180,34 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
         rf,
         grads...,
         adc,
-        Tuple{PulseqExtension, Int}[]
+        ext
     )
 end
+
+
+# I/O of InstantPulse
+function parse_extension(ext::PulseqExtensionDefinition{:InstantPulse})
+    mapping = Dict{Int, InstantPulse}()
+    for line in ext.content
+        (id, delay, flip_angle, phase) = parse.((Int, Float64, Float64, Float64), split(line))
+        mapping[id] = (delay, InstantPulse(flip_angle, phase, nothing))
+    end
+    return mapping
+end
+
+get_extension_name(::Tuple{<:Number, InstantPulse}) = :InstantPulse
+
+function add_extension_definition!(content::Vector{String}, obj::Tuple{Int, InstantPulse})
+    to_store = (obj[1], obj[2].flip_angle, obj[2].phase)
+    for line in content
+        (id, this_line...) = parse.((Int, Int, Float64, Float64), split(line))
+        if all(to_store .≈ this_line)
+            return id
+        end
+    end
+    push!(content, "$(length(content) + 1) " * join(string.(to_store), " "))
+    return length(content)
+end
+
 
 end
