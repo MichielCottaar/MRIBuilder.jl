@@ -125,7 +125,7 @@ struct PulseqBlock
     gy :: Union{Nothing, AnyPulseqGradient}
     gz :: Union{Nothing, AnyPulseqGradient}
     adc :: Union{Nothing, PulseqADC}
-    ext :: Vector{<:Tuple{PulseqExtension, Int}}
+    ext :: Vector
 end
 
 """

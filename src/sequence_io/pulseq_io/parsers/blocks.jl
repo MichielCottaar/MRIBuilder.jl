@@ -25,7 +25,7 @@ function parse_section(section::PulseqSection{:blocks}; version, rf=Dict(), grad
     return res
 end
 
-function gen_section(seq::PulseqSequence, comp:: PulseqComponents, ::Val{:blocks})
+function gen_section(seq::PulseqSequence, comp:: PulseqComponents, ::Val{:blocks}, extension_mapping::Dict{Vector, Int})
     res = PulseqSection{:blocks}(String[])
 
     for (i, block) in enumerate(seq.blocks)
@@ -39,9 +39,10 @@ function gen_section(seq::PulseqSequence, comp:: PulseqComponents, ::Val{:blocks
         ]
             push!(values, add_components!(comp, search_vec, part))
         end
-        push!(values, 0)
         if length(block.ext) > 0
-            error("Cannot write extensions yet.")
+            push!(values, extension_mapping[block.ext])
+        else
+            push!(values, 0)
         end
         push!(res.content, join(string.(values), " "))
     end

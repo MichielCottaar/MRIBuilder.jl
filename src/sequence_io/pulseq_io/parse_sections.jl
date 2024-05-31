@@ -33,9 +33,11 @@ function gen_all_sections(seq:: PulseqSequence)
     sections = Dict{Symbol, PulseqSection}()
     sections[:version] = gen_section(seq, Val(:version))
     sections[:definitions] = gen_section(seq, Val(:definitions))
+    (section, extension_mapping) = gen_section(seq, Val(:extensions))
+    sections[:extensions] = section
 
     comp = PulseqComponents()
-    sections[:blocks] = gen_section(seq, comp, Val(:blocks))
+    sections[:blocks] = gen_section(seq, comp, Val(:blocks), extension_mapping)
     for symbol in [:rf, :gradients, :trap, :adc, :shapes]
         sections[symbol] = gen_section(comp, Val(symbol))
     end

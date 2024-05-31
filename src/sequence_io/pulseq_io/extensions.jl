@@ -38,7 +38,7 @@ Get the name under which the given `obj` should be stored in a Pulseq extension.
 To write an object to a Pulseq file extension, 
 one needs to define both this function and [`add_extension_definition`](@ref).
 """
-get_extension_name(ext::PulseqExtension{N}) where {N} = N
+get_extension_name(::PulseqExtension{N}) where {N} = N
 
 """
     add_extension_definition!(content::Vector{String}, obj)

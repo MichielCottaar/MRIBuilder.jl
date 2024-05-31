@@ -34,10 +34,12 @@ function parse_section(section::PulseqSection{:extensions}; kwargs...)
     return Dict(key => get_extension_list(key) for key in keys(linked_list))
 end
 
-function gen_section(comp:: PulseqComponents, ::Val{:extensions})
+function gen_section(seq:: PulseqSequence, ::Val{:extensions})
     definitions = Dict{Symbol, PulseqExtensionDefinition}()
     extensions_ref_id = Dict{Any, Int}()
-    for ext_vec in comp.extensions
+
+    all_ext_vec = [block.ext for block in seq.blocks if length(block.ext) > 0]
+    for ext_vec in all_ext_vec
         for ext in ext_vec
             name = get_extension_name(ext)
             if !(name in keys(definitions))
@@ -58,17 +60,17 @@ function gen_section(comp:: PulseqComponents, ::Val{:extensions})
         end
         next_id = add_extension_vec!(ext_vec[2:end])
         ext = ext_vec[1]
-        type_id = findfirst(get_extension_name(ext), definitions_order)
+        type_id = findfirst(isequal(get_extension_name(ext)), definitions_order)
         ref_id = extensions_ref_id[ext]
         all_ids = (type_id, ref_id, next_id)
         if all_ids in labels
-            extension_vec_id[ext_vec] = findfirst(lables, all_ids)
+            extension_vec_id[ext_vec] = findfirst(isequal(all_ids), labels)
         else
             push!(labels, all_ids)
-            extension_vec_id[ext_vec] = length(lables)
+            extension_vec_id[ext_vec] = length(labels)
         end
     end
-    add_extension_definition!.(values(comp.extensions))
+    add_extension_vec!.(all_ext_vec)
 
     content = String[]
     for (id0, (id1, id2, id3)) in enumerate(labels)
@@ -83,5 +85,5 @@ function gen_section(comp:: PulseqComponents, ::Val{:extensions})
         push!(content, "")
     end
 
-    return PulseqSection{:extensions}(content)
+    return PulseqSection{:extensions}(content), extension_vec_id
 end

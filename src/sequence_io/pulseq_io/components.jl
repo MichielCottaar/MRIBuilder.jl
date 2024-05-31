@@ -15,13 +15,11 @@ struct PulseqComponents
     pulses:: Dict{Int, PulseqRFPulse}
     grads:: Dict{Int, AnyPulseqGradient}
     adc:: Dict{Int, PulseqADC}
-    extensions:: Dict{Int, Any}
-    PulseqComponents(shapes, pulses, grads, adc, extensions) = new(
+    PulseqComponents(shapes, pulses, grads, adc) = new(
         _convert_to_dict(shapes, PulseqShape),
         _convert_to_dict(pulses, PulseqRFPulse),
         _convert_to_dict(grads, AnyPulseqGradient),
         _convert_to_dict(adc, PulseqADC),
-        _convert_to_dict(extensions, Any),
     )
 end
 
@@ -30,21 +28,11 @@ _convert_to_dict(d::Dict{Int, T}, ::Type{T}) where {T} = d
 _convert_to_dict(vec::Vector, ::Type{T}) where {T} = Dict{Int, T}(i => v for (i, v) in enumerate(vec))
 
 
-"""
-    PulseqComponents(sequence::PulseqSequence)
-
-Indentifies and lists all the unique components in the sequence.
-"""
-function PulseqComponents(sequence::PulseqSequence)
-
-end
-
 PulseqComponents() = PulseqComponents(
     PulseqShape[],
     PulseqRFPulse[],
     AnyPulseqGradient[],
     PulseqADC[],
-    PulseqExtension[],
 )
 
 """

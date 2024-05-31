@@ -38,7 +38,7 @@ function write_pulseq(io::IO, sequence::Types.PulseqSequence)
         error("Can only write to pulseq version 1.4 or later.")
     end
     sections = ParseSections.gen_all_sections(sequence)
-    for key in [:version, :definitions, :blocks, :rf, :gradients, :trap, :adc, :shapes]
+    for key in [:version, :definitions, :blocks, :rf, :gradients, :trap, :adc, :extensions, :shapes]
         if length(sections[key].content) == 0
             continue
         end
