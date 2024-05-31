@@ -328,12 +328,21 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
         else
             push!(components, ChangingGradient(prev_grad, (grad .- prev_grad) ./ duration, orientation, duration, group))
         end
+        if prev_time == time
+            continue
+        end
         for (t_event, event) in events
             if prev_time <= t_event < time
                 push!(components, (t_event - prev_time, event))
             end
         end
     end
+    for (t_event, event) in events
+        if t_event == waveform[end][1]
+            push!(components, (t_event - waveform[end-1][1], event))
+        end
+    end
+
     return BuildingBlock(components)
 end
 
