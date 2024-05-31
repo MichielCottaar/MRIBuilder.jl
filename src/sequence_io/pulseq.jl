@@ -74,6 +74,7 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
         push!(times, 0.)
     end
     waveform = [(t, _get_amplitude.(grads, t, GradientRasterTime)) for t in times]
+    @show waveform
 
     return BuildingBlock(waveform, events)
 end
@@ -106,6 +107,11 @@ end
 function _get_amplitude(grad::PulseqGradient, time::Number, raster::Number)
     amp = grad.amplitude * 1e-3
     edges = _control_times(grad, raster)
+    if time ≈ edges[1]
+        return grad.shape.samples[1]
+    elseif time ≈ edges[end]
+        return grad.shape.samples[end]
+    end
     return amp * linear_interpolation(edges, grad.shape.samples, extrapolation_bc=0.)(time)
 end
 
