@@ -4,14 +4,14 @@ MRIBuilder supports this by allowing the creation of a longer sequence out of mu
 
 To support post-hoc alterations, each RF pulse or gradient waveform in the sequence can be given a label. 
 Some commonly-used labels in MRIBuilder are:
-- `:diffusion`: used for diffusion-weighted gradients produced by [`dwi_gradients`](@ref).
-- `:FOV`: used for gradients that should align with the field-of-view (slice-select gradients in [`excitation_pulse`](@ref) or [`refocus_pulse`](@ref) and readout gradients in [`readout_event`](@ref)).
+- `:diffusion` used for diffusion-weighted gradients produced by [`dwi_gradients`](@ref).
+- `:FOV` used for gradients that should align with the field-of-view (slice-select gradients in [`excitation_pulse`](@ref) or [`refocus_pulse`](@ref) and readout gradients in [`readout_event`](@ref)).
 
 Post-hoc alterations can be applied to gradients or RF pulses with a specific labels (or to all gradients/RF pulses) using [`adjust`](@ref).
 Some example usages are:
-- Reduce the RF pulse amplitude by 20% (e.g., due to transmit bias field): `adjust(sequence, pulse=(scale=0.8, ))`
+- Reduce the RF pulse amplitude by 20% (e.g., to model the effect of transmit bias field): `adjust(sequence, pulse=(scale=0.8, ))`
 - Repeat sequence 2 times with different diffusion-weighted gradient orientations (x- and y-direction) and gradient strength reduced by 30%: `adjust(sequence, diffusion=(orientation=[[1., 0., 0], [0., 1., 0.]], scale=0.7))`
-- Rotate the field of view by 45 degrees around the y-axis:
+- Rotations defined using the [`Rotations.jl`](https://github.com/JuliaGeometry/Rotations.jl) package can be applied to gradient orientations or the field of view. For example, to rotate the field of view by 45 degrees around the y-axis:
 ```julia
 using Rotations
 rotation = Rotations.AngleAxis(deg2rad(45), 0., 1., 0.)

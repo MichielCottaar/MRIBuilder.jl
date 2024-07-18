@@ -1,7 +1,7 @@
 # [Defining new sequences](@id defining_sequences)
 
-Examples of sequence definitions can be found [here](`https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl/-/tree/main/src/sequences?ref_type=heads`).
-These are the actual sequence definitions used for the [pre-implemented sequences](@ref implemented_sequences) in MRIBuilder. In this example, we will look at the file for [`DiffusionSpinEcho`](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl/-/blob/main/src/sequences/diffusion_spin_echoes.jl?ref_type=heads) as an example. 
+Examples of sequence definitions can be found [here](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl/-/tree/main/src/sequences).
+These are the actual sequence definitions used for the [pre-implemented sequences](@ref implemented_sequences) in MRIBuilder. In this example, we will look at the file for [`DiffusionSpinEcho`](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl/-/blob/main/src/sequences/diffusion_spin_echoes.jl) as an example. 
 
 We can see that there are several steps.
 First we define the sequence as a specific sub-type of [`Sequence`](@ref):
@@ -47,7 +47,7 @@ The crucial part here are the individual parts used to build the sequence, defin
 
 We can see that this sequence is built in order by an excitation pulse, some unknown dead time (indicated by `nothing`), a gradient, more dead time, a refocus pulse, more dead time, another gradient, more dead time, and finally a readout.
 
-Some of these components have been given specific names (e.g., `:excitation => ...`). This is optional, but can be useful to refer to individual components. There are [helper functions](@id helper_functions) available to create these components.
+Some of these components have been given specific names (e.g., `:excitation => ...`). This is optional, but can be useful to refer to individual components. There are [helper functions](@ref helper_functions) available to create these components.
 
 The next step is to define [summary variables](@ref variables) that the user can constrain when setting up a specific instance of this sequence:
 ```julia
@@ -56,10 +56,10 @@ The next step is to define [summary variables](@ref variables) that the user can
     echo_time(ge::DiffusionSpinEcho) = 2 * (variables.effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
 end
 ```
-For this sequence, we can see that we define the [`variables.diffusion_time`](@ref) as the time between the start of the first and second gradient pulse, and the [`variables.echo_time`](@ref) as twice the time between the refocus and excitation pulses.
+For this sequence, we define the [`variables.diffusion_time`](@ref) as the time between the start of the first and second gradient pulse, and the [`variables.echo_time`](@ref) as twice the time between the refocus and excitation pulses.
 These variables need to be defined within a [`@defvar`](@ref) block.
 
-In addition to these sequence-specific summary variables, there are also a lot of variables already pre-defined on individual components, such as the [`variables.slice_thickness](@ref) of the RF pulse or the [`variables.gradient_strength`](@ref) of the gradient pulses. To access these summary variables on a sequence-level, we need to tell MRIBuilder for which RF pulses/gradients we are interested in computing these variables:
+In addition to these sequence-specific summary variables, there are also a lot of variables already pre-defined on individual components, such as the [`variables.slice_thickness`](@ref) of the RF pulse or the [`variables.gradient_strength`](@ref) of the gradient pulses. To access these summary variables on a sequence-level, we need to tell MRIBuilder for which RF pulses/gradients we are interested in computing these variables:
 ```julia
 get_pulse(seq::DiffusionSpinEcho) = (excitation=seq[:excitation], refocus=seq[:refocus])
 get_gradient(seq::DiffusionSpinEcho) = (gradient=seq[:gradient], gradient2=seq[:gradient2])
@@ -75,7 +75,7 @@ variables.flip_angle(sequence)
 ```
 Here we can see that we get the [`variables.flip_angle`](@ref) for each of the two RF pulses defined using [`get_pulse`](@ref) above.
 
-The final component to defining summary variables is to define one or more default coherence pathways using [`get_pathway`]:
+The final component to defining summary variables is to define one or more default coherence pathways using [`get_pathway`](@ref):
 ```julia
 get_pathway(seq::DiffusionSpinEcho) = Pathway(seq, [90, 180], 1, group=:diffusion)
 ```
