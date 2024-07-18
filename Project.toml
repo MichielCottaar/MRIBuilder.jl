@@ -1,7 +1,7 @@
 name = "MRIBuilder"
 uuid = "691e6122-0b62-4932-92e7-e4ff0ddaf3a0"
 authors = ["Michiel Cottaar <Michiel.Cottaar@ndcn.ox.ac.uk>"]
-version = "0.0.0"
+version = "0.1.0"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
