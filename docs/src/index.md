@@ -16,7 +16,7 @@ excite different slices (see [Post-hoc adjustment of sequences](@ref adjust_sequ
 The signal formation for the resulting sequence can be predicted using [MCMRSimulator](https://open.win.ox.ac.uk/pages/ndcn0236/mcmrsimulator.jl/stable) given some representation of the imaged tissue.
 MRIBuilder can be used to read/write to the [pulseq](https://pulseq.github.io) MR sequence file format.
 This can be used to run the sequence on MRI scanners as described in the [pulseq homepage](https://pulseq.github.io).
-Rather than just directly running the sequences from this library on the scanner, we strongly recommend to load it using the [MATLAB pulseq](https://github.com/pulseq/pulseq) or [python pypulseq](https://github.com/pulseq/pulseq) first as these libraries run additional checks!
+Rather than just directly running the sequences from this library on the scanner, we strongly recommend to load it using the [MATLAB pulseq](https://github.com/pulseq/pulseq) or [python pypulseq](https://github.com/imr-framework/pypulseq) first as these libraries run additional checks!
 
 
 ## Installation
