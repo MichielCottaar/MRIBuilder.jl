@@ -93,7 +93,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
     end
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=1000, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=100, kwargs...)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
         model = Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...))
     else
@@ -102,8 +102,8 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser
     build_sequence(f, scanner, model, optimise, n_attempts)
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=0, kwargs...)
-    build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=0, mu_strategy="adaptive", kwargs...)
+    build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, mu_strategy=mu_strategy, kwargs...)
 end
 
 build_sequence(f::Function, optimiser_constructor; kwargs...) = build_sequence(f, Default_Scanner, optimiser_constructor; kwargs...)

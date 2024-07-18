@@ -92,10 +92,18 @@ The gradient is linearly interpolated between these points (see [`waveform_seque
 """
 function waveform(bb::BaseBuildingBlock)
     ndim = ndim_grad(bb)
+    first_block = waveform_sequence(bb)[1][2]
+    if first_block isa NoGradient
+        first_grad = ndim == 3 ? zero(SVector{3, Float64}) : 0.
+    elseif first_block isa ConstantGradient
+        first_grad = first_block.gradient_strength
+    else
+        first_grad = first_block.gradient_strength_start
+    end
     if ndim == 3
-        result = Tuple{VariableType, SVector{3, VariableType}}[(0., zero(SVector{3, Float64}))]
+        result = Tuple{VariableType, SVector{3, VariableType}}[(0., first_grad)]
     elseif ndim == 1
-        result = Tuple{VariableType, VariableType}[(0., 0.)]
+        result = Tuple{VariableType, VariableType}[(0., first_grad)]
     else
         return []
     end
@@ -116,7 +124,6 @@ function waveform(bb::BaseBuildingBlock)
             error("Unrecognised block type in BuildingBlock: $(typeof(bb)).")
         end
     end
-    @assert all(abs.(result[end][2]) .<= 1e-12) "$(typeof(bb)) does not end up with a gradient of zero. This is probably caused by an improper implementation of this BuildingBlock."
     return result
 end
 
@@ -142,7 +149,7 @@ function start_time(building_block::BaseBuildingBlock, index)
     error("Building block with index '$index' not found")
 end
 
-@defvar duration(bb::BaseBuildingBlock) = sum([variables.duration(wv) for (_, wv) in waveform_sequence(bb)])
+@defvar duration(bb::BaseBuildingBlock) = sum([variables.duration(wv) for (_, wv) in waveform_sequence(bb)]; init=0.)
 
 # Pathway support
 """
@@ -319,7 +326,7 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
     end
 
     components = Union{GradientWaveform, Tuple{Number, EventComponent}}[]
-    for (index_grad, ((prev_time, prev_grad), (time, grad))) in enumerate(zip(waveform[1:end-1], waveform[2:end]))
+    for ((prev_time, prev_grad), (time, grad)) in zip(waveform[1:end-1], waveform[2:end])
         duration = time - prev_time
         if norm(prev_grad) <= 1e-12 && norm(grad) <= 1e-12
             push!(components, NoGradient(duration))
@@ -328,15 +335,21 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
         else
             push!(components, ChangingGradient(prev_grad, (grad .- prev_grad) ./ duration, orientation, duration, group))
         end
+        if prev_time == time
+            continue
+        end
         for (t_event, event) in events
             if prev_time <= t_event < time
                 push!(components, (t_event - prev_time, event))
             end
         end
     end
-    #for comp in components
-    #    scanner_constraints!(comp)
-    #end
+    for (t_event, event) in events
+        if t_event == waveform[end][1]
+            push!(components, (t_event - waveform[end-1][1], event))
+        end
+    end
+
     return BuildingBlock(components)
 end
 

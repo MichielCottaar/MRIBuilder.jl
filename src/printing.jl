@@ -56,7 +56,11 @@ function Base.show(io::IO, block::AbstractBlock)
             if isnothing(numeric_value)
                 continue
             end
-            print(io, "$(fn_name)=$(numeric_value), ")
+            as_string = string(numeric_value)
+            if length(as_string) > 50
+                continue
+            end
+            print(io, "$(fn_name)=$(as_string), ")
         catch e
             continue
         end

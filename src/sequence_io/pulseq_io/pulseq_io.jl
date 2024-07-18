@@ -6,6 +6,7 @@ The translation of these types into MRIBuilder types is defined in "../pulseq.jl
 """
 module PulseqIO
 include("types.jl")
+include("extensions.jl")
 include("basic_parsers.jl")
 include("sections_io.jl")
 include("components.jl")
@@ -13,6 +14,7 @@ include("parsers/parsers.jl")
 include("parse_sections.jl")
 
 import .Types: PulseqSequence
+import .Extensions: parse_extension, get_extension_name, add_extension_definition!
 
 
 """
@@ -36,7 +38,7 @@ function write_pulseq(io::IO, sequence::Types.PulseqSequence)
         error("Can only write to pulseq version 1.4 or later.")
     end
     sections = ParseSections.gen_all_sections(sequence)
-    for key in [:version, :definitions, :blocks, :rf, :gradients, :trap, :adc, :shapes]
+    for key in [:version, :definitions, :blocks, :rf, :gradients, :trap, :adc, :extensions, :shapes]
         if length(sections[key].content) == 0
             continue
         end
