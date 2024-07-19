@@ -201,9 +201,10 @@ function dwi_gradients(; type=:trapezoid, optimise=false, scanner=nothing, refoc
     end
 
     if isnothing(match)
-        match = get(Dict(
+        match = Dict(
             :trapezoid => [:rise_time, :flat_time, :slew_rate],
-        ), type, [])
+            :instant => [],
+        )[type]
     end
 
     get_index(var::Union{Tuple, AbstractVector}, i) = length(var) == 2 ? var[i] : var
