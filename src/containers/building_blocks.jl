@@ -254,7 +254,7 @@ Similarly, if `last_event` is set to something else than `nothing`, only the gra
 variables.bmat_gradient
 
 function edge_times(bb::BaseBuildingBlock)
-    res = Float64[]
+    res = Float64[0.]
     for (key, event) in events(bb)
         append!(res, edge_times(event) .+ start_time(bb, key))
     end
