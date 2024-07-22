@@ -453,26 +453,6 @@ function (var::AlternateVariable)(args...; kwargs...)
 end
 
 
-for base_fn in [:qval, :gradient_strength, :slew_rate]
-    fn3 = Symbol(String(base_fn) * "3")
-    @eval function $fn3(bb::AbstractBlock, args...; kwargs...)
-        if hasmethod(get_gradient, (typeof(bb), ))
-            return $fn3(get_gradient(bb), args...; kwargs...)
-        else
-            value = $base_fn(bb, args...; kwargs...)
-            if value isa Number && iszero(value)
-                return zero(SVector{3, Float64})
-            elseif value isa AbstractVector
-                return value
-            else
-                return value .* gradient_orientation(bb)
-            end
-        end
-    end
-    @eval $fn3(nt::NamedTuple, args...; kwargs...) = map(v -> $fn3(v, args...; kwargs...), nt)
-end
-
-
 """
     set_simple_constraints!(block, kwargs)
 
