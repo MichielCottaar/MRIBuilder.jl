@@ -2,7 +2,7 @@ module SincPulses
 import JuMP: @constraint
 import QuadGK: quadgk
 import ....BuildSequences: global_model
-import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar, apply_simple_constraint!
 import ...AbstractTypes: RFPulseComponent, split_timestep
 import ..GenericPulses: GenericPulse
 
@@ -50,10 +50,10 @@ function SincPulse(;
         group
     )
     if !(res.amplitude isa Number)
-        @constraint global_model() res.amplitude >= 0
+        apply_simple_constraint!(res.amplitude, :>=, 0)
     end
     if !(res.lobe_duration isa Number)
-        @constraint global_model() res.lobe_duration >= 0
+        apply_simple_constraint!(res.lobe_duration, :>=, 0)
     end
     set_simple_constraints!(res, kwargs)
     return res

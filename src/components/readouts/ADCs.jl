@@ -36,13 +36,13 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
         get_free_variable(time_to_center),
         get_free_variable(oversample),
     )
-    @constraint global_model() res.dwell_time >= 0
-    @constraint global_model() res.oversample >= 1
+    apply_simple_constraint!(res.dwell_time, :>=, 0)
+    apply_simple_constraint!(res.oversample, :>=, 0)
     if center_halfway
         apply_simple_constraint!(variables.duration(res), 2 * res.time_to_center)
     else
-        @constraint global_model() res.time_to_center >= 0
-        @constraint global_model() res.time_to_center <= variables.duration(res)
+        apply_simple_constraint!(res.time_to_center, :>=, 0)
+        apply_simple_constraint!(res.time_to_center, :<=, variables.duration(res))
     end
     set_simple_constraints!(res, kwargs)
     return res

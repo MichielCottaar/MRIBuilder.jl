@@ -2,7 +2,7 @@ module InstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent
 import ....BuildSequences: global_model
-import ....Variables: VariableType, make_generic, get_free_variable, adjust_internal, variables, @defvar
+import ....Variables: VariableType, make_generic, get_free_variable, adjust_internal, variables, @defvar, apply_simple_constraint!
 
 """
     InstantPulse(; flip_angle=nothing, phase=nothing, group=nothing)
@@ -28,7 +28,7 @@ function InstantPulse(; flip_angle=nothing, phase=nothing, group=nothing)
         get_free_variable(phase),
         group
     )
-    @constraint global_model() res.flip_angle >= 0
+    apply_simple_constraint!(res.flip_angle, :>=, 0)
     return res
 end
 

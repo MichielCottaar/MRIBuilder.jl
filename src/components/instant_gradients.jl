@@ -27,7 +27,7 @@ function (::Type{InstantGradient})(; orientation=nothing, group=nothing, qval=no
     else
         res = InstantGradient1D(get_free_variable(qval), orientation, group)
         if !(res.qval isa Number)
-            @constraint global_model() res.qval >= 0
+            apply_simple_constraint!(res.qval, :>=, 0)
         end
         apply_simple_constraint!(variables.qvec(res), qvec)
     end

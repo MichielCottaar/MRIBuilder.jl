@@ -33,7 +33,7 @@ function ConstantPulse(; amplitude=nothing, duration=nothing, phase=nothing, fre
         [get_free_variable(value) for value in (amplitude, duration, phase, frequency)]...,
         group
     )
-    @constraint global_model() res.amplitude >= 0
+    apply_simple_constraint!(res.amplitude, :>=, 0)
     set_simple_constraints!(res, kwargs)
     return res
 end

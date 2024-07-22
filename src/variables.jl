@@ -495,6 +495,13 @@ Add a single constraint or objective to the `variable`.
 - `:max`: maximise the variable
 - `number`: fix variable to this value
 - `equation`: fix variable to the result of this equation
+
+
+    apply_simple_constraint!(variable, :>=/:<=, value)
+
+Set an inequality constraint to the `variable`.
+
+`value` can be a number of an equation.
 """
 apply_simple_constraint!(variable::AbstractVector, value::Symbol) = apply_simple_constraint!(sum(variable), Val(value))
 apply_simple_constraint!(variable, value::Nothing) = nothing
@@ -514,6 +521,17 @@ end
 function apply_simple_constraint!(variable::NamedTuple, value::NamedTuple)
     for key in keys(value)
         apply_simple_constraint!(variable[key], value[key])
+    end
+end
+
+apply_simple_constraint!(variable::VariableType, sign::Symbol, value) = apply_simple_constraint!(variable, Val(sign), value)
+apply_simple_constraint!(variable::VariableType, ::Val{:(==)}, value) = apply_simple_constraint!(variable, value)
+apply_simple_constraint!(variable::VariableType, ::Val{:(<=)}, value::VariableType) = apply_simple_constraint!(variable, Val(:>=), -value)
+function apply_simple_constraint!(variable::VariableType, ::Val{:(>=)}, value::VariableType)
+    @constraint global_model() variable >= value
+    if value isa Number && iszero(value)
+        @constraint global_model() variable * 1e6 >= value
+        @constraint global_model() variable * 1e12 >= value
     end
 end
 

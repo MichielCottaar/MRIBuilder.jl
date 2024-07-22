@@ -8,7 +8,7 @@ import StaticArrays: SVector
 import ..Abstract: ContainerBlock, start_time, end_time, iter
 import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient, edge_times
-import ...Variables: VariableType, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient, gradient_orientation, variables, @defvar, get_free_variable
+import ...Variables: VariableType, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient, gradient_orientation, variables, @defvar, get_free_variable, apply_simple_constraint!
 
 """
 Basic BuildingBlock, which can consist of a gradient waveforms with any number of RF pulses/readouts overlaid
@@ -400,7 +400,7 @@ struct Wait <: BaseBuildingBlock
     function Wait(var)
         res = new(get_free_variable(var))
         if !(res.duration isa Number)
-            @constraint global_model() res.duration >= 0
+            apply_simple_constraint!(res.duration, :>=, 0)
         end
         return res
     end

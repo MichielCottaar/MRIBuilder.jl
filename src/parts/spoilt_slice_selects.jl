@@ -53,7 +53,7 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
             slew_rate(global_scanner()),
         )
         for time_var in (rise_time_var, flat_time_var)
-            @constraint model time_var >= 0
+            apply_simple_constraint!(time_var, :>=, 0)
         end
     else
         res = SpoiltSliceSelect(
@@ -68,7 +68,7 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
             slew_rate(global_scanner()),
         )
         for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
-            @constraint model time_var >= 0
+            apply_simple_constraint!(time_var, :>=, 0)
         end
         @constraint model res.diff_time <= res.rise_time1
         @constraint model res.diff_time <= res.fall_time2
