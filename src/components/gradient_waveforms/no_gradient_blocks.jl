@@ -21,11 +21,11 @@ end
 
 @defvar begin
     duration(ngb::NoGradient) = ngb.duration
-    gradient_strength(nb::NoGradient, time::Number) = 0.
+    gradient_strength(nb::NoGradient, time::Number) = zero(SVector{3, Float64})
 end
 
 @defvar gradient begin
-    bmat_gradient(::NoGradient) = 0.
+    bmat_gradient(::NoGradient) = zero(SMatrix{3, 3, 9, Float64})
     bmat_gradient(ngb::NoGradient, qstart::VariableType) = qstart^2 * variables.duration(ngb)
     bmat_gradient(ngb::NoGradient, qstart::AbstractVector{<:VariableType}) = @. qstart * permutedims(qstart) * variables.duration(ngb)
 end
