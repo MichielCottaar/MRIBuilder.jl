@@ -48,7 +48,7 @@ function write_sequence(io::IO, sequence; format::Symbol=:pulseq)
     elseif format == :serialize
         serialize(io, sequence)
     else
-        error("Unrecognised selected format for output ($format). Only :serialize is supported..")
+        error("Unrecognised selected format for output ($format). Only :pulseq or :serialize are supported..")
     end
 end
 
