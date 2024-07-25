@@ -5,7 +5,7 @@ import ..Trapezoids: Trapezoid, opposite_kspace_lines, SliceSelect
 import ..SpoiltSliceSelects: SpoiltSliceSelect
 import ..SliceSelectRephases: SliceSelectRephase
 import ..EPIReadouts: EPIReadout
-import ...BuildSequences: global_model, build_sequence, global_scanner
+import ...BuildSequences: build_sequence, global_scanner
 import ...Containers: Sequence
 import ...Components: SincPulse, ConstantPulse, InstantPulse, SingleReadout, InstantGradient
 import ...Variables: variables, apply_simple_constraint!

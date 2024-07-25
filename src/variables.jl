@@ -5,6 +5,7 @@ In addition this defines:
 - [`variables`](@ref): module containing all variables.
 - [`VariableType`](@ref): parent type for any variables (whether number or JuMP variable).
 - [`get_free_variable`](@ref): helper function to create new JuMP variables.
+- [`add_cost_function!`](@ref): add a specific term to the model cost functions.
 - [`set_simple_constraints!`](@ref): call [`apply_simple_constraint!`](@ref) for each keyword argument.
 - [`apply_simple_constraint!`](@ref): set a simple equality constraint.
 - [`get_pulse`](@ref)/[`get_gradient`](@ref)/[`get_readout`](@ref): Used to get the pulse/gradient/readout part of a building block
@@ -15,7 +16,7 @@ import JuMP: @constraint, @variable, Model, @objective, objective_function, Abst
 import StaticArrays: SVector
 import MacroTools
 import ..Scanners: gradient_strength, slew_rate, Scanner
-import ..BuildSequences: global_model, global_scanner, fixed
+import ..BuildSequences: global_scanner, fixed, GLOBAL_MODEL
 
 """
 Parent type of all components, building block, and sequences that form an MRI sequence.
@@ -343,18 +344,16 @@ The result is guaranteed to be a [`VariableType`](@ref).
 """
 get_free_variable(value::Number; integer=false, kwargs...) = integer ? Int(value) : Float64(value)
 get_free_variable(value::VariableType; kwargs...) = value
-get_free_variable(::Nothing; integer=false, start=0.01) = @variable(global_model(), start=start, integer=integer)
+get_free_variable(::Nothing; integer=false, start=0.01) = @variable(GLOBAL_MODEL[][1], start=start, integer=integer)
 get_free_variable(value::Symbol; integer=false, kwargs...) = integer ? error("Cannot maximise or minimise an integer variable") : get_free_variable(Val(value); kwargs...)
 function get_free_variable(::Val{:min}; kwargs...)
     var = get_free_variable(nothing; kwargs...)
-    model = global_model()
-    @objective model Min objective_function(model) + var
+    add_cost_function!(var, 1)
     return var
 end
 function get_free_variable(::Val{:max}; kwargs...)
     var = get_free_variable(nothing; kwargs...)
-    model = global_model()
-    @objective model Min objective_function(model) - var
+    add_cost_function!(-var, 1)
     return var
 end
 
@@ -454,6 +453,21 @@ end
 
 
 """
+    add_cost_function!(function, level=2)
+
+Adds an additional term to the cost function.
+
+This term will be minimised together with any other terms in the cost function.
+Terms added at a lower level will be optimised before any terms with a higher level.
+
+By default, the term is added to the `level=2`, which is appropriate for any cost functions added by the developer,
+which will generally only be optimised after any user-defined cost functions (which are added at `level=1` by [`add_simple_constraint!`](@ref) or [`set_simple_constraints!`](@ref).
+"""
+function add_cost_function!(func, level=2)
+    push!(GLOBAL_MODEL[][2], (Float64(level), func))
+end
+
+"""
     set_simple_constraints!(block, kwargs)
 
 Add any constraints or objective functions to the variables of a [`AbstractBlock`](@ref).
@@ -507,9 +521,9 @@ apply_simple_constraint!(variable::AbstractVector, value::Symbol) = apply_simple
 apply_simple_constraint!(variable, value::Nothing) = nothing
 apply_simple_constraint!(variable::NamedTuple, value::Nothing) = nothing
 apply_simple_constraint!(variable::VariableType, value::Symbol) = apply_simple_constraint!(variable, Val(value))
-apply_simple_constraint!(variable::VariableType, ::Val{:min}) = @objective global_model() Min objective_function(global_model()) + variable
-apply_simple_constraint!(variable::VariableType, ::Val{:max}) = @objective global_model() Min objective_function(global_model()) - variable
-apply_simple_constraint!(variable::VariableType, value::VariableType) = @constraint global_model() variable == value
+apply_simple_constraint!(variable::VariableType, ::Val{:min}) = add_cost_function!(variable, 1)
+apply_simple_constraint!(variable::VariableType, ::Val{:max}) = add_cost_function!(-variable, 1)
+apply_simple_constraint!(variable::VariableType, value::VariableType) = @constraint GLOBAL_MODEL[][1] variable == value
 apply_simple_constraint!(variable::AbstractVector, value::AbstractVector) = [apply_simple_constraint!(v1, v2) for (v1, v2) in zip(variable, value)]
 apply_simple_constraint!(variable::AbstractVector, value::VariableType) = [apply_simple_constraint!(v1, value) for v1 in variable]
 apply_simple_constraint!(variable::Number, value::Number) = @assert variable ≈ value "Variable set to multiple incompatible values."
@@ -526,12 +540,12 @@ end
 
 apply_simple_constraint!(variable::VariableType, sign::Symbol, value) = apply_simple_constraint!(variable, Val(sign), value)
 apply_simple_constraint!(variable::VariableType, ::Val{:(==)}, value) = apply_simple_constraint!(variable, value)
-apply_simple_constraint!(variable::VariableType, ::Val{:(<=)}, value::VariableType) = apply_simple_constraint!(variable, Val(:>=), -value)
+apply_simple_constraint!(variable::VariableType, ::Val{:(<=)}, value::VariableType) = apply_simple_constraint!(value, Val(:>=), variable)
 function apply_simple_constraint!(variable::VariableType, ::Val{:(>=)}, value::VariableType)
-    @constraint global_model() variable >= value
+    @constraint GLOBAL_MODEL[][1] variable >= value
     if value isa Number && iszero(value)
-        @constraint global_model() variable * 1e6 >= value
-        @constraint global_model() variable * 1e12 >= value
+        @constraint GLOBAL_MODEL[][1] variable * 1e6 >= value
+        @constraint GLOBAL_MODEL[][1] variable * 1e12 >= value
     end
 end
 
@@ -569,8 +583,8 @@ function scanner_constraints!(bb::AbstractBlock)
             if v isa Number || ((v isa Union{QuadExpr, AffExpr}) && length(v.terms) == 0)
                 continue
             end
-            @constraint global_model() v <= max_value
-            @constraint global_model() v >= -max_value
+            apply_simple_constraint!(v, :<=, max_value)
+            apply_simple_constraint!(v, :>=, -max_value)
         end
     end
 end

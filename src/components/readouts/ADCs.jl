@@ -1,7 +1,7 @@
 module ADCs
 import JuMP: @constraint, value
 import ...AbstractTypes: ReadoutComponent
-import ....BuildSequences: global_model, fixed
+import ....BuildSequences: fixed
 import ....Variables: VariableType, apply_simple_constraint!, set_simple_constraints!, get_free_variable, make_generic, variables, @defvar
 
 

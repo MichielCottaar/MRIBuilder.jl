@@ -1,13 +1,29 @@
 module BuildSequences
-import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED, objective_value, INVALID_MODEL, @variable
+import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED, objective_value, INVALID_MODEL, @variable, @objective, @constraint
 import Ipopt
 import Juniper
 import ..Scanners: Scanner, gradient_strength, Default_Scanner
 
-const GLOBAL_MODEL = Ref(Model())
+const GLOBAL_MODEL = Ref((Model(), Tuple{Float64, AbstractJuMPScalar}[]))
 const IGNORE_MODEL = GLOBAL_MODEL[]
 
 const GLOBAL_SCANNER = Ref(Scanner())
+
+
+"""
+    iterate_cost()
+
+Return a sequence of all the cost functions that should be optimised in order.
+"""
+function iterate_cost()
+    unique_weights = sort(unique([w for (w, _) in GLOBAL_MODEL[][2]]))
+    if iszero(length(unique_weights))
+        return [0.]
+    else
+        return [sum([f for (w, f) in GLOBAL_MODEL[][2] if w == weight]) for weight in unique_weights]
+    end
+end
+
 
 """
 Wrapper to build a sequence.
@@ -27,10 +43,10 @@ seq = Sequence(
 )
 ```
 
-You can also add any arbitrary constraints or objectives using the same syntax as for [`JuMP`](https://jump.dev/JuMP.jl):
-```
-@constraint global_model() duration(seq) == 30.
-```
+You can also add any arbitrary constraints or objectives using one of:
+- [`set_simple_constraints!`](@ref)
+- [`apply_simple_constraint!`](@ref)
+- [`add_cost_function!`](@ref)
 
 As soon as the code block ends the sequence is optimised (if `optimise=true`) and returned.
 
@@ -41,7 +57,7 @@ As soon as the code block ends the sequence is optimised (if `optimise=true`) an
 - `n_attempts`: How many times to restart the optimser (default: 100).
 - `kwargs...`: Other keywords are passed on as attributes to the `optimiser_constructor` (e.g., set `print_level=3` to make the Ipopt optimiser quieter).
 """
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Model, optimise::Bool, n_attempts::Int)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tuple, optimise::Bool, n_attempts::Int)
     prev_model = GLOBAL_MODEL[]
     GLOBAL_MODEL[] = model
     prev_scanner = GLOBAL_SCANNER[]
@@ -53,34 +69,38 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Mo
     try
         sequence = f()
         if optimise
-            if !iszero(num_variables(model))
-                min_objective = Inf
-                for attempt in 1:n_attempts
-                    if attempt != 1
-                        old_values = value.(all_variables(model))
-                        size_kick = 0.5 / attempt
-                        new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
-                        for (var, v) in zip(all_variables(model), new_values)
-                            set_start_value(var, v)
+            jump_model = GLOBAL_MODEL[][1]
+            if !iszero(num_variables(jump_model))
+                for cost_func in iterate_cost()
+                    @objective jump_model Min cost_func
+                    min_objective = Inf
+                    for attempt in 1:n_attempts
+                        if attempt != 1
+                            old_values = value.(all_variables(jump_model))
+                            size_kick = 0.5 / attempt
+                            new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
+                            for (var, v) in zip(all_variables(jump_model), new_values)
+                                set_start_value(var, v)
+                            end
+                        end
+                        optimize!(jump_model)
+                        while termination_status(jump_model) == INVALID_MODEL
+                            @variable(jump_model)
+                            optimize!(jump_model)
+                        end
+                        if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
+                            if objective_value(jump_model) < min_objective
+                                min_objective = objective_value(jump_model)
+                            elseif isapprox(min_objective, objective_value(jump_model), rtol=1e-6)
+                                break
+                            end
                         end
                     end
-                    optimize!(model)
-                    while termination_status(model) == INVALID_MODEL
-                        @variable(model)
-                        optimize!(model)
+                    if !(termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL))
+                        println(solution_summary(jump_model))
+                        error("Optimisation failed to converge.")
                     end
-                    if termination_status(model) in (LOCALLY_SOLVED, OPTIMAL)
-                        if objective_value(model) < min_objective
-                            min_objective = objective_value(model)
-                        elseif isapprox(min_objective, objective_value(model), rtol=1e-6)
-                            println("Optimisation succeeded after $(attempt-1) restarts.")
-                            break
-                        end
-                    end
-                end
-                if !(termination_status(model) in (LOCALLY_SOLVED, OPTIMAL))
-                    @warn "Optimisation did not report successful convergence. Please check the output sequence."
-                    println(solution_summary(model))
+                    #@constraint jump_model cost_func == objective_value(jump_model)
                 end
             end
             return fixed(sequence)
@@ -95,9 +115,12 @@ end
 
 function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=100, kwargs...)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
-        model = Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...))
+        model = (
+            Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...)),
+            Tuple{Float64, AbstractJuMPScalar}[]
+        )
     else
-        model = global_model()
+        model = GLOBAL_MODEL[]
     end
     build_sequence(f, scanner, model, optimise, n_attempts)
 end
@@ -108,20 +131,6 @@ end
 
 build_sequence(f::Function, optimiser_constructor; kwargs...) = build_sequence(f, Default_Scanner, optimiser_constructor; kwargs...)
 
-
-"""
-    global_model()
-
-Return the currently set JuMP model.
-
-The model can be set using [`build_sequence`](@ref)
-"""
-function global_model()
-    if GLOBAL_MODEL[] == IGNORE_MODEL
-        error("No global model has been set. Please embed any sequence creation within an `build_sequence` block.")
-    end
-    return GLOBAL_MODEL[]
-end
 
 """
     global_scanner()

@@ -16,8 +16,8 @@ include("printing.jl")
 include("sequence_io/sequence_io.jl")
 include("plot.jl")
 
-import .BuildSequences: build_sequence, global_model, global_scanner, fixed
-export build_sequence, global_model, global_scanner, fixed
+import .BuildSequences: build_sequence, global_scanner, fixed
+export build_sequence, global_scanner, fixed
 
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra, Default_Scanner
 export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra, Default_Scanner
@@ -48,8 +48,5 @@ export read_sequence, write_sequence
 
 import .Plot: plot_sequence
 export plot_sequence
-
-import JuMP: @constraint, @objective, objective_function, value, Model
-export @constraint, @objective, objective_function, value, Model
 
 end

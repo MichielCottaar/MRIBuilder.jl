@@ -6,7 +6,6 @@ import LinearAlgebra: norm
 import JuMP: @constraint
 import StaticArrays: SVector
 import ..Abstract: ContainerBlock, start_time, end_time, iter
-import ...BuildSequences: global_model
 import ...Components: BaseComponent, GradientWaveform, EventComponent, NoGradient, ChangingGradient, ConstantGradient, split_gradient, RFPulseComponent, ReadoutComponent, InstantGradient, edge_times
 import ...Variables: VariableType, make_generic, get_pulse, get_readout, scanner_constraints!, get_gradient, gradient_orientation, variables, @defvar, get_free_variable, apply_simple_constraint!
 

@@ -5,7 +5,7 @@ module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
 import ...Variables: get_free_variable, VariableType, variables, set_simple_constraints!, make_generic, get_gradient, get_pulse, get_gradient, @defvar
-import ...BuildSequences: global_model, global_scanner
+import ...BuildSequences: global_scanner
 import ...Components: EventComponent, NoGradient, edge_times
 import ...Scanners: Scanner, B0
 import ..Abstract: ContainerBlock, start_time

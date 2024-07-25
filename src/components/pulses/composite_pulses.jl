@@ -1,7 +1,6 @@
 module CompositePulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep, edge_times
-import ....BuildSequences: global_model
 import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
 import ..GenericPulses: GenericPulse
 
@@ -48,12 +47,6 @@ function CompositePulse(; base_pulse::RFPulseComponent, nweights=nothing, weight
         get_free_variable(pulse_time),
         scale_amplitude
     )
-    return res
-    @constraint global_model() minimum(wait_times(res)) >= 0.
-    if !(res.scale_amplitude isa Number)
-        @constraint global_model() res.scale_amplitude >= 0.
-        @constraint global_model() res.scale_amplitude <= 1.
-    end
     return res
 end
 
