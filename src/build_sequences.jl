@@ -23,7 +23,7 @@ Within the code block you can create one or more sequences, e.g.
 seq = Sequence(
     SincPulse(flip_angle=90, phase=0, duration=2., bandwidth=:max)
     nothing.,
-    InstantReadout
+    SingleReadout
 )
 ```
 

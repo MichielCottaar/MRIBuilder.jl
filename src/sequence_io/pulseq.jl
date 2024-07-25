@@ -6,7 +6,7 @@ import Interpolations: linear_interpolation
 import ..PulseqIO.Types: PulseqSequence, PulseqBlock, PulseqTrapezoid, PulseqGradient, PulseqRFPulse, PulseqShape, PulseqADC
 import ..PulseqIO.Extensions: parse_extension, get_extension_name, add_extension_definition!, PulseqExtension, PulseqExtensionDefinition
 import ...Containers: Sequence, BuildingBlock, BaseBuildingBlock, events, waveform, iter_blocks, start_time
-import ...Components: GenericPulse, ADC, RFPulseComponent, InstantPulse, InstantGradient, InstantGradient3D
+import ...Components: GenericPulse, ADC, RFPulseComponent, InstantPulse, InstantGradient, InstantGradient3D, SingleReadout
 import ...Scanners: Scanner
 import ...Variables: variables, make_generic
 
@@ -44,11 +44,15 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
         dwell_time = pulseq.adc.dwell * 1e-6
         push!(events, (
             pulseq.adc.delay * 1e-3,
-            ADC(
-                pulseq.adc.num,
-                dwell_time,
-                dwell_time * pulseq.adc.num / 2,
-                1.
+            (
+                iszero(dwell_time) ?
+                SingleReadout() :
+                ADC(
+                    pulseq.adc.num,
+                    dwell_time,
+                    dwell_time * pulseq.adc.num / 2,
+                    1.
+                )
             )
         ))
     end

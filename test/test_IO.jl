@@ -108,7 +108,7 @@
                 end
             end
         end
-        @testset "check that format $(format) works for some sequences with instant pulses/gradients" begin
+        @testset "check that format $(format) works for some sequences with instant pulses/gradients/readouts" begin
             for seq_orig in [
                 DWI(TE=80., bval=2., scanner=Siemens_Connectom),
                 DWI(TE=80., bval=2., scanner=Siemens_Terra, gradient=(type=:instant, )),
@@ -123,6 +123,7 @@
                 @test all(isapprox.(variables.duration.(seq_orig), variables.duration.(seq_json), atol=1e-5))
                 @test length(iter_instant_gradients(seq_json)) == length(iter_instant_gradients(seq_json))
                 @test length(iter_instant_pulses(seq_json)) == length(iter_instant_pulses(seq_json))
+                @test length(variables.readout_times(seq_orig)) == length(variables.readout_times(seq_json))
                 @test all(isapprox.(variables.readout_times(seq_orig), variables.readout_times(seq_json), atol=1e-5))
             end
         end
