@@ -1,8 +1,9 @@
 module DiffusionSpinEchoes
 import ...Containers: Sequence
+import ...Components: InstantGradient
 import ...Parts: excitation_pulse, readout_event, interpret_image_size, Trapezoid, gradient_spoiler, refocus_pulse, dwi_gradients
 import ...Containers: start_time, end_time
-import ...Variables: get_pulse, get_readout, get_gradient, variables, @defvar
+import ...Variables: get_pulse, get_readout, get_gradient, variables, @defvar, add_cost_function!
 import ...Pathways: Pathway, get_pathway
 import ...BuildSequences: build_sequence
 import ...Scanners: Default_Scanner, Scanner
@@ -36,7 +37,7 @@ If image parameters are provided, this will switch to a sinc pulse and EPI reado
 - [`variables.duration`](@ref): total duration of the sequence from start of excitation pulse to end of readout or spoiler in ms.
 - [`variables.Δ`](@ref)/[`variables.diffusion_time`](@ref): Time from the start of one diffusion-weighted gradient till the other in ms.
 """
-function DiffusionSpinEcho(; delay=0., excitation=(), gradient=(), refocus=(), readout=(), optim=(), spoiler=nothing, resolution=nothing, fov=nothing, voxel_size=nothing, slice_thickness=nothing, scanner=Default_Scanner, variables...)
+function DiffusionSpinEcho(; delay=0., excitation=(), gradient=(), refocus=(), readout=(), optim=(), spoiler=nothing, resolution=nothing, fov=nothing, voxel_size=nothing, slice_thickness=nothing, scanner=Default_Scanner, vars...)
     build_sequence(scanner; optim...) do
         (slice_thickness, _, extra_readout_params) = interpret_image_size(fov, resolution, voxel_size, slice_thickness)
         (g1, g2) = dwi_gradients(; gradient...)
@@ -50,11 +51,20 @@ function DiffusionSpinEcho(; delay=0., excitation=(), gradient=(), refocus=(), r
             :gradient2 => g2,
             nothing,
             :readout => readout_event(; extra_readout_params..., readout...),
+            nothing,
         ]
         if !isnothing(spoiler)
             push!(parts, gradient_spoiler(; spoiler...))
         end
-        return Sequence(parts; name=:DiffusionSpinEcho, delay=delay, variables...)
+        seq = Sequence(parts; name=:DiffusionSpinEcho, delay=delay, vars...)
+        
+        if g1 isa InstantGradient
+            add_cost_function!((variables.duration(seq[2]) - variables.duration(seq[4]))^2)
+            add_cost_function!((variables.duration(seq[6]) - variables.duration(seq[8]))^2)
+        else
+            add_cost_function!(variables.duration(seq[6]) + variables.duration(seq[7]))
+        end
+        return seq
     end
 end
 
