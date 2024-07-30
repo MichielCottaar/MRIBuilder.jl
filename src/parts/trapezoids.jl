@@ -248,10 +248,10 @@ function LineReadout(adc::ADC; ramp_overlap=nothing, orientation=nothing, group=
     )
     set_simple_constraints!(res, vars)
     if !(res.ramp_overlap isa Number)
-        add_simple_constraint!(res.ramp_overlap, :>=, 0.)
-        add_simple_constraint!(res.ramp_overlap, :<=, 1.)
+        apply_simple_constraint!(res.ramp_overlap, :>=, 0.)
+        apply_simple_constraint!(res.ramp_overlap, :<=, 1.)
     end
-    add_simple_constraint!(
+    apply_simple_constraint!(
         res.ramp_overlap * variables.rise_time(res.trapezoid) * 2 + variables.flat_time(res.trapezoid),
         variables.duration(res.adc)
     )
