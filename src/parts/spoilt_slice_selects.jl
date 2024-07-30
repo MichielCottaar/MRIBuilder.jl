@@ -3,7 +3,7 @@ module SpoiltSliceSelects
 import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @constraint, @objective, objective_function
-import ...BuildSequences: global_model, global_scanner
+import ...BuildSequences: global_scanner
 import ...Variables: VariableType, get_pulse, set_simple_constraints!, variables, @defvar, gradient_orientation
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
 import ...Containers: BaseBuildingBlock
@@ -36,7 +36,6 @@ struct SpoiltSliceSelect <: BaseBuildingBlock
 end
 
 function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group=nothing, slice_thickness=nothing, kwargs...)
-    model = global_model()
     res = nothing
     if slice_thickness isa Number && isinf(slice_thickness)
         rise_time_var = get_free_variable(nothing)
@@ -70,16 +69,16 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
         for time_var in (res.rise_time1, res.flat_time1, res.diff_time, res.flat_time2, res.fall_time2)
             apply_simple_constraint!(time_var, :>=, 0)
         end
-        @constraint model res.diff_time <= res.rise_time1
-        @constraint model res.diff_time <= res.fall_time2
-        @constraint model qvec(res, nothing, :pulse) == qvec(res, :pulse, nothing)
+        apply_simple_constraint!(res.diff_time, :<=, res.rise_time1)
+        apply_simple_constraint!(res.diff_time, :<=, res.rise_time2)
+        apply_simple_constraint!(qvec(res, nothing, :pulse), qvec(res, :pulse, nothing))
     end
 
     set_simple_constraints!(res, kwargs)
 
     max_time = gradient_strength(global_scanner()) / res.slew_rate
-    @constraint model rise_time(res)[1] <= max_time
-    @constraint model fall_time(res)[2] <= max_time
+    apply_simple_constraint!(rise_time(res)[1], :<=, max_time)
+    apply_simple_constraint!(fall_time(res)[2], :<=, max_time)
     return res
 end
 

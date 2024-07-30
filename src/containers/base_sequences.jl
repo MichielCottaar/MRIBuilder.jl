@@ -4,8 +4,8 @@ Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, VariableType, variables, set_simple_constraints!, make_generic, get_gradient, get_pulse, get_gradient, @defvar
-import ...BuildSequences: global_model, global_scanner
+import ...Variables: get_free_variable, VariableType, variables, set_simple_constraints!, make_generic, get_gradient, get_pulse, get_gradient, @defvar, add_cost_function!
+import ...BuildSequences: global_scanner
 import ...Components: EventComponent, NoGradient, edge_times
 import ...Scanners: Scanner, B0
 import ..Abstract: ContainerBlock, start_time
@@ -151,10 +151,11 @@ struct Sequence{S, N} <: BaseSequence{N}
     scanner :: Scanner
 end
 
-function Sequence(blocks::AbstractVector; name=:Sequence, scanner=nothing, variables...)
+function Sequence(blocks::AbstractVector; name=:Sequence, scanner=nothing, vars...)
     blocks = to_block_pair.(blocks)
     res = Sequence{name, length(blocks)}(SVector{length(blocks)}(blocks), isnothing(scanner) ? global_scanner() : scanner)
-    set_simple_constraints!(res, variables)
+    set_simple_constraints!(res, vars)
+    add_cost_function!(variables.duration(res), 3)
     return res
 end
 
@@ -166,6 +167,8 @@ Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
 get_index_single_TR(s::Sequence, i::Integer) = s.blocks[i][2]
 Base.getindex(seq::Sequence, sym::Symbol) = seq[findfirst(p -> p[1] == sym, seq.blocks)]
 nrepeat(::Sequence) = 0
+
+@defvar repetition_time(seq::Sequence) = variables.duration(seq)
 
 to_block_pair(pair::Pair) = pair[1] => to_block(pair[2])
 to_block_pair(other) = nothing => to_block(other)

@@ -1,8 +1,8 @@
 module Alternatives
 import JuMP: @constraint
 import ..Abstract: ContainerBlock
-import ...BuildSequences: global_model, fixed
-import ...Variables: @defvar, make_generic
+import ...BuildSequences: fixed
+import ...Variables: @defvar, make_generic, apply_simple_constraint!
 
 """
     AlternativeBlocks(name, blocks)
@@ -36,11 +36,7 @@ function match_blocks!(alternatives::AlternativeBlocks, func)
     options = [values(alternatives.options)...]
     baseline = func(options[1])
     for other_block in options[2:end]
-        if baseline isa AbstractVector
-            @constraint global_model() baseline == func(other_block)
-        else
-            @constraint global_model() baseline .== func(other_block)
-        end
+        apply_simple_constraint!(func(other_block), baseline)
     end
 end
 

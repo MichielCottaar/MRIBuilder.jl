@@ -16,14 +16,14 @@ include("printing.jl")
 include("sequence_io/sequence_io.jl")
 include("plot.jl")
 
-import .BuildSequences: build_sequence, global_model, global_scanner, fixed
-export build_sequence, global_model, global_scanner, fixed
+import .BuildSequences: build_sequence, global_scanner, fixed
+export build_sequence, global_scanner, fixed
 
 import .Scanners: Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra, Default_Scanner
 export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra, Default_Scanner
 
-import .Variables: variables, make_generic, @defvar, get_pulse, get_readout, get_pathway, get_gradient
-export variables, make_generic, @defvar, get_pulse, get_readout, get_pathway, get_gradient
+import .Variables: variables, make_generic, @defvar, get_pulse, get_readout, get_pathway, get_gradient, add_cost_function!, apply_simple_constraint!, set_simple_constraints!
+export variables, make_generic, @defvar, get_pulse, get_readout, get_pathway, get_gradient, add_cost_function!, apply_simple_constraint!, set_simple_constraints!
 
 import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse, edge_times
 export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse, edge_times
@@ -48,8 +48,5 @@ export read_sequence, write_sequence
 
 import .Plot: plot_sequence
 export plot_sequence
-
-import JuMP: @constraint, @objective, objective_function, value, Model
-export @constraint, @objective, objective_function, value, Model
 
 end

@@ -1,7 +1,6 @@
 module InstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent
-import ....BuildSequences: global_model
 import ....Variables: VariableType, make_generic, get_free_variable, adjust_internal, variables, @defvar, apply_simple_constraint!
 
 """

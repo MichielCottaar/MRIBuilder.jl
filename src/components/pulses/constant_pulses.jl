@@ -1,7 +1,6 @@
 module ConstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep
-import ....BuildSequences: global_model
 import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar, apply_simple_constraint!
 import ..GenericPulses: GenericPulse
 

@@ -2,7 +2,6 @@ module InstantGradients
 import StaticArrays: SVector, SMatrix
 import JuMP: @constraint
 import ...Variables: @defvar, VariableType, variables, get_free_variable, set_simple_constraints!, make_generic, adjust_internal, adjustable, gradient_orientation, apply_simple_constraint!
-import ...BuildSequences: global_model
 import ..AbstractTypes: EventComponent, GradientWaveform
 
 """

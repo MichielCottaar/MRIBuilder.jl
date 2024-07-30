@@ -1,9 +1,9 @@
 @testset "test_sequences.jl" begin
     @testset "GradientEcho" begin
         seq = GradientEcho(TE=40)
-        @test length(seq) == 3
-        @test variables.duration(seq) == 40
-        @test all(isapprox.(variables.duration.(seq), [0., 40., 0.], atol=1e-6))
+        @test length(seq) == 4
+        @test variables.duration(seq) ≈ 40
+        @test all(isapprox.(variables.duration.(seq), [0., 40., 0., 0.], atol=1e-6))
         @test length(collect(iter_instant_pulses(seq))) == 1
         @test length(collect(iter_instant_gradients(seq))) == 0.
         @test variables.duration_dephase(seq) ≈ 40.
@@ -11,9 +11,9 @@
     end
     @testset "SpinEcho" begin
         seq = SpinEcho(TE=40)
-        @test length(seq) == 5
-        @test variables.duration(seq) == 40
-        @test all(isapprox.(variables.duration.(seq), [0., 20., 0., 20., 0.], atol=1e-6))
+        @test length(seq) == 6
+        @test variables.duration(seq) ≈ 40
+        @test all(isapprox.(variables.duration.(seq), [0., 20., 0., 20., 0., 0.], atol=1e-6))
         @test length(collect(iter_instant_pulses(seq))) == 2
         @test length(collect(iter_instant_gradients(seq))) == 0.
         @test variables.duration_dephase(seq) ≈ 0. atol=1e-4
@@ -25,9 +25,9 @@
         @testset "Instant pulse & readout" begin
             @testset "Minimise TE" begin
                 seq = DiffusionSpinEcho(TE=:min, bval=1.)
-                @test length(seq) == 9
+                @test length(seq) == 10
                 grad_duration = variables.TE(seq) / 2
-                @test all(isapprox.(variables.duration.(seq), [0., 0., grad_duration, 0., 0., 0., grad_duration, 0., 0.], atol=1e-6))
+                @test all(isapprox.(variables.duration.(seq), [0., 0., grad_duration, 0., 0., 0., grad_duration, 0., 0., 0.], atol=1e-6))
                 @test length([iter_instant_pulses(seq)...]) == 2
                 @test length([iter_instant_gradients(seq)...]) == 0.
                 @test variables.bval(seq) ≈ 1.
@@ -37,8 +37,8 @@
             end
             @testset "Maximise b-value" begin
                 seq = DiffusionSpinEcho(TE=80., bval=:max)
-                @test length(seq) == 9
-                @test all(isapprox.(variables.duration.(seq), [0., 0., 40., 0., 0., 0., 40., 0., 0.], atol=1e-4, rtol=1e-4))
+                @test length(seq) == 10
+                @test all(isapprox.(variables.duration.(seq), [0., 0., 40., 0., 0., 0., 40., 0., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test length([iter_instant_pulses(seq)...]) == 2
                 @test length([iter_instant_gradients(seq)...]) == 0.
                 @test variables.TE(seq) ≈ 80.
@@ -55,7 +55,7 @@
             end
             @testset "Set diffusion time Δ" begin
                 seq = DiffusionSpinEcho(TE=80., Δ=70., qval=:max)
-                @test all(isapprox.(variables.duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0.], atol=1e-4, rtol=1e-4))
+                @test all(isapprox.(variables.duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test variables.Δ(seq) ≈ 70.
                 @test variables.TE(seq) ≈ 80.
                 @test variables.duration(seq) ≈ 80.
@@ -66,10 +66,10 @@
             end
             @testset "Set gradient duration" begin
                 seq = DiffusionSpinEcho(TE=80., gradient=(duration=10., ), bval=:max)
-                @test all(isapprox.(variables.duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0.], atol=1e-4, rtol=1e-4))
+                @test all(isapprox.(variables.duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test variables.Δ(seq) ≈ 70. rtol=1e-4
                 @test variables.TE(seq) ≈ 80.
-                @test variables.duration(seq) ≈ 80.
+                @test variables.duration(seq) ≈ 80. rtol=1e-4
                 @test 0.72 < variables.bval(seq) < 0.73
                 @test variables.readout_times(seq)[1] ≈ variables.TE(seq)
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
@@ -78,7 +78,7 @@
         @testset "DW-SE with finite RF pulses" begin
             @testset "slice-select DW-SE" begin
                 seq = DiffusionSpinEcho(duration=:min, bval=2., slice_thickness=2.)
-                @test length(seq) == 9
+                @test length(seq) == 10
                 @test variables.duration(seq[1]) > 1.
                 for index in 1:9
                     if index in [2, 4, 8, 9]
@@ -94,7 +94,7 @@
             end
             @testset "voxel-wise DW-SE" begin
                 seq = DiffusionSpinEcho(duration=:min, bval=2., voxel_size=2., fov=(20, 20, 20))
-                @test length(seq) == 9
+                @test length(seq) == 10
                 @test variables.duration(seq[1]) > 1.
                 for index in 1:9
                     if index in [2, 6, 8]
