@@ -71,7 +71,11 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
         if optimise
             jump_model = GLOBAL_MODEL[][1]
             if !iszero(num_variables(jump_model))
+                prev_cost_func = nothing
                 for cost_func in iterate_cost()
+                    if !isnothing(prev_cost_func)
+                        @constraint jump_model prev_cost_func == objective_value(jump_model)
+                    end
                     @objective jump_model Min cost_func
                     min_objective = Inf
                     for attempt in 1:n_attempts
@@ -100,7 +104,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
                         println(solution_summary(jump_model))
                         error("Optimisation failed to converge.")
                     end
-                    #@constraint jump_model cost_func == objective_value(jump_model)
+                    prev_cost_func = cost_func
                 end
             end
             return fixed(sequence)
