@@ -74,6 +74,7 @@ function (::Type{Trapezoid})(; orientation=nothing, rise_time=nothing, flat_time
             get_free_variable.(slew_rate),
             group
         )
+        add_cost_function!(-sum(abs(res.slew_rate)))
     else
         res = Trapezoid1D(
             get_free_variable(rise_time),
@@ -83,13 +84,13 @@ function (::Type{Trapezoid})(; orientation=nothing, rise_time=nothing, flat_time
             group
         )
         apply_simple_constraint!(res.slew_rate, :>=, 0)
+        add_cost_function!(-res.slew_rate)
     end
 
     set_simple_constraints!(res, kwargs)
 
     apply_simple_constraint!(res.flat_time, :>=, 0)
     apply_simple_constraint!(res.rise_time, :>=, 0)
-    add_cost_function!(-res.slew_rate)
     scanner_constraints!(res)
     return res
 end
