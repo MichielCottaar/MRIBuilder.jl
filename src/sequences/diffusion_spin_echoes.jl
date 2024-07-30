@@ -78,7 +78,6 @@ get_pathway(ge::DiffusionSpinEcho) = Pathway(ge, [90, 180], 1, group=:diffusion)
     echo_time(ge::DiffusionSpinEcho) = 2 * (variables.effective_time(ge, :refocus) - variables.effective_time(ge, :excitation))
     delay(ge::DiffusionSpinEcho) = variables.duration_transverse(ge) - variables.echo_time(ge)
     diffusion_time(ge::DiffusionSpinEcho) = start_time(ge, :gradient2) - start_time(ge, :gradient)
-    gradient_asymmetry(se::DiffusionSpinEcho) = end_time(se, :gradient) + start_time(se, :gradient2) - 2 * variables.effective_time(se, :refocus)
 end
 
 """
