@@ -6,7 +6,7 @@ module Trapezoids
 import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType, get_gradient, get_pulse, get_readout, adjustable, adjust_internal, apply_simple_constraint!
+import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType, get_gradient, get_pulse, get_readout, adjustable, adjust_internal, apply_simple_constraint!, add_cost_function!
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ...Containers: BaseBuildingBlock
 
@@ -89,6 +89,7 @@ function (::Type{Trapezoid})(; orientation=nothing, rise_time=nothing, flat_time
 
     apply_simple_constraint!(res.flat_time, :>=, 0)
     apply_simple_constraint!(res.rise_time, :>=, 0)
+    add_cost_function!(-res.slew_rate)
     scanner_constraints!(res)
     return res
 end
