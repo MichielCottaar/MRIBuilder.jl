@@ -34,6 +34,7 @@ function GradientEcho(; excitation=(), readout=(), optim=(), resolution=nothing,
             :excitation => excitation_pulse(; slice_thickness=slice_thickness, excitation...),
             nothing,
             :readout => readout_event(; extra_readout_params..., readout...),
+            nothing
         ]; name=:GradientEcho, variables...)
     end
 end

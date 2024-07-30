@@ -38,6 +38,7 @@ function SpinEcho(; delay=0., excitation=(), refocus=(), readout=(), optim=(), s
             :refocus => refocus_pulse(; slice_thickness=slice_thickness, refocus...),
             nothing,
             :readout => readout_event(; extra_readout_params..., readout...),
+            nothing
         ]; name=:SpinEcho, delay=delay, variables...)
     end
 end
@@ -56,6 +57,8 @@ end
     echo_time(sequence)
 
 Returns the echo time of a sequence in ms.
+
+This is typically defined as the time between the excitation pulse and the crossing of k=0 during the MRI readout.
 """
 variables.echo_time
 
