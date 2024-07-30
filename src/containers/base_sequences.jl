@@ -168,6 +168,8 @@ get_index_single_TR(s::Sequence, i::Integer) = s.blocks[i][2]
 Base.getindex(seq::Sequence, sym::Symbol) = seq[findfirst(p -> p[1] == sym, seq.blocks)]
 nrepeat(::Sequence) = 0
 
+@defvar repetition_time(seq::Sequence) = duration(seq)
+
 to_block_pair(pair::Pair) = pair[1] => to_block(pair[2])
 to_block_pair(other) = nothing => to_block(other)
 
