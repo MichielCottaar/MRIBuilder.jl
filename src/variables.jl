@@ -465,9 +465,12 @@ which will generally only be optimised after any user-defined cost functions (wh
 
 Any sequence will also have a `level=3` cost function, which minimises the total sequence duration.
 """
-function add_cost_function!(func, level=2)
+function add_cost_function!(func::AbstractJuMPScalar, level=2)
     push!(GLOBAL_MODEL[][2], (Float64(level), func))
 end
+
+add_cost_function!(func::Number, level=2) = nothing
+
 
 """
     set_simple_constraints!(block, kwargs)
