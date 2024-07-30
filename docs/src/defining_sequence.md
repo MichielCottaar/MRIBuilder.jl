@@ -13,10 +13,10 @@ This name will have to be unique.
 
 The next step is to define the sequence constructor:
 ```julia
-function DiffusionSpinEcho(; scanner=DefaultScanner, parameters..., variables...)
+function DiffusionSpinEcho(; scanner=DefaultScanner, parameters..., vars...)
     build_sequence(scanner) do
         (g1, g2) = dwi_gradients(...)
-        return Sequence([
+        seq = Sequence([
             :excitation => excitation_pulse(...),
             nothing,
             :gradient => g1,
@@ -26,7 +26,10 @@ function DiffusionSpinEcho(; scanner=DefaultScanner, parameters..., variables...
             g2,
             nothing,
             :readout => readout_event(...),
-        ], name=:DiffusionSpinEcho, variables...)
+            nothing,
+        ], name=:DiffusionSpinEcho, vars...)
+        add_cost_function!(variables.duration(seq[6]) + variables.duration(seq[7]))
+        return seq
     end
 end
 ```
@@ -42,12 +45,24 @@ The crucial part here are the individual parts used to build the sequence, defin
     :gradient2 => g2,
     nothing,
     :readout => readout_event(...),
+    nothing
 ]
 ```
 
 We can see that this sequence is built in order by an excitation pulse, some unknown dead time (indicated by `nothing`), a gradient, more dead time, a refocus pulse, more dead time, another gradient, more dead time, and finally a readout.
 
 Some of these components have been given specific names (e.g., `:excitation => ...`). This is optional, but can be useful to refer to individual components. There are [helper functions](@ref helper_functions) available to create these components.
+
+After creating the sequence object, we can now add secondary objectives to the cost function (using [`add_cost_function!`](@ref)).
+In this example, we have:
+```julia
+add_cost_function!(variables.duration(seq[6]) + variables.duration(seq[7]))
+```
+If we check the order of the sequence component, we see that this minimises the sum of the duration of the second gradient and the wait block before this gradient.
+This cost function has been added to maximise the time between the second gradient and the readout (and hence minimise the effect of eddy currents on the readout).
+Note that this is a secondary cost function that will only take effect if it does not interfere with any user-defined constraints and cost functions (see [sequence optimisation](@ref sequence_optimisation)).
+Some secondary cost functions will be automatically defined for you within the individual components (e.g., a trapezoidal gradient has a secondary cost function to maximise the slew rate).
+There is even a tertiary cost function, which minimises the total sequence duration.
 
 The next step is to define [summary variables](@ref variables) that the user can constrain when setting up a specific instance of this sequence:
 ```julia

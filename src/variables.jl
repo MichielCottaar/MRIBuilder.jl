@@ -462,6 +462,8 @@ Terms added at a lower level will be optimised before any terms with a higher le
 
 By default, the term is added to the `level=2`, which is appropriate for any cost functions added by the developer,
 which will generally only be optimised after any user-defined cost functions (which are added at `level=1` by [`add_simple_constraint!`](@ref) or [`set_simple_constraints!`](@ref).
+
+Any sequence will also have a `level=3` cost function, which minimises the total sequence duration.
 """
 function add_cost_function!(func, level=2)
     push!(GLOBAL_MODEL[][2], (Float64(level), func))
