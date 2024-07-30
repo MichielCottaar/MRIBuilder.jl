@@ -44,9 +44,9 @@ seq = Sequence(
 ```
 
 You can also add any arbitrary constraints or objectives using one of:
-- [`set_simple_constraints!`](@ref)
-- [`apply_simple_constraint!`](@ref)
-- [`add_cost_function!`](@ref)
+- `set_simple_constraints!`
+- `apply_simple_constraint!`
+- `add_cost_function!`
 
 As soon as the code block ends the sequence is optimised (if `optimise=true`) and returned.
 
