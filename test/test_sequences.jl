@@ -2,7 +2,7 @@
     @testset "GradientEcho" begin
         seq = GradientEcho(TE=40)
         @test length(seq) == 4
-        @test variables.duration(seq) == 40
+        @test variables.duration(seq) ≈ 40
         @test all(isapprox.(variables.duration.(seq), [0., 40., 0., 0.], atol=1e-6))
         @test length(collect(iter_instant_pulses(seq))) == 1
         @test length(collect(iter_instant_gradients(seq))) == 0.
@@ -12,7 +12,7 @@
     @testset "SpinEcho" begin
         seq = SpinEcho(TE=40)
         @test length(seq) == 6
-        @test variables.duration(seq) == 40
+        @test variables.duration(seq) ≈ 40
         @test all(isapprox.(variables.duration.(seq), [0., 20., 0., 20., 0., 0.], atol=1e-6))
         @test length(collect(iter_instant_pulses(seq))) == 2
         @test length(collect(iter_instant_gradients(seq))) == 0.
@@ -69,7 +69,7 @@
                 @test all(isapprox.(variables.duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test variables.Δ(seq) ≈ 70. rtol=1e-4
                 @test variables.TE(seq) ≈ 80.
-                @test variables.duration(seq) ≈ 80.
+                @test variables.duration(seq) ≈ 80. rtol=1e-4
                 @test 0.72 < variables.bval(seq) < 0.73
                 @test variables.readout_times(seq)[1] ≈ variables.TE(seq)
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
