@@ -74,7 +74,7 @@ function (::Type{Trapezoid})(; orientation=nothing, rise_time=nothing, flat_time
             get_free_variable.(slew_rate),
             group
         )
-        add_cost_function!(-sum(abs(res.slew_rate)))
+        add_cost_function!(-sum(abs.(res.slew_rate)))
     else
         res = Trapezoid1D(
             get_free_variable(rise_time),
