@@ -1,7 +1,7 @@
 module InstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent
-import ....Variables: VariableType, make_generic, get_free_variable, adjust_internal, variables, @defvar, apply_simple_constraint!
+import ....Variables: VariableType, make_generic, get_free_variable, adjust_internal, variables, @defvar, apply_simple_constraint!, add_cost_function!
 
 """
     InstantPulse(; flip_angle=nothing, phase=nothing, group=nothing)
