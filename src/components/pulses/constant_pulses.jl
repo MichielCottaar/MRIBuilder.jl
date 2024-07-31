@@ -1,7 +1,7 @@
 module ConstantPulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep
-import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar, apply_simple_constraint!
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar, apply_simple_constraint!, add_cost_function!
 import ..GenericPulses: GenericPulse
 
 """
@@ -34,6 +34,7 @@ function ConstantPulse(; amplitude=nothing, duration=nothing, phase=nothing, fre
     )
     apply_simple_constraint!(res.amplitude, :>=, 0)
     set_simple_constraints!(res, kwargs)
+    add_cost_function!(res.frequency^2 + res.phase^2)
     return res
 end
 

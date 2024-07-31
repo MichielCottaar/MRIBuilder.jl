@@ -55,6 +55,7 @@ function SincPulse(;
         apply_simple_constraint!(res.lobe_duration, :>=, 0)
     end
     set_simple_constraints!(res, kwargs)
+    add_cost_function!(res.frequency^2 + res.phase^2)
     return res
 end
 

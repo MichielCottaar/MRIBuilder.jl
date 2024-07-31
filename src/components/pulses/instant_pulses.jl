@@ -28,6 +28,7 @@ function InstantPulse(; flip_angle=nothing, phase=nothing, group=nothing)
         group
     )
     apply_simple_constraint!(res.flip_angle, :>=, 0)
+    add_cost_function!(res.phase^2)
     return res
 end
 
