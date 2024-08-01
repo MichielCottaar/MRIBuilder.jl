@@ -94,23 +94,22 @@ end
 function adjust_helper(block::AbstractBlock, used_names::Set{Symbol}; gradient=(), pulse=(), kwargs...)
     params = []
     adjust_type = adjustable(block)
-    if adjust_type == :false
-        for prop_name in propertynames(block)
-            push!(params, adjust_helper(getproperty(block, prop_name), used_names; gradient=gradient, pulse=pulse, kwargs...))
-        end
-        return typeof(block)(params...)
+    if adjust_type != :false && (!isnothing(block.group) && (block.group in keys(kwargs)))
+        push!(used_names, block.group)
+        new_block = adjust_internal(block; kwargs[block.group]...)
+    elseif adjust_type == :gradient
+        push!(used_names, :gradient)
+        new_block = adjust_internal(block; gradient...)
+    elseif adjust_type == :pulse
+        push!(used_names, :pulse)
+        new_block = adjust_internal(block; pulse...)
     else
-        if !isnothing(block.group) && (block.group in keys(kwargs))
-            push!(used_names, block.group)
-            return adjust_internal(block; kwargs[block.group]...)
-        elseif adjust_type == :gradient
-            push!(used_names, :gradient)
-            return adjust_internal(block; gradient...)
-        elseif adjust_type == :pulse
-            push!(used_names, :pulse)
-            return adjust_internal(block; pulse...)
-        end
+        new_block = block
     end
+    for prop_name in propertynames(new_block)
+        push!(params, adjust_helper(getproperty(new_block, prop_name), used_names; gradient=gradient, pulse=pulse, kwargs...))
+    end
+    return typeof(block)(params...)
 end
 
 adjust_helper(some_value, used_names::Set{Symbol}; kwargs...) = some_value
