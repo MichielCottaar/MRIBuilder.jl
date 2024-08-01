@@ -4,7 +4,7 @@ import LinearAlgebra: norm
 import StaticArrays: SVector
 import JuMP: @constraint, @objective, objective_function
 import ...BuildSequences: global_scanner
-import ...Variables: VariableType, get_pulse, set_simple_constraints!, variables, @defvar, gradient_orientation, adjust_groups, adjust_internal, get_free_variable, apply_simple_constraint!
+import ...Variables: VariableType, get_pulse, set_simple_constraints!, variables, @defvar, gradient_orientation, adjust, adjust_groups, adjust_internal, get_free_variable, apply_simple_constraint!
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent
 import ...Containers: BaseBuildingBlock
 
@@ -139,17 +139,17 @@ Returns the time of the [`SpoiltSliceSelect`](@ref) to return to zero.
 """
 variables.fall_time
 
-adjust_groups(::SpoiltSliceSelect) = [ss.group, :slice]
+adjust_groups(ss::SpoiltSliceSelect) = [ss.group, :slice]
 
 function adjust_internal(ss::SpoiltSliceSelect; shift=0.)
-    return SliceSelect(
+    return SpoiltSliceSelect(
         ss.orientation,
         ss.rise_time1,
         ss.flat_time1,
         ss.diff_time,
         adjust(
             ss.pulse;
-            frequency=variables.all_gradient_strengths(ss)[2] * shift * 1e3
+            pulse=(frequency=variables.all_gradient_strengths(ss)[2] * shift * 1e3, )
         ),
         ss.flat_time2,
         ss.fall_time2,
