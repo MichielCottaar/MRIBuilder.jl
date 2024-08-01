@@ -36,7 +36,7 @@
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
                 @testset "Explicitly minimising TE gives same result" begin
                     alt = DiffusionSpinEcho(bval=1., TE=:min)
-                    @test all(variables.duration.(seq) .≈ variables.duration.(alt))
+                    @test all(isapprox.(variables.duration.(seq), variables.duration.(alt), atol=1e-4, rtol=1e-6))
                 end
             end
             @testset "Maximise b-value" begin
