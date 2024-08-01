@@ -62,7 +62,8 @@ function DiffusionSpinEcho(; delay=0., excitation=(), gradient=(), refocus=(), r
             add_cost_function!((variables.duration(seq[2]) - variables.duration(seq[4]))^2)
             add_cost_function!((variables.duration(seq[6]) - variables.duration(seq[8]))^2)
         else
-            add_cost_function!(variables.duration(seq[6]) + variables.duration(seq[7]))
+            # Minimise sequence duration with less emphasis on waiting block between second gradient and readout
+            add_cost_function!(variables.duration(seq) - 0.5 * variables.duration(seq[8]), 2)
         end
         return seq
     end

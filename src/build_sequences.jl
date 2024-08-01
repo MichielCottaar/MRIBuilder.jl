@@ -24,6 +24,10 @@ function iterate_cost()
     end
 end
 
+function total_cost_func()
+    return sum([10^(-w) * f for (w, f) in GLOBAL_MODEL[][2]]; init=0.)
+end
+
 
 """
 Wrapper to build a sequence.
@@ -71,39 +75,13 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
         if optimise
             jump_model = GLOBAL_MODEL[][1]
             if !iszero(num_variables(jump_model))
+                optimise_with_cost_func(jump_model, total_cost_func(), n_attempts)
                 prev_cost_func = nothing
                 for cost_func in iterate_cost()
                     if !isnothing(prev_cost_func)
                         @constraint jump_model prev_cost_func == objective_value(jump_model)
                     end
-                    @objective jump_model Min cost_func
-                    min_objective = Inf
-                    for attempt in 1:n_attempts
-                        if attempt != 1
-                            old_values = value.(all_variables(jump_model))
-                            size_kick = 0.5 / attempt
-                            new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
-                            for (var, v) in zip(all_variables(jump_model), new_values)
-                                set_start_value(var, v)
-                            end
-                        end
-                        optimize!(jump_model)
-                        while termination_status(jump_model) == INVALID_MODEL
-                            @variable(jump_model)
-                            optimize!(jump_model)
-                        end
-                        if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
-                            if objective_value(jump_model) < min_objective
-                                min_objective = objective_value(jump_model)
-                            elseif isapprox(min_objective, objective_value(jump_model), rtol=1e-6)
-                                break
-                            end
-                        end
-                    end
-                    if !(termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL))
-                        println(solution_summary(jump_model))
-                        error("Optimisation failed to converge.")
-                    end
+                    optimise_with_cost_func(jump_model, cost_func, n_attempts)
                     prev_cost_func = cost_func
                 end
             end
@@ -114,6 +92,37 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
     finally
         GLOBAL_MODEL[] = prev_model
         GLOBAL_SCANNER[] = prev_scanner
+    end
+end
+
+function optimise_with_cost_func(jump_model::Model, cost_func, n_attempts)
+    @objective jump_model Min cost_func
+    min_objective = Inf
+    for attempt in 1:n_attempts
+        if attempt != 1
+            old_values = value.(all_variables(jump_model))
+            size_kick = 0.5 / attempt
+            new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
+            for (var, v) in zip(all_variables(jump_model), new_values)
+                set_start_value(var, v)
+            end
+        end
+        optimize!(jump_model)
+        while termination_status(jump_model) == INVALID_MODEL
+            @variable(jump_model)
+            optimize!(jump_model)
+        end
+        if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
+            if objective_value(jump_model) < min_objective
+                min_objective = objective_value(jump_model)
+            elseif isapprox(min_objective, objective_value(jump_model), rtol=1e-6)
+                break
+            end
+        end
+    end
+    if !(termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL))
+        println(solution_summary(jump_model))
+        error("Optimisation failed to converge.")
     end
 end
 

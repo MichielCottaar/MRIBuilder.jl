@@ -23,8 +23,8 @@
     @testset "DW-SE" begin
         min_rise_time = Default_Scanner.gradient / Default_Scanner.slew_rate
         @testset "Instant pulse & readout" begin
-            @testset "Minimise TE" begin
-                seq = DiffusionSpinEcho(TE=:min, bval=1.)
+            @testset "Default behaviour is to minimise duration" begin
+                seq = DiffusionSpinEcho(bval=1.)
                 @test length(seq) == 10
                 grad_duration = variables.TE(seq) / 2
                 @test all(isapprox.(variables.duration.(seq), [0., 0., grad_duration, 0., 0., 0., grad_duration, 0., 0., 0.], atol=1e-6))
@@ -34,6 +34,10 @@
                 @test 40. < variables.TE(seq) < 50.
                 @test variables.duration(seq) ≈ variables.TE(seq)
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
+                @testset "Explicitly minimising TE gives same result" begin
+                    alt = DiffusionSpinEcho(bval=1., TE=:min)
+                    @test all(isapprox.(variables.duration.(seq), variables.duration.(alt), atol=1e-4, rtol=1e-6))
+                end
             end
             @testset "Maximise b-value" begin
                 seq = DiffusionSpinEcho(TE=80., bval=:max)
