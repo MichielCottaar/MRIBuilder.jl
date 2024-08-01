@@ -250,7 +250,7 @@ function def_alternate_variable!(name::Symbol, other_var::Symbol, from_other::Fu
     setproperty!(variables, name, AlternateVariable(name, other_var, from_other, to_other, inverse))
 end
 
-def_alternate_variable!(:spoiler_scale, :qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
+def_alternate_variable!(:spoiler, :qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
 def_alternate_variable!(:qval, :qval_square, sqrt, q -> q * q, false)
 def_alternate_variable!(:qval_square, :qvec, qv -> sum(q -> q * q, qv), nothing, false)
 
@@ -262,13 +262,13 @@ The norm of the [`variables.qvec`](@ref).
 variables.qval
 
 """
-    spoiler_scale(gradient)
+    spoiler(gradient)
 
 Spatial scale in mm over which the spoiler gradient will dephase by 2π.
 
 Automatically computed based on [`variables.qvec`](@ref).
 """
-variables.spoiler_scale
+variables.spoiler
 
 
 for vec_variable in [:gradient_strength, :slew_rate]

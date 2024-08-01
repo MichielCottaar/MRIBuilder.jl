@@ -64,7 +64,7 @@ variables.rise_time
 variables.slew_rate
 variables.slew_rate_norm            
 variables.slice_thickness           
-variables.spoiler_scale             
+variables.spoiler
 variables.time_to_center            
 variables.voxel_size                
 variables.Δ                         
