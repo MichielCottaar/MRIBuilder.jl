@@ -1,6 +1,6 @@
 module NoGradientBlocks
 import StaticArrays: SVector, SMatrix
-import ....Variables: VariableType, get_free_variable, adjustable, variables, @defvar
+import ....Variables: VariableType, get_free_variable, adjust_groups, variables, @defvar
 import ...AbstractTypes: GradientWaveform
 import ..ChangingGradientBlocks: split_gradient
 
@@ -35,6 +35,6 @@ function split_gradient(ngb::NoGradient, times::VariableType...)
     return [NoGradient(d) for d in durations]
 end
 
-adjustable(::NoGradient) = :false
+adjust_groups(::NoGradient) = Symbol[]
 
 end

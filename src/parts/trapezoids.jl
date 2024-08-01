@@ -6,7 +6,7 @@ module Trapezoids
 import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType, get_gradient, get_pulse, get_readout, adjustable, adjust_internal, apply_simple_constraint!, add_cost_function!
+import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType, get_gradient, get_pulse, get_readout, adjust_groups, adjust_internal, apply_simple_constraint!, add_cost_function!
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ...Containers: BaseBuildingBlock
 
@@ -146,7 +146,7 @@ variables.δ
 
 @defvar qvec(g::BaseTrapezoid, ::Nothing, ::Nothing) = variables.δ(g) .* variables.gradient_strength(g) .* 2π
 
-adjustable(::BaseTrapezoid) = :gradient
+adjust_groups(t::Trapezoid) = [t.group, :gradient]
 
 function adjust_internal(trap::Trapezoid1D; orientation=nothing, scale=1., rotation=nothing)
     if !isnothing(orientation) && !isnothing(rotation)

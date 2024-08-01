@@ -1,7 +1,7 @@
 module InstantGradients
 import StaticArrays: SVector, SMatrix
 import JuMP: @constraint
-import ...Variables: @defvar, VariableType, variables, get_free_variable, set_simple_constraints!, make_generic, adjust_internal, adjustable, gradient_orientation, apply_simple_constraint!
+import ...Variables: @defvar, VariableType, variables, get_free_variable, set_simple_constraints!, make_generic, adjust_internal, adjust_groups, gradient_orientation, apply_simple_constraint!
 import ..AbstractTypes: EventComponent, GradientWaveform
 
 """
@@ -62,7 +62,7 @@ end
 
 make_generic(ig::InstantGradient) = ig
 
-adjustable(::InstantGradient) = :gradient
+adjust_groups(g::InstantGradient) = [g.group, :gradient]
 
 gradient_orientation(ig::InstantGradient{1}) = ig.orientation
 

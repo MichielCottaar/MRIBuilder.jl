@@ -1,5 +1,5 @@
 module AbstractTypes
-import ...Variables: AbstractBlock, variables, adjustable, gradient_orientation, @defvar
+import ...Variables: AbstractBlock, variables, adjust_groups, gradient_orientation, @defvar
 
 """
 Super-type for all individual components that form an MRI sequence (i.e., RF pulse, gradient waveform, or readout event).
@@ -110,8 +110,8 @@ It should be infinite if the component is linear.
 split_timestep(comp_tuple::Tuple{<:Number, <:EventComponent}, precision::Number) = split_timestep(comp_tuple[2], precision)
 
 
-adjustable(::RFPulseComponent) = :pulse
-adjustable(::GradientWaveform) = :gradient
+adjust_groups(p::RFPulseComponent) = [p.group, :pulse]
+adjust_groups(g::GradientWaveform) = [g.group, :gradient]
 gradient_orientation(gw::GradientWaveform{1}) = gw.orientation
 
 

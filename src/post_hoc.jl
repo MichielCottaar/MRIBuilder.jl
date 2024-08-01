@@ -3,9 +3,11 @@ Define post-fitting adjustments of the sequences
 """
 module PostHoc
 
-import ..Variables: AbstractBlock, adjust_internal, adjustable, adjust
+import ..Variables: AbstractBlock, adjust_internal, adjust_groups, adjust
 import ..Components: GradientWaveform, RFPulseComponent, BaseComponent, NoGradient
 import ..Containers: ContainerBlock, Sequence, Wait
+
+const UsedNamesType = Dict{Symbol, Set{Symbol}}
 
 """
     adjust(block; kwargs...)
@@ -34,7 +36,11 @@ To affect all gradients or pulses, use `gradient=` or `pulse`, e.g.
 will divide the amplitude of all RV pulses by two.
 """
 function adjust(block::AbstractBlock; merge=true, kwargs...) 
-    used_names = Set{Symbol}()
+    invalid_type = Set(key for (key, value) in pairs(kwargs) if !(value isa NamedTuple))
+    if length(invalid_type) > 0
+        error("All `adjust` keywords except for merge should be a NamedTuple, like (scale=3, ). This is not the case for: $(invalid_type).")
+    end
+    used_names = UsedNamesType()
     n_adjust, kwargs_list = adjust_kwargs_list(; kwargs...)
     if isnothing(n_adjust)
         res = adjust_helper(block, used_names; kwargs_list[1]...)
@@ -48,10 +54,21 @@ function adjust(block::AbstractBlock; merge=true, kwargs...)
         end
     end
     unused_names = filter(keys(kwargs)) do key
-        !(key in used_names)
+        !(key in keys(used_names))
     end
     if length(unused_names) > 0
         @warn "Some group/type names were not used in call to `MRIBuilder.adjust`, namely: $(unused_names)."
+    end
+    for group_name in keys(kwargs)
+        if group_name in unused_names
+            continue
+        end
+        unused_keys = filter(keys(kwargs[group_name])) do key
+            !(key in used_names[group_name])
+        end
+        if length(unused_keys) > 0
+            @warn "Some keywords provided for group `$(group_name)` were not used, namely: $(unused_keys)."
+        end
     end
     res
 end
@@ -90,33 +107,35 @@ function adjust_kwargs_list(; kwargs...)
     return (n_adjust, kwargs_list)
 end
 
-
-function adjust_helper(block::AbstractBlock, used_names::Set{Symbol}; gradient=(), pulse=(), kwargs...)
+function adjust_helper(block::AbstractBlock, used_names::UsedNamesType; kwargs...)
     params = []
-    adjust_type = adjustable(block)
-    if adjust_type != :false && (!isnothing(block.group) && (block.group in keys(kwargs)))
-        push!(used_names, block.group)
-        new_block = adjust_internal(block; kwargs[block.group]...)
-    elseif adjust_type == :gradient
-        push!(used_names, :gradient)
-        new_block = adjust_internal(block; gradient...)
-    elseif adjust_type == :pulse
-        push!(used_names, :pulse)
-        new_block = adjust_internal(block; pulse...)
-    else
-        new_block = block
+
+    for prop_name in propertynames(block)
+        push!(params, adjust_helper(getproperty(block, prop_name), used_names; kwargs...))
     end
-    for prop_name in propertynames(new_block)
-        push!(params, adjust_helper(getproperty(new_block, prop_name), used_names; gradient=gradient, pulse=pulse, kwargs...))
+    new_block = typeof(block)(params...)
+
+    for group in adjust_groups(new_block)
+        if group in keys(kwargs)
+            if !(group in keys(used_names))
+                used_names[group] = Set{Symbol}()
+            end
+            all_available_kwargs = kwargs[group]
+            use_kwargs = reduce(vcat, Base.kwarg_decl.(methods(adjust_internal, (typeof(new_block), ))))
+            @assert length(use_kwargs) > 0 "Invalid definition of `internal_kwargs` for $(typeof(new_block))"
+            internal_kwargs = Dict(key => value for (key, value) in pairs(all_available_kwargs) if key in use_kwargs)
+            union!(used_names[group], keys(internal_kwargs))
+            return adjust_internal(block; internal_kwargs...)
+        end
     end
-    return typeof(block)(params...)
+    return new_block
 end
 
-adjust_helper(some_value, used_names::Set{Symbol}; kwargs...) = some_value
-adjust_helper(array_variable::AbstractArray, used_names::Set{Symbol}; kwargs...) = map(array_variable) do v adjust_helper(v, used_names; kwargs...) end
-adjust_helper(dict_variable::AbstractDict, used_names::Set{Symbol}; kwargs...) = typeof(dict_variable)(k => adjust_helper(v, used_names; kwargs...) for (k, v) in pairs(dict_variable))
-adjust_helper(tuple_variable::Tuple, used_names::Set{Symbol}; kwargs...) = map(tuple_variable) do v adjust_helper(v, used_names; kwargs...) end
-adjust_helper(pair:: Pair, used_names::Set{Symbol}; kwargs...) = adjust_helper(pair[1], used_names; kwargs...) => adjust_helper(pair[2], used_names; kwargs...)
+adjust_helper(some_value, used_names::UsedNamesType; kwargs...) = some_value
+adjust_helper(array_variable::AbstractArray, used_names::UsedNamesType; kwargs...) = map(array_variable) do v adjust_helper(v, used_names; kwargs...) end
+adjust_helper(dict_variable::AbstractDict, used_names::UsedNamesType; kwargs...) = typeof(dict_variable)(k => adjust_helper(v, used_names; kwargs...) for (k, v) in pairs(dict_variable))
+adjust_helper(tuple_variable::Tuple, used_names::UsedNamesType; kwargs...) = map(tuple_variable) do v adjust_helper(v, used_names; kwargs...) end
+adjust_helper(pair:: Pair, used_names::UsedNamesType; kwargs...) = adjust_helper(pair[1], used_names; kwargs...) => adjust_helper(pair[2], used_names; kwargs...)
 
 
 """

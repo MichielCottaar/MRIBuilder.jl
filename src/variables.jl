@@ -37,21 +37,23 @@ end
 
 Returns the adjusted blocks and add any keywords used in the process to `names_used`.
 
-This is a helper function used by `adjust`. 
+This is a helper function used by [`adjust`](@ref). 
+It should be defined for any block that is adjustable (as defined by [`adjust_groups`](@ref)).
 """
 function adjust_internal end
 
 """
-    adjustable(block)
+    adjust_groups(block)
 
-Returns whether a sequence, building block, or component can be adjusted
+Returns an array of keywords in [`adjust`](@ref) that should affect a specfic block.
 
-Can return one of:
-- `:false`: not adjustable
+If any of these keywords are present in [`adjust`](@ref), then [`adjust_internal`](@ref) will be called.
+
+Some standard keywords are:
 - `:gradient`: expects gradient adjustment parameters
 - `:pulse`: expects RF pulse adjustment parameters
 """
-adjustable(::AbstractBlock) = :false
+adjust_groups(::AbstractBlock) = Symbol[]
 
 # further defined in post_hoc.jl
 function adjust end
