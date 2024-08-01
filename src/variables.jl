@@ -53,6 +53,9 @@ Can return one of:
 """
 adjustable(::AbstractBlock) = :false
 
+# further defined in post_hoc.jl
+function adjust end
+
 
 abstract type AnyVariable end
 

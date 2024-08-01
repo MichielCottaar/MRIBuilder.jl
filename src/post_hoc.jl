@@ -3,7 +3,7 @@ Define post-fitting adjustments of the sequences
 """
 module PostHoc
 
-import ..Variables: AbstractBlock, adjust_internal, adjustable
+import ..Variables: AbstractBlock, adjust_internal, adjustable, adjust
 import ..Components: GradientWaveform, RFPulseComponent, BaseComponent, NoGradient
 import ..Containers: ContainerBlock, Sequence, Wait
 
