@@ -10,7 +10,7 @@ import ...Containers: BaseBuildingBlock
 
 
 """
-    SpoiltSliceSelect(pulse; parameters, variables...)
+    SpoiltSliceSelect(pulse; parameters..., variables...)
 
 Adds slice selection to the `pulse` and surrounds it with spoiler gradients.
 
@@ -21,7 +21,7 @@ Adds slice selection to the `pulse` and surrounds it with spoiler gradients.
 ## Variables
 - `duration`: total duration of the block in ms.
 - `slice_thickness`: slice thickness in mm.
-- `spoiler_scale`: length scale on which the spoilers achieve 2π dephasing in mm. This sets the minimum spoiling. If this spoiling level is not achieved by the slice-select gradient alone, then there will be additional gradients added.
+- `spoiler`: length scale on which the spoilers achieve 2π dephasing in mm. This sets the minimum spoiling. If this spoiling level is not achieved by the slice-select gradient alone, then there will be additional gradients added.
 """
 struct SpoiltSliceSelect <: BaseBuildingBlock
     orientation :: SVector{3, Float64}
@@ -35,7 +35,7 @@ struct SpoiltSliceSelect <: BaseBuildingBlock
     slew_rate :: Number
 end
 
-function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group=:FOV, slice_thickness=nothing, kwargs...)
+function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group=:FOV, slice_thickness=nothing, spoiler, kwargs...)
     res = nothing
     if slice_thickness isa Number && isinf(slice_thickness)
         rise_time_var = get_free_variable(nothing)
@@ -76,6 +76,7 @@ function SpoiltSliceSelect(pulse::RFPulseComponent; orientation=[0, 0, 1], group
     end
 
     set_simple_constraints!(res, kwargs)
+    apply_simple_constraint!(variables.spoiler(res), :<=, spoiler)
 
     max_time = global_scanner().gradient / res.slew_rate
     apply_simple_constraint!(variables.rise_time(res)[1], :<=, max_time)
