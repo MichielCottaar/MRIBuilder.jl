@@ -25,7 +25,7 @@ function iterate_cost()
 end
 
 function total_cost_func()
-    return sum([f for (_, f) in GLOBAL_MODEL[][2]]; init=0.)
+    return sum([10^(-w) * f for (w, f) in GLOBAL_MODEL[][2]]; init=0.)
 end
 
 
@@ -75,6 +75,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
         if optimise
             jump_model = GLOBAL_MODEL[][1]
             if !iszero(num_variables(jump_model))
+                optimise_with_cost_func(jump_model, total_cost_func(), n_attempts)
                 prev_cost_func = nothing
                 for cost_func in iterate_cost()
                     if !isnothing(prev_cost_func)
