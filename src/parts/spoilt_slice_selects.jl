@@ -134,6 +134,6 @@ variables.all_gradient_strengths
 
 Returns the time of the [`SpoiltSliceSelect`](@ref) to return to zero.
 """
-variables.all_gradient_strengths
+variables.fall_time
 
 end
