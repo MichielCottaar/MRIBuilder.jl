@@ -2,7 +2,7 @@ module EPIReadouts
 import ...Containers: BaseSequence, get_index_single_TR
 import ..Trapezoids: Trapezoid, opposite_kspace_lines, LineReadout
 import ...Components: ADC
-import ...Variables: get_free_variable, VariableType, set_simple_constraints!, get_readout, apply_simple_constraint!, variables, @defvar
+import ...Variables: get_free_variable, VariableType, set_simple_constraints!, get_readout, apply_simple_constraint!, variables, @defvar, add_cost_function!
 import ...Pathways: PathwayWalker, update_walker_till_time!, walk_pathway!
 
 """
@@ -58,6 +58,12 @@ function EPIReadout(; resolution::AbstractVector{<:Integer}, recenter=false, gro
         res.blips[shift] = Trapezoid(qvec=[0., shift * res.ky_step, 0.], group=group)
     end
     set_simple_constraints!(res, vars)
+    add_cost_function!(sum(variables.duration.([
+        res.start_gradient,
+        res.positive_line,
+        res.negative_line,
+        values(res.blips)...,
+    ])))
     return res
 end
 
