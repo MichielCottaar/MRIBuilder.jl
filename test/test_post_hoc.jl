@@ -53,5 +53,15 @@
                 @test all(variables.qvec(new_dwi[:gradient]) .≈ [qval_orig/√2, qval_orig/√2, 0.])
             end
         end
+        @testset "Slice selection" begin
+            dwi = DWI(bval=1., slice_thickness=2., refocus=(spoiler=0.5, ))
+            @test variables.frequency(dwi) == (excitation=0., refocus=0.)
+            new_dwi = adjust(dwi, slice=(shift=2., ))
+            @test variables.frequency(new_dwi).excitation ≈ variables.bandwidth(dwi).excitation
+            @test variables.frequency(new_dwi).refocus ≈ variables.bandwidth(dwi).refocus
+            another_dwi = adjust(new_dwi, slice=(shift=-3., ))
+            @test variables.frequency(another_dwi).excitation ≈ -variables.bandwidth(dwi).excitation * 0.5
+            @test variables.frequency(another_dwi).refocus ≈ -variables.bandwidth(dwi).refocus * 0.5
+        end
     end
 end

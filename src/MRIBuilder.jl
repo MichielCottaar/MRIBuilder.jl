@@ -28,8 +28,8 @@ export variables, make_generic, @defvar, get_pulse, get_readout, get_pathway, ge
 import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse, edge_times
 export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse, edge_times
 
-import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, iter_blocks, iter_instant_gradients, iter_instant_pulses
-export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AlternativeBlocks, match_blocks!, get_index_single_TR, iter_blocks, iter_instant_gradients, iter_instant_pulses
+import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AbstractAlternativeBlocks, get_alternatives_name, get_alternatives_options, AlternativeBlocks, match_blocks!, get_index_single_TR, iter_blocks, iter_instant_gradients, iter_instant_pulses
+export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AbstractAlternativeBlocks, get_alternatives_name, get_alternatives_options, AlternativeBlocks, match_blocks!, get_index_single_TR, iter_blocks, iter_instant_gradients, iter_instant_pulses
 
 import .Pathways: Pathway
 export Pathway

@@ -135,7 +135,7 @@ function refocus_pulse(; flip_angle=180, phase=0., frequency=0., shape=nothing, 
                 return SliceSelect(pulse; duration=:min, slice_thickness=slice_thickness, orientation=orientation, group=:FOV)
             end
         else
-            res = SpoiltSliceSelect(pulse; orientation=orientation, duration=:min, group=:FOV, slice_thickness=slice_thickness, spoiler_scale=spoiler)
+            res = SpoiltSliceSelect(pulse; orientation=orientation, duration=:min, group=:FOV, slice_thickness=slice_thickness, spoiler=spoiler)
             return res
         end
     end
@@ -285,7 +285,7 @@ function interpret_image_size(fov, resolution, voxel_size, slice_thickness)
 end
 
 """
-    gradient_spoiler(; optimise=false, orientation=[0, 0, 1], rotate=:FOV, scale=:spoiler, spoiler_scale=1., duration=:min, variables...)
+    gradient_spoiler(; optimise=false, orientation=[0, 0, 1], rotate=:FOV, scale=:spoiler, spoiler=1., duration=:min, variables...)
 
 Returns two DWI gradients that are guaranteed to cancel each other out.
 
@@ -297,12 +297,12 @@ Returns two DWI gradients that are guaranteed to cancel each other out.
 - `scanner`: Used for testing. Do not set this parameter at this level (instead set it for the total sequence using [`build_sequence`](@ref)).
 
 ## Variables
-- [`variables.spoiler_scale`](@ref): maximum spoiler scale (before applying any reductions due to `scale`).
+- [`variables.spoiler`](@ref): maximum spoiler scale (before applying any reductions due to `scale`).
 - Any other parameters expected by [`Trapezoid`](@ref).
 """
-function gradient_spoiler(; optimise=false, scanner=nothing, orientation=[0, 0, 1], group=:FOV, spoiler_scale=1., duration=:min, variables...)
+function gradient_spoiler(; optimise=false, scanner=nothing, orientation=[0, 0, 1], group=:FOV, spoiler=1., duration=:min, variables...)
     build_sequence(scanner; optimise=optimise) do
-        Trapezoid(; orientation=orientation, group=group, spoiler_scale=spoiler_scale, duration=duration, variables...)
+        Trapezoid(; orientation=orientation, group=group, spoiler=spoiler, duration=duration, variables...)
     end
 end
 

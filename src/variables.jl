@@ -37,21 +37,26 @@ end
 
 Returns the adjusted blocks and add any keywords used in the process to `names_used`.
 
-This is a helper function used by `adjust`. 
+This is a helper function used by [`adjust`](@ref). 
+It should be defined for any block that is adjustable (as defined by [`adjust_groups`](@ref)).
 """
 function adjust_internal end
 
 """
-    adjustable(block)
+    adjust_groups(block)
 
-Returns whether a sequence, building block, or component can be adjusted
+Returns an array of keywords in [`adjust`](@ref) that should affect a specfic block.
 
-Can return one of:
-- `:false`: not adjustable
+If any of these keywords are present in [`adjust`](@ref), then [`adjust_internal`](@ref) will be called.
+
+Some standard keywords are:
 - `:gradient`: expects gradient adjustment parameters
 - `:pulse`: expects RF pulse adjustment parameters
 """
-adjustable(::AbstractBlock) = :false
+adjust_groups(::AbstractBlock) = Symbol[]
+
+# further defined in post_hoc.jl
+function adjust end
 
 
 abstract type AnyVariable end
@@ -245,7 +250,7 @@ function def_alternate_variable!(name::Symbol, other_var::Symbol, from_other::Fu
     setproperty!(variables, name, AlternateVariable(name, other_var, from_other, to_other, inverse))
 end
 
-def_alternate_variable!(:spoiler_scale, :qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
+def_alternate_variable!(:spoiler, :qval, q->1e-3 * 2π/q, l->1e-3 * 2π/l, true)
 def_alternate_variable!(:qval, :qval_square, sqrt, q -> q * q, false)
 def_alternate_variable!(:qval_square, :qvec, qv -> sum(q -> q * q, qv), nothing, false)
 
@@ -257,13 +262,13 @@ The norm of the [`variables.qvec`](@ref).
 variables.qval
 
 """
-    spoiler_scale(gradient)
+    spoiler(gradient)
 
 Spatial scale in mm over which the spoiler gradient will dephase by 2π.
 
 Automatically computed based on [`variables.qvec`](@ref).
 """
-variables.spoiler_scale
+variables.spoiler
 
 
 for vec_variable in [:gradient_strength, :slew_rate]

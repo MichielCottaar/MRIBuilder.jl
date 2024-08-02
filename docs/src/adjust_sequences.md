@@ -11,6 +11,7 @@ Post-hoc alterations can be applied to gradients or RF pulses with a specific la
 Some example usages are:
 - Reduce the RF pulse amplitude by 20% (e.g., to model the effect of transmit bias field): `adjust(sequence, pulse=(scale=0.8, ))`
 - Repeat sequence 2 times with different diffusion-weighted gradient orientations (x- and y-direction) and gradient strength reduced by 30%: `adjust(sequence, diffusion=(orientation=[[1., 0., 0], [0., 1., 0.]], scale=0.7))`
+- Repeat the sequence by shifting the excited slice by the given number of millimetres in the slice-select direction: `adjust(sequence, FOV=(shift=[-7.5, -2.5, 2.5, 7.5, -5., 0., 5., 10.]))`. These shifts represent an interleaved acquisition scheme, where the acquired slices/bands are 2.5 mm apart.
 - Rotations defined using the [`Rotations.jl`](https://github.com/JuliaGeometry/Rotations.jl) package can be applied to gradient orientations or the field of view. For example, to rotate the field of view by 45 degrees around the y-axis:
 ```julia
 using Rotations

@@ -6,7 +6,7 @@ module Trapezoids
 import JuMP: @constraint
 import StaticArrays: SVector
 import LinearAlgebra: norm
-import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType, get_gradient, get_pulse, get_readout, adjustable, adjust_internal, apply_simple_constraint!, add_cost_function!
+import ...Variables: variables, @defvar, scanner_constraints!, get_free_variable, set_simple_constraints!, gradient_orientation, VariableType, get_gradient, get_pulse, get_readout, adjust, adjust_groups, adjust_internal, apply_simple_constraint!, add_cost_function!
 import ...Components: ChangingGradient, ConstantGradient, RFPulseComponent, ADC
 import ...Containers: BaseBuildingBlock
 
@@ -146,7 +146,7 @@ variables.δ
 
 @defvar qvec(g::BaseTrapezoid, ::Nothing, ::Nothing) = variables.δ(g) .* variables.gradient_strength(g) .* 2π
 
-adjustable(::BaseTrapezoid) = :gradient
+adjust_groups(t::Trapezoid) = [t.group, :gradient]
 
 function adjust_internal(trap::Trapezoid1D; orientation=nothing, scale=1., rotation=nothing)
     if !isnothing(orientation) && !isnothing(rotation)
@@ -192,12 +192,14 @@ Parameters and variables are identical as for [`Trapezoid`](@ref) with the addit
 struct SliceSelect{N} <: BaseTrapezoid{N}
     trapezoid :: Trapezoid{N}
     pulse :: RFPulseComponent
+    group :: Symbol
 end
 
-function SliceSelect(pulse::RFPulseComponent; orientation=nothing, rise_time=nothing, group=nothing, slew_rate=nothing, vars...)
+function SliceSelect(pulse::RFPulseComponent; orientation=nothing, rise_time=nothing, group=:FOV, slew_rate=nothing, vars...)
     res = SliceSelect(
-        Trapezoid(; orientation=orientation, rise_time=rise_time, flat_time=variables.duration(pulse), group=group, slew_rate=slew_rate),
-        pulse
+        Trapezoid(; orientation=orientation, rise_time=rise_time, flat_time=variables.duration(pulse), slew_rate=slew_rate, group=nothing),
+        pulse,
+        group
     )
     set_simple_constraints!(res, vars)
     return res
@@ -220,6 +222,19 @@ variables.slice_thickness
 get_pulse(ss::SliceSelect) = ss.pulse
 get_gradient(ss::SliceSelect) = ss.trapezoid
 @defvar effective_time(ss::SliceSelect) = variables.effective_time(ss, :pulse)
+
+adjust_groups(ss::SliceSelect) = [ss.group, :slice]
+function adjust_internal(ss::SliceSelect; shift)
+    return SliceSelect(
+        ss.trapezoid,
+        adjust(
+            ss.pulse;
+            pulse=(frequency=variables.gradient_strength_norm(ss) * shift * 1e3,)
+        ),
+        ss.group,
+    )
+end
+
 
 """
     LineReadout(adc; ramp_overlap=1., orientation=nothing, group=nothing, variables...)
