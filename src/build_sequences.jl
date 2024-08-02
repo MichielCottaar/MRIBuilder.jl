@@ -1,5 +1,5 @@
 module BuildSequences
-import JuMP: Model, optimizer_with_attributes, optimize!, AbstractJuMPScalar, value, solution_summary, termination_status, LOCALLY_SOLVED, OPTIMAL, num_variables, all_variables, set_start_value, ALMOST_LOCALLY_SOLVED, objective_value, INVALID_MODEL, @variable, @objective, @constraint, raw_status
+using JuMP
 import Ipopt
 import Juniper
 import ..Scanners: Scanner, gradient_strength, Default_Scanner
@@ -95,6 +95,10 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
     end
 end
 
+function number_equality_constraints(model::Model)
+    sum([num_constraints(model, expr, comp) for (expr, comp) in JuMP.list_of_constraint_types(model) if comp <: MOI.EqualTo])
+end
+
 function optimise_with_cost_func(jump_model::Model, cost_func, n_attempts)
     @objective jump_model Min cost_func
     min_objective = Inf
@@ -107,11 +111,10 @@ function optimise_with_cost_func(jump_model::Model, cost_func, n_attempts)
                 set_start_value(var, v)
             end
         end
-        optimize!(jump_model)
-        while termination_status(jump_model) == INVALID_MODEL
+        for _ in num_variables(jump_model):number_equality_constraints(jump_model)
             @variable(jump_model)
-            optimize!(jump_model)
         end
+        optimize!(jump_model)
         if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
             if objective_value(jump_model) < min_objective
                 min_objective = objective_value(jump_model)
