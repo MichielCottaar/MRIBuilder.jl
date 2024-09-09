@@ -59,11 +59,11 @@ function DiffusionSpinEcho(; delay=0., excitation=(), gradient=(), refocus=(), r
         seq = Sequence(parts; name=:DiffusionSpinEcho, delay=delay, vars...)
         
         if g1 isa InstantGradient
-            add_cost_function!((variables.duration(seq[2]) - variables.duration(seq[4]))^2)
-            add_cost_function!((variables.duration(seq[6]) - variables.duration(seq[8]))^2)
+            add_cost_function!((seq[2].duration - seq[4].duration)^2)
+            add_cost_function!((seq[6].duration - seq[8].duration)^2)
         else
             # Minimise sequence duration with less emphasis on waiting block between second gradient and readout
-            add_cost_function!(variables.duration(seq) - 0.5 * variables.duration(seq[8]), 2)
+            add_cost_function!(seq.duration - 0.5 * seq[8].duration, 2)
         end
         return seq
     end
