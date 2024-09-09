@@ -1,7 +1,7 @@
 module CompositePulses
 import JuMP: @constraint
 import ...AbstractTypes: RFPulseComponent, split_timestep, edge_times
-import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar
+import ....Variables: VariableType, set_simple_constraints!, make_generic, get_free_variable, adjust_internal, variables, @defvar, add_cost_function!
 import ..GenericPulses: GenericPulse
 
 """
@@ -15,7 +15,7 @@ A composite RF pulse formed by repeating a base RF pulse.
 
 # Variables
 - `weights`: The weight of each of the base RF pulses.
-- `interpulse_delay`: Time between the center of the RF pulses.
+- `interpulse_delay`: Time between the center of the RF pulses. If not otherwise constrained, it will be minimised.
 - `scale_amplitude`: How strongly one should scale the amplitude versus the duration to achieve the desired weights. If set to 1 only the RF pulse amplitude will be scaled. If set to 0 only the RF pulse duration will be scaled.
 """
 struct CompositePulse <: RFPulseComponent
@@ -47,6 +47,7 @@ function CompositePulse(; base_pulse::RFPulseComponent, nweights=nothing, weight
         get_free_variable(interpulse_delay),
         scale_amplitude
     )
+    add_cost_function!(res.interpulse_delay)
     return res
 end
 
