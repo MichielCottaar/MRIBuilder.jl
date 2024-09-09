@@ -23,9 +23,9 @@ Parent type of all components, building block, and sequences that form an MRI se
 """
 abstract type AbstractBlock end
 
-function fixed(ab::AbstractBlock)
+function fixed(ab::T) where {T<:AbstractBlock}
     params = []
-    for prop_name in propertynames(ab)
+    for prop_name in fieldnames(T)
         push!(params, fixed(getproperty(ab, prop_name)))
     end
     return typeof(ab)(params...)
