@@ -25,7 +25,11 @@ _robust_value(other) = other
 
 
 function Base.show(io::IO, block::AbstractBlock)
-    print(io, nameof(typeof(block)), "(")
+    show_block(io, block, 0)
+end
+
+function show_block(io::IO, block::AbstractBlock, nspaces::Int64)
+    print(io, nameof(typeof(block)), "(\n")
     for name in propertynames(block)
         value = _robust_value(getproperty(block, name))
         if (
@@ -39,7 +43,13 @@ function Base.show(io::IO, block::AbstractBlock)
             continue
         end
 
-        print(io, name, "=", repr(getproperty(block, name)), ", ")
+        print(io, repeat(' ', nspaces + 2), name, "=")
+        if value isa AbstractBlock
+            show_block(io, value, nspaces + 2)
+        else
+            print(io, repr(value))
+        end
+        print(io, ",\n")
     end
     print(io, ")")
 end
