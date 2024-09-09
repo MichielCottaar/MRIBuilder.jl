@@ -86,6 +86,59 @@ end
 
 
 """
+    base_variables([T])
+
+Return dictionary with all [`Variable`](@ref) objects defined for a specific sequence component/block `T`.
+
+This only returns those [`Variable`](@ref) directly defined for this component/block, not for any sub-components (through [`get_pulse`](@ref), [`get_gradient`][(@ref), etc.)
+
+If `T` is not provided, all [`Variable`](@ref) objects are returned.
+"""
+function base_variables()
+    all_members = (s => getproperty(variables, s) for s in names(variables, all=true))
+    return Dict{Symbol, Variable}(
+        s => v for (s, v) in all_members if v isa Variable
+    )
+end
+
+function base_variables(T::Type{<:AbstractBlock})
+    return Dict(
+        s => v for (s, v) in base_variables() if hasmethod(v.f, (T, ))
+    )
+end
+
+
+# Add Variables to the individual sequence components/blocks properties
+function Base.propertynames(::T) where {T <: AbstractBlock}
+    f = Base.fieldnames(T)
+    var_names = [k for k in keys(base_variables(T)) if !(k in f)]
+    return (f..., var_names...)
+end
+
+function Base.getproperty(block::T, v::Symbol) where T <: AbstractBlock
+    if v in Base.fieldnames(T)
+        return getfield(block, v)
+    end
+    vars = base_variables(T)
+    if v in keys(vars)
+        return vars[v](block)
+    end
+    error("Type $(T) has no field or variable $(v)")
+end
+
+function Base.setproperty!(block::T, v::Symbol, value) where T <: AbstractBlock
+    if v in Base.fieldnames(T)
+        return setfield!(block, v, value)
+    end
+    vars = base_variables(T)
+    if v in keys(vars)
+        orig = vars[v](block)
+        return apply_simple_constraint!(orig, value)
+    end
+    error("Type $(T) has no field or variable $(v)")
+end
+
+"""
     variable_defined_for(var, Val(type))
 
 Check whether variable is defined for a specific sub-type.
