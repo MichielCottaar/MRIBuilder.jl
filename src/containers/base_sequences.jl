@@ -4,7 +4,7 @@ Defines [`BaseSequence`](@ref) and [`Sequence`](@ref)
 module BaseSequences
 import StaticArrays: SVector
 import JuMP: @constraint
-import ...Variables: get_free_variable, VariableType, variables, set_simple_constraints!, make_generic, get_gradient, get_pulse, get_gradient, @defvar, add_cost_function!
+import ...Variables: get_free_variable, VariableType, variables, set_simple_constraints!, make_generic, get_gradient, get_pulse, get_gradient, @defvar, add_cost_function!, base_variables
 import ...BuildSequences: global_scanner
 import ...Components: EventComponent, NoGradient, edge_times
 import ...Scanners: Scanner, B0
@@ -160,6 +160,29 @@ function Sequence(blocks::AbstractVector; name=:Sequence, scanner=nothing, vars.
 end
 
 Base.show(io::IO, ::Type{<:Sequence{S, N}}) where {S, N} = print(io, S, "{$N}")
+
+function Base.propertynames(seq::T) where {T <: Sequence}
+    f = Base.fieldnames(T)
+    var_names = [k for k in keys(base_variables(T)) if !(k in f)]
+    intermediate = (f..., var_names...)
+    part_names = [k for (k, _) in values(seq.blocks) if !isnothing(k) && !(k in intermediate)]
+    return (intermediate..., part_names...)
+end
+
+function Base.getproperty(seq::T, v::Symbol) where T <: Sequence
+    if v in Base.fieldnames(T)
+        return getfield(seq, v)
+    end
+    vars = base_variables(T)
+    if v in keys(vars)
+        return vars[v](seq)
+    end
+    if v in [k for (k, _) in values(seq.blocks)]
+        return seq[v]
+    end
+    error("Type $(T) has no field, block, or variable $(v)")
+end
+
 B0(sequence::Sequence) = B0(sequence.scanner)
 
 Sequence(blocks...; kwargs...) = Sequence([blocks...]; kwargs...)
