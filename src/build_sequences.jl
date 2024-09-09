@@ -116,10 +116,10 @@ function optimise_with_cost_func(jump_model::Model, cost_func, n_attempts)
         end
         optimize!(jump_model)
         if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
-            if objective_value(jump_model) < min_objective
-                min_objective = objective_value(jump_model)
-            elseif isapprox(min_objective, objective_value(jump_model), rtol=1e-6)
+            if isapprox(min_objective, objective_value(jump_model), rtol=1e-6)
                 break
+            elseif objective_value(jump_model) < min_objective
+                min_objective = objective_value(jump_model)
             end
         end
     end
