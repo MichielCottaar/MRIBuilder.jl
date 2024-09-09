@@ -129,7 +129,7 @@ function optimise_with_cost_func(jump_model::Model, cost_func, n_attempts)
     end
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=30, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=10, kwargs...)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
         model = (
             Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...)),
@@ -141,8 +141,8 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser
     build_sequence(f, scanner, model, optimise, n_attempts)
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=0, mu_strategy="adaptive", kwargs...)
-    build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, mu_strategy=mu_strategy, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=0, mu_strategy="adaptive", max_iter=10000, kwargs...)
+    build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, mu_strategy=mu_strategy, max_iter=max_iter, kwargs...)
 end
 
 build_sequence(f::Function, optimiser_constructor; kwargs...) = build_sequence(f, Default_Scanner, optimiser_constructor; kwargs...)
