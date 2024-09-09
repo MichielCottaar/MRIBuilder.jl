@@ -28,7 +28,7 @@ function DiffusionSpinEcho(; scanner=DefaultScanner, parameters..., vars...)
             :readout => readout_event(...),
             nothing,
         ], name=:DiffusionSpinEcho, vars...)
-        add_cost_function!(variables.duration(seq[6]) + variables.duration(seq[7]))
+        add_cost_function!(seq[6].duration + seq[7].duration)
         return seq
     end
 end
@@ -56,7 +56,7 @@ Some of these components have been given specific names (e.g., `:excitation => .
 After creating the sequence object, we can now add secondary objectives to the cost function (using [`add_cost_function!`](@ref)).
 In this example, we have:
 ```julia
-add_cost_function!(variables.duration(seq[6]) + variables.duration(seq[7]))
+add_cost_function!(seq[6].duration + seq[7].duration)
 ```
 If we check the order of the sequence component, we see that this minimises the sum of the duration of the second gradient and the wait block before this gradient.
 This cost function has been added to maximise the time between the second gradient and the readout (and hence minimise the effect of eddy currents on the readout).
