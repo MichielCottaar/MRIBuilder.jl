@@ -15,16 +15,16 @@ A composite RF pulse formed by repeating a base RF pulse.
 
 # Variables
 - `weights`: The weight of each of the base RF pulses.
-- `pulse_time`: Time between the center of the RF pulses.
+- `interpulse_delay`: Time between the center of the RF pulses.
 - `scale_amplitude`: How strongly one should scale the amplitude versus the duration to achieve the desired weights. If set to 1 only the RF pulse amplitude will be scaled. If set to 0 only the RF pulse duration will be scaled.
 """
 struct CompositePulse <: RFPulseComponent
     pulses :: Vector{RFPulseComponent}
-    pulse_time :: VariableType
+    interpulse_delay :: VariableType
     scale_amplitude :: VariableType
 end
 
-function CompositePulse(; base_pulse::RFPulseComponent, nweights=nothing, weights=nothing, pulse_time=nothing, scale_amplitude=nothing, variables...)
+function CompositePulse(; base_pulse::RFPulseComponent, nweights=nothing, weights=nothing, interpulse_delay=nothing, scale_amplitude=nothing, variables...)
     if isnothing(weights)
         if isnothing(nweights)
             error("Either `nweights` or `weights` should be set when constructing a CompositePulse.")
@@ -44,7 +44,7 @@ function CompositePulse(; base_pulse::RFPulseComponent, nweights=nothing, weight
     ]
     res = CompositePulse(
         pulses,
-        get_free_variable(pulse_time),
+        get_free_variable(interpulse_delay),
         scale_amplitude
     )
     return res
@@ -53,28 +53,29 @@ end
 Base.length(comp::CompositePulse) = length(comp.pulses)
 function wait_times(comp::CompositePulse)
     d = duration.(comp.pulses)
-    comp.pulse_time - (d[1:end-1] + d[2:end]) / 2
+    interpulse_delay(comp) - (d[1:end-1] + d[2:end]) / 2
 end
 
 @defvar duration(pulse::CompositePulse) = (
         0.5 * variables.duration(pulse.pulses[1]) + 
         0.5 * variables.duration(pulse.pulses[end]) + 
-        pulse.pulse_time * (length(pulse) - 1)
+        interpulse_delay(pulse) * (length(pulse) - 1)
     )
 
 @defvar begin
     flip_angle(pulse::CompositePulse) = sum(variables.flip_angle.(pulse.pulses))
     effective_time(pulse::CompositePulse) = variables.duration(pulse) / 2
+    interpulse_delay(pulse::CompositePulse) = pulse.interpulse_delay
 end
 
 
 function get_pulse_index(comp::CompositePulse, time::Number)
     t_first_center = 0.5 * variables.duration(comp.pulses[1])
-    index = Int(div(time - t_first_center, comp.pulse_time, RoundNearest)) + 1
+    index = Int(div(time - t_first_center, interpulse_delay(comp), RoundNearest)) + 1
     if index < 1 || index > length(comp)
         return (index, 0.)
     else
-        relative_to_center = time - t_first_center - (index - 1) * comp.pulse_time
+        relative_to_center = time - t_first_center - (index - 1) * interpulse_delay(comp)
         relative_to_start = relative_to_center + 0.5 * variables.duration(comp.pulses[index])
         return (index, relative_to_start)
     end
@@ -102,8 +103,8 @@ function edge_times(comp::CompositePulse)
     t1 = variables.duration(comp.pulses[1]) * 0.5
     for (index, pulse) in enumerate(comp.pulses)
         d = variables.duration(pulse)
-        push!(res, t1 - d/2 + comp.pulse_time * (index - 1))
-        push!(res, t1 + d/2 + comp.pulse_time * (index - 1))
+        push!(res, t1 - d/2 + interpulse_delay(comp) * (index - 1))
+        push!(res, t1 + d/2 + interpulse_delay(comp) * (index - 1))
     end
     return res
 end
@@ -116,7 +117,7 @@ function make_generic(comp::CompositePulse)
     amplitude = Float64[]
     phase = Float64[]
     for (index, generic) in enumerate(sub_generics)
-        start_time = t1 + (index - 1) * comp.pulse_time - variables.duration(comp.pulses[index]) / 2
+        start_time = t1 + (index - 1) * interpulse_delay(comp) - variables.duration(comp.pulses[index]) / 2
         push!(times, start_time)
         push!(amplitude, 0.)
         push!(phase, generic.phase[1])
@@ -135,8 +136,8 @@ split_timestep(comp::CompositePulse, precision) = minimum(split_timestep.(comp.p
 function adjust_internal(comp::CompositePulse; stretch=1., kwargs...)
     return CompositePulse(
         adjust_internal.(comp.pulses; stretch=stretch, kwargs...),
-        comp.pulse_time * stretch,
-        comp.scale_amplitude,
+        interpulse_delay(comp) * stretch,
+        scale_amplitude(comp),
     )
 end
 
