@@ -110,7 +110,7 @@ end
 function adjust_helper(block::AbstractBlock, used_names::UsedNamesType; kwargs...)
     params = []
 
-    for prop_name in propertynames(block)
+    for prop_name in fieldnames(typeof(block))
         push!(params, adjust_helper(getproperty(block, prop_name), used_names; kwargs...))
     end
     new_block = typeof(block)(params...)
