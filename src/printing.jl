@@ -2,6 +2,7 @@ module Printing
 import JuMP: value, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Variables: VariableType, variables, AbstractBlock, Variable
+import ..Containers: BuildingBlock, waveform, events, start_time
 
 function _robust_value(possible_number::VariableType)
     try
@@ -51,7 +52,22 @@ function show_block(io::IO, block::AbstractBlock, nspaces::Int64)
         end
         print(io, ",\n")
     end
-    print(io, ")")
+    print(io, repeat(' ', nspaces), ")")
+end
+
+function show_block(io::IO, block::BuildingBlock, nspaces::Int64)
+    print(io, nameof(typeof(block)), "(\n")
+    control_points = waveform(block)
+    print(io, repeat(' ', nspaces + 2), "duration=$(variables.duration(block)),\n")
+    for (key, event) in events(block)
+        print(io, repeat(' ', nspaces + 2), "t=$(start_time(block, key)): ")
+        show_block(io, event, nspaces + 2)
+        print(io, ",\n")
+    end
+    if !all(all(iszero.(grad)) for (_, grad) in control_points)
+        print(io, repeat(' ', npsaces + 2), "waveform=", control_points, ",\n")
+    end
+    print(io, repeat(' ', nspaces), ")")
 end
 
 end
