@@ -1,5 +1,5 @@
 module Printing
-import JuMP: value
+import JuMP: value, AbstractJuMPScalar
 import Printf: @sprintf
 import ..Variables: VariableType, variables, AbstractBlock, Variable
 
@@ -21,49 +21,25 @@ end
 
 _robust_value(possible_tuple::Tuple) = _robust_value([possible_tuple...])
 _robust_value(possible_tuple::NamedTuple) = NamedTuple(k => _robust_value(v) for (k, v) in pairs(possible_tuple))
+_robust_value(other) = other
 
 
 function Base.show(io::IO, block::AbstractBlock)
     print(io, nameof(typeof(block)), "(")
     for name in propertynames(block)
-        ft = fieldtype(typeof(block), name)
+        value = _robust_value(getproperty(block, name))
         if (
-            ft == VariableType ||
-            (ft <: AbstractVector && eltype(ft) == VariableType) ||
-            string(name)[1] == '_'
-        )
-            continue
-        end
-        if (
-            ft <: Union{Nothing, AbstractBlock} ||
-            (ft <: AbstractVector && eltype(ft) <: AbstractBlock) ||
-            (ft <: AbstractVector && eltype(ft) <: Pair)
+            value isa AbstractJuMPScalar ||
+            (value isa AbstractVector{<:AbstractJuMPScalar}) ||
+            string(name)[1] == '_' ||
+            isnothing(value) ||
+            (value isa AbstractVector{<:AbstractBlock}) ||
+            (value isa AbstractVector{<:Pair})
         )
             continue
         end
 
         print(io, name, "=", repr(getproperty(block, name)), ", ")
-    end
-
-    for fn_name in names(variables, all=true)
-        fn = getproperty(variables, fn_name)
-        if !(fn isa Variable)
-            continue
-        end
-
-        try
-            numeric_value = _robust_value(fn(block))
-            if isnothing(numeric_value)
-                continue
-            end
-            as_string = string(numeric_value)
-            if length(as_string) > 50
-                continue
-            end
-            print(io, "$(fn_name)=$(as_string), ")
-        catch e
-            continue
-        end
     end
     print(io, ")")
 end
