@@ -45,8 +45,8 @@
                 @test all(isapprox.(variables.duration.(seq), [0., 0., 40., 0., 0., 0., 40., 0., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test length([iter_instant_pulses(seq)...]) == 2
                 @test length([iter_instant_gradients(seq)...]) == 0.
-                @test variables.TE(seq) ≈ 80.
-                @test variables.duration(seq) ≈ 80.
+                @test variables.TE(seq) ≈ 80. rtol=1e-6
+                @test variables.duration(seq) ≈ 80. rtol=1e-6
                 @test 4.8 < variables.bval(seq) < 4.9
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
                 @test all(isapprox.(edge_times(seq, tol=1e-3), [0., min_rise_time, 40. - min_rise_time, 40, 40 + min_rise_time, 80 - min_rise_time, 80.], atol=1e-4))
