@@ -8,7 +8,7 @@ To get help on a specific sequence, either follow the link in the sequence list 
 
 When reading the help, you will notice that there are two type of expected inputs:
 - `Parameters`: these define the type of components that will be included, e.g., the shape of the excitation pulse or the readout strategy. These parameters have to be set to certain fixed values. If not set, they will be determined by their default value as defined in the documentation.
-- `Variables`: These are a special type of parameters. In addition to being set to a fixed value, they can also be set to `:min` or `:max` to minimise or maximise the variable. If they are not set, they will be determined based on the optimisation or fixing of other variables. For more details, see the section on [sequence optimisation](@ref sequence_optimisation). All variables are available in the [`variables`](@ref) module.
+- `Variables`: These are a special type of parameters. In addition to being set to a fixed value, they can also be set to `:min` or `:max` to minimise or maximise the variable. If they are not set, they will be determined based on the optimisation or fixing of other variables. For more details, see the section on [sequence optimisation](@ref sequence_optimisation). All variables are available in the [`variables`](@ref) module. They can also be accessed as properties of the specific pulse/gradient/readout/block (i.e., `block.<variable_name>`).
 
 As an example, the following creates and plots a [`DiffusionSpinEcho`](@ref) that has a b-value of 1, a minimal echo time, and a slice thickness of 2 mm:
 ```@example

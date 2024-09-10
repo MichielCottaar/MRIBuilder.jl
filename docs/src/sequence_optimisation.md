@@ -11,7 +11,7 @@ In addition to the user-defined constraints, this optimisation will also take in
 Internally, MRIBuilder will then optimise the `BuildingBlock` free parameters to match any user-defined constraints and/or objectives.
 This optimisation uses the [Ipopt](https://github.com/coin-or/Ipopt) optimiser accessed through the [JuMP.jl](https://jump.dev/JuMP.jl/stable/) library.
 
-In addition to any user-defined objectives, the developer might also define secondary objectives (e.g., manimise the total sequence duration). 
+In addition to any user-defined objectives, the developer might also have defined secondary objectives (e.g., minimise the total sequence duration). 
 These objective functions will only be considered if they do not affect the result of the user-defined primary objective.
 More details on these developer-defined secondary objectives can be found in the section on [defining new sequences](@ref defining_sequences)
 
