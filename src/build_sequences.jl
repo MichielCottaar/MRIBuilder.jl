@@ -34,7 +34,7 @@ Wrapper to build a sequence.
 
 Use as 
 ```julia
-build_sequence(scanner[, optimiser_constructor];) do
+build_sequence(scanner;) do
     ...
 end
 ```
@@ -56,7 +56,6 @@ As soon as the code block ends the sequence is optimised (if `optimise=true`) an
 
 ## Parameters
 - `scanner`: Set to a [`Scanner`](@ref) to limit the gradient strength and slew rate. When this call to `build_sequence` is embedded in another, this parameter can be set to `nothing` to indicate that the same scanner should be used. 
-- `optimiser_constructor`: A `JuMP` solver optimiser as described in the [JuMP documentation](https://jump.dev/JuMP.jl/stable/tutorials/getting_started/getting_started_with_JuMP/#What-is-a-solver?). Defaults to using [Ipopt](https://github.com/jump-dev/Ipopt.jl).
 - `optimise`: Whether to optimise and fix the sequence as soon as it is returned. This defaults to `true` if a scanner is provided and `false` if no scanner is provided.
 - `n_attempts`: How many times to restart the optimser (default: 100).
 - `kwargs...`: Other keywords are passed on as attributes to the `optimiser_constructor` (e.g., set `print_level=3` to make the Ipopt optimiser quieter).
@@ -129,10 +128,16 @@ function optimise_with_cost_func(jump_model::Model, cost_func, n_attempts)
     end
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=10, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=10, print_level=0, mu_strategy="adaptive", max_iter=10000, kwargs...)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
+        full_kwargs = Dict(
+            :print_level => print_level,
+            :mu_strategy => mu_strategy,
+            :max_iter => max_iter,
+            kwargs...
+        )
         model = (
-            Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...)),
+            Model(optimizer_with_attributes(Ipopt.Optimizer, [string(k) => v for (k, v) in full_kwargs]...)),
             Tuple{Float64, AbstractJuMPScalar}[]
         )
     else
@@ -140,12 +145,6 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser
     end
     build_sequence(f, scanner, model, optimise, n_attempts)
 end
-
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=0, mu_strategy="adaptive", max_iter=10000, kwargs...)
-    build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, mu_strategy=mu_strategy, max_iter=max_iter, kwargs...)
-end
-
-build_sequence(f::Function, optimiser_constructor; kwargs...) = build_sequence(f, Default_Scanner, optimiser_constructor; kwargs...)
 
 
 """
