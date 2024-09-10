@@ -78,7 +78,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
                 prev_cost_func = nothing
                 for cost_func in iterate_cost()
                     if !isnothing(prev_cost_func)
-                        @constraint jump_model prev_cost_func == objective_value(jump_model)
+                        @constraint jump_model prev_cost_func <= objective_value(jump_model) + (1 + 1e-12)
                     end
                     optimise_with_cost_func(jump_model, cost_func, n_attempts)
                     prev_cost_func = cost_func
