@@ -20,7 +20,7 @@ function iterate_cost()
     if iszero(length(unique_weights))
         return [0.]
     else
-        return [sum([f for (w, f) in GLOBAL_MODEL[][2] if w == weight]; init=0.) for weight in unique_weights]
+        return [sum([f for (w, f) in GLOBAL_MODEL[][2] if w <= weight]; init=0.) for weight in unique_weights]
     end
 end
 
