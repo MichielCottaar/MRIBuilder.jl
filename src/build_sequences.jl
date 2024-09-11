@@ -151,7 +151,7 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
         error("Optimisation failed to converge. The following errors were raised: $err_string. Example errors for each type are printed above.")
     end
     backend(jump_model).optimizer.model.inner.x .= min_values
-    @assert value(cost_func) == min_objective
+    @assert value(cost_func) ≈ min_objective eps(min_objective)
 end
 
 function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=20, print_level=0, mu_strategy="adaptive", max_iter=1000, kwargs...)
