@@ -104,6 +104,8 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
     min_objective = Inf
     min_values = nothing
     nsuccess = 0
+    sample_error = Dict{TerminationStatusCode, Any}()
+    errors = TerminationStatusCode[]
     for attempt in 1:n_attempts
         if attempt != 1
             new_values = rand(length(all_variables(jump_model)))
@@ -111,7 +113,7 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
                 set_start_value(var, v)
             end
         end
-        for sub_attempt in 1:5
+        for sub_attempt in 1:3
             if sub_attempt != 1
                 old_values = value.(all_variables(jump_model))
                 size_kick = 0.5 / sub_attempt
@@ -132,15 +134,22 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
                     min_values = copy(backend(jump_model).optimizer.model.inner.x)
                 end
                 break
+            elseif sub_attempt == 3
+                push!(errors, termination_status(jump_model))
+                sample_error[termination_status(jump_model)] = solution_summary(jump_model)
             end
         end
         if nsuccess > 2
             break
         end
     end
-    if nsuccess < 2
-        println(solution_summary(jump_model))
-        error("Optimisation failed to converge.")
+    if iszero(nsuccess)
+        err_string = join(["$(String(Symbol(err))) (x$(sum([e == err for e in errors])))" for err in unique(errors)], ", ", ", and ")
+        for msg in values(sample_error)
+            println(msg)
+            println("")
+        end
+        error("Optimisation failed to converge. The following errors were raised: $err_string. Example errors for each type are printed above.")
     end
     backend(jump_model).optimizer.model.inner.x .= min_values
     return min_objective
