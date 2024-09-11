@@ -74,13 +74,14 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
         if optimise
             jump_model = GLOBAL_MODEL[][1]
             if !iszero(num_variables(jump_model))
-                optimise_with_cost_func(jump_model, total_cost_func(), n_attempts)
+                optimise_with_cost_func!(jump_model, total_cost_func(), n_attempts)
                 prev_cost_func = nothing
+                prev_opt_value = nothing
                 for cost_func in iterate_cost()
                     if !isnothing(prev_cost_func)
-                        @constraint jump_model prev_cost_func <= objective_value(jump_model)
+                        @constraint jump_model prev_cost_func <= prev_opt_value
                     end
-                    optimise_with_cost_func(jump_model, cost_func, n_attempts)
+                    prev_opt_value = optimise_with_cost_func!(jump_model, cost_func, n_attempts)
                     prev_cost_func = cost_func
                 end
             end
@@ -98,37 +99,54 @@ function number_equality_constraints(model::Model)
     sum([num_constraints(model, expr, comp) for (expr, comp) in JuMP.list_of_constraint_types(model) if comp <: MOI.EqualTo])
 end
 
-function optimise_with_cost_func(jump_model::Model, cost_func, n_attempts)
+function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
     @objective jump_model Min cost_func
     min_objective = Inf
+    min_values = nothing
+    nsuccess = 0
     for attempt in 1:n_attempts
         if attempt != 1
-            old_values = value.(all_variables(jump_model))
-            size_kick = 0.5 / attempt
-            new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
+            new_values = rand(length(all_variables(jump_model)))
             for (var, v) in zip(all_variables(jump_model), new_values)
                 set_start_value(var, v)
             end
         end
-        for _ in num_variables(jump_model):number_equality_constraints(jump_model)
-            @variable(jump_model)
-        end
-        optimize!(jump_model)
-        if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
-            if isapprox(min_objective, objective_value(jump_model), rtol=1e-6)
+        for sub_attempt in 1:5
+            if sub_attempt != 1
+                old_values = value.(all_variables(jump_model))
+                size_kick = 0.5 / sub_attempt
+                new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
+                for (var, v) in zip(all_variables(jump_model), new_values)
+                    set_start_value(var, v)
+                end
+            end
+            for _ in num_variables(jump_model):number_equality_constraints(jump_model)
+                @variable(jump_model)
+            end
+            optimize!(jump_model)
+            #println(solution_summary(jump_model))
+            if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
+                nsuccess += 1
+                if objective_value(jump_model) < min_objective
+                    min_objective = objective_value(jump_model)
+                    min_values = copy(backend(jump_model).optimizer.model.inner.x)
+                end
                 break
-            elseif objective_value(jump_model) < min_objective
-                min_objective = objective_value(jump_model)
             end
         end
+        if nsuccess > 2
+            break
+        end
     end
-    if !(termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL))
+    if nsuccess < 2
         println(solution_summary(jump_model))
         error("Optimisation failed to converge.")
     end
+    backend(jump_model).optimizer.model.inner.x .= min_values
+    return min_objective
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=10, print_level=0, mu_strategy="adaptive", max_iter=10000, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=10, print_level=0, mu_strategy="adaptive", max_iter=1000, kwargs...)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
         full_kwargs = Dict(
             :print_level => print_level,
