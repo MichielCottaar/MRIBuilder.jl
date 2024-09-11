@@ -106,6 +106,9 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
     nsuccess = 0
     sample_error = Dict{TerminationStatusCode, Any}()
     errors = TerminationStatusCode[]
+    for _ in num_variables(jump_model):number_equality_constraints(jump_model)
+        @variable(jump_model)
+    end
     for attempt in 1:n_attempts
         if attempt != 1
             new_values = rand(length(all_variables(jump_model)))
@@ -121,9 +124,6 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
                 for (var, v) in zip(all_variables(jump_model), new_values)
                     set_start_value(var, v)
                 end
-            end
-            for _ in num_variables(jump_model):number_equality_constraints(jump_model)
-                @variable(jump_model)
             end
             optimize!(jump_model)
             #println(solution_summary(jump_model))
