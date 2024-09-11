@@ -155,7 +155,7 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
     return min_objective
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=10, print_level=0, mu_strategy="adaptive", max_iter=1000, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=20, print_level=0, mu_strategy="adaptive", max_iter=1000, kwargs...)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
         full_kwargs = Dict(
             :print_level => print_level,
