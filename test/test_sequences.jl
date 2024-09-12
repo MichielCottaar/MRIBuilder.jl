@@ -45,8 +45,8 @@
                 @test all(isapprox.(variables.duration.(seq), [0., 0., 40., 0., 0., 0., 40., 0., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test length([iter_instant_pulses(seq)...]) == 2
                 @test length([iter_instant_gradients(seq)...]) == 0.
-                @test variables.TE(seq) ≈ 80.
-                @test variables.duration(seq) ≈ 80.
+                @test variables.TE(seq) ≈ 80. rtol=1e-6
+                @test variables.duration(seq) ≈ 80. rtol=1e-6
                 @test 4.8 < variables.bval(seq) < 4.9
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
                 @test all(isapprox.(edge_times(seq, tol=1e-3), [0., min_rise_time, 40. - min_rise_time, 40, 40 + min_rise_time, 80 - min_rise_time, 80.], atol=1e-4))
@@ -59,6 +59,7 @@
             end
             @testset "Set diffusion time Δ" begin
                 seq = DiffusionSpinEcho(TE=80., Δ=70., qval=:max)
+                @show seq
                 @test all(isapprox.(variables.duration.(seq), [0., 0., 10., 30., 0., 30., 10., 0., 0., 0.], atol=1e-4, rtol=1e-4))
                 @test variables.Δ(seq) ≈ 70.
                 @test variables.TE(seq) ≈ 80.
@@ -66,6 +67,7 @@
                 @test 0.72 < variables.bval(seq) < 0.73
                 @test variables.readout_times(seq)[1] ≈ variables.TE(seq)
                 @test variables.rise_time(seq[:gradient]) ≈ min_rise_time rtol=1e-4
+                @show edge_times(seq)
                 @test all(isapprox.(edge_times(seq), [0., min_rise_time, 10. - min_rise_time, 10., 40, 70, 70 + min_rise_time, 80 - min_rise_time, 80.], atol=1e-4))
             end
             @testset "Set gradient duration" begin

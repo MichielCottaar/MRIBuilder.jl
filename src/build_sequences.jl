@@ -20,7 +20,7 @@ function iterate_cost()
     if iszero(length(unique_weights))
         return [0.]
     else
-        return [sum([f for (w, f) in GLOBAL_MODEL[][2] if w == weight]; init=0.) for weight in unique_weights]
+        return [sum([f for (w, f) in GLOBAL_MODEL[][2] if w <= weight]; init=0.) for weight in unique_weights]
     end
 end
 
@@ -34,7 +34,7 @@ Wrapper to build a sequence.
 
 Use as 
 ```julia
-build_sequence(scanner[, optimiser_constructor];) do
+build_sequence(scanner;) do
     ...
 end
 ```
@@ -56,7 +56,6 @@ As soon as the code block ends the sequence is optimised (if `optimise=true`) an
 
 ## Parameters
 - `scanner`: Set to a [`Scanner`](@ref) to limit the gradient strength and slew rate. When this call to `build_sequence` is embedded in another, this parameter can be set to `nothing` to indicate that the same scanner should be used. 
-- `optimiser_constructor`: A `JuMP` solver optimiser as described in the [JuMP documentation](https://jump.dev/JuMP.jl/stable/tutorials/getting_started/getting_started_with_JuMP/#What-is-a-solver?). Defaults to using [Ipopt](https://github.com/jump-dev/Ipopt.jl).
 - `optimise`: Whether to optimise and fix the sequence as soon as it is returned. This defaults to `true` if a scanner is provided and `false` if no scanner is provided.
 - `n_attempts`: How many times to restart the optimser (default: 100).
 - `kwargs...`: Other keywords are passed on as attributes to the `optimiser_constructor` (e.g., set `print_level=3` to make the Ipopt optimiser quieter).
@@ -75,13 +74,13 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
         if optimise
             jump_model = GLOBAL_MODEL[][1]
             if !iszero(num_variables(jump_model))
-                optimise_with_cost_func(jump_model, total_cost_func(), n_attempts)
+                optimise_with_cost_func!(jump_model, total_cost_func(), n_attempts)
                 prev_cost_func = nothing
                 for cost_func in iterate_cost()
                     if !isnothing(prev_cost_func)
-                        @constraint jump_model prev_cost_func == objective_value(jump_model)
+                        @constraint jump_model prev_cost_func <= value(prev_cost_func)
                     end
-                    optimise_with_cost_func(jump_model, cost_func, n_attempts)
+                    optimise_with_cost_func!(jump_model, cost_func, n_attempts)
                     prev_cost_func = cost_func
                 end
             end
@@ -99,40 +98,72 @@ function number_equality_constraints(model::Model)
     sum([num_constraints(model, expr, comp) for (expr, comp) in JuMP.list_of_constraint_types(model) if comp <: MOI.EqualTo])
 end
 
-function optimise_with_cost_func(jump_model::Model, cost_func, n_attempts)
+function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
     @objective jump_model Min cost_func
     min_objective = Inf
+    min_values = nothing
+    nsuccess = 0
+    sample_error = Dict{TerminationStatusCode, Any}()
+    errors = TerminationStatusCode[]
+    for _ in num_variables(jump_model):number_equality_constraints(jump_model)
+        @variable(jump_model)
+    end
     for attempt in 1:n_attempts
         if attempt != 1
-            old_values = value.(all_variables(jump_model))
-            size_kick = 0.5 / attempt
-            new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
+            new_values = rand(length(all_variables(jump_model)))
             for (var, v) in zip(all_variables(jump_model), new_values)
                 set_start_value(var, v)
             end
         end
-        for _ in num_variables(jump_model):number_equality_constraints(jump_model)
-            @variable(jump_model)
-        end
-        optimize!(jump_model)
-        if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
-            if isapprox(min_objective, objective_value(jump_model), rtol=1e-6)
+        for sub_attempt in 1:3
+            if sub_attempt != 1
+                old_values = value.(all_variables(jump_model))
+                size_kick = 0.5 / sub_attempt
+                new_values = old_values .* (2 .* size_kick .* rand(length(old_values)) .+ 1. .- size_kick)
+                for (var, v) in zip(all_variables(jump_model), new_values)
+                    set_start_value(var, v)
+                end
+            end
+            optimize!(jump_model)
+            #println(solution_summary(jump_model))
+            if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
+                nsuccess += 1
+                if objective_value(jump_model) < min_objective
+                    min_objective = objective_value(jump_model)
+                    min_values = copy(backend(jump_model).optimizer.model.inner.x)
+                end
                 break
-            elseif objective_value(jump_model) < min_objective
-                min_objective = objective_value(jump_model)
+            elseif sub_attempt == 3
+                push!(errors, termination_status(jump_model))
+                sample_error[termination_status(jump_model)] = solution_summary(jump_model)
             end
         end
+        if nsuccess > 2
+            break
+        end
     end
-    if !(termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL))
-        println(solution_summary(jump_model))
-        error("Optimisation failed to converge.")
+    if iszero(nsuccess)
+        err_string = join(["$(String(Symbol(err))) (x$(sum([e == err for e in errors])))" for err in unique(errors)], ", ", ", and ")
+        for msg in values(sample_error)
+            println(msg)
+            println("")
+        end
+        error("Optimisation failed to converge. The following errors were raised: $err_string. Example errors for each type are printed above.")
     end
+    backend(jump_model).optimizer.model.inner.x .= min_values
+    @assert value(cost_func) ≈ min_objective eps(min_objective)
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser_constructor; optimise=true, n_attempts=10, kwargs...)
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=20, print_level=0, mu_strategy="adaptive", max_iter=1000, kwargs...)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
+        full_kwargs = Dict(
+            :print_level => print_level,
+            :mu_strategy => mu_strategy,
+            :max_iter => max_iter,
+            kwargs...
+        )
         model = (
-            Model(optimizer_with_attributes(optimiser_constructor, [string(k) => v for (k, v) in kwargs]...)),
+            Model(optimizer_with_attributes(Ipopt.Optimizer, [string(k) => v for (k, v) in full_kwargs]...)),
             Tuple{Float64, AbstractJuMPScalar}[]
         )
     else
@@ -140,12 +171,6 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, optimiser
     end
     build_sequence(f, scanner, model, optimise, n_attempts)
 end
-
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; print_level=0, mu_strategy="adaptive", max_iter=10000, kwargs...)
-    build_sequence(f, scanner, Ipopt.Optimizer; print_level=print_level, mu_strategy=mu_strategy, max_iter=max_iter, kwargs...)
-end
-
-build_sequence(f::Function, optimiser_constructor; kwargs...) = build_sequence(f, Default_Scanner, optimiser_constructor; kwargs...)
 
 
 """
