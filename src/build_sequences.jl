@@ -57,7 +57,7 @@ As soon as the code block ends the sequence is optimised (if `optimise=true`) an
 ## Parameters
 - `scanner`: Set to a [`Scanner`](@ref) to limit the gradient strength and slew rate. When this call to `build_sequence` is embedded in another, this parameter can be set to `nothing` to indicate that the same scanner should be used. 
 - `optimise`: Whether to optimise and fix the sequence as soon as it is returned. This defaults to `true` if a scanner is provided and `false` if no scanner is provided.
-- `n_attempts`: How many times to restart the optimser (default: 100).
+- `n_attempts`: How many times to restart the optimiser (default: 20)? Decrease if you want to quickly check feasibility of a simple sequence. Increase if convergence fails for a complex sequence.
 - `kwargs...`: Other keywords are passed on as attributes to the `optimiser_constructor` (e.g., set `print_level=3` to make the Ipopt optimiser quieter).
 """
 function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tuple, optimise::Bool, n_attempts::Int)
