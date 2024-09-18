@@ -4,7 +4,7 @@ import Printf: @sprintf
 import ..Variables: VariableType, variables, AbstractBlock, Variable
 import ..Containers: BuildingBlock, waveform, events, start_time
 
-function _robust_value(possible_number::VariableType)
+function _robust_value(possible_number::AbstractJuMPScalar)
     try
         return round(value(possible_number), sigdigits=3)
     catch
