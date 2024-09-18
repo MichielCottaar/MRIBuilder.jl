@@ -5,7 +5,7 @@ import ....Variables: VariableType, set_simple_constraints!, make_generic, get_f
 import ..GenericPulses: GenericPulse
 
 """
-    CompositePulse(; variables...)
+    CompositePulse(; base_pulse, nweights, variables...)
 
 A composite RF pulse formed by repeating a base RF pulse.
 
@@ -18,8 +18,8 @@ A composite RF pulse formed by repeating a base RF pulse.
 - `interpulse_delay`: Time between the center of the RF pulses. If not otherwise constrained, it will be minimised.
 - `scale_amplitude`: How strongly one should scale the amplitude versus the duration to achieve the desired weights. If set to 1 only the RF pulse amplitude will be scaled. If set to 0 only the RF pulse duration will be scaled.
 """
-struct CompositePulse <: RFPulseComponent
-    pulses :: Vector{RFPulseComponent}
+struct CompositePulse{T<:RFPulseComponent} <: RFPulseComponent
+    pulses :: Vector{T}
     interpulse_delay :: VariableType
     scale_amplitude :: VariableType
 end
@@ -42,7 +42,7 @@ function CompositePulse(; base_pulse::RFPulseComponent, nweights=nothing, weight
         )
         for w in weights
     ]
-    res = CompositePulse(
+    res = CompositePulse{typeof(base_pulse)}(
         pulses,
         get_free_variable(interpulse_delay),
         scale_amplitude
@@ -60,7 +60,7 @@ end
 @defvar duration(pulse::CompositePulse) = (
         0.5 * variables.duration(pulse.pulses[1]) + 
         0.5 * variables.duration(pulse.pulses[end]) + 
-        interpulse_delay(pulse) * (length(pulse) - 1)
+        variables.interpulse_delay(pulse) * (length(pulse) - 1)
     )
 
 @defvar begin
@@ -140,6 +140,20 @@ function adjust_internal(comp::CompositePulse; stretch=1., kwargs...)
         interpulse_delay(comp) * stretch,
         scale_amplitude(comp),
     )
+end
+
+
+"""
+    BinomialPulse(; base_pulse, npulses, flip=true, variables...)
+
+Creates a [`CompositePulse`](@ref) of `npulses` repeats of `base_pulse`, where the `weights` are set by the biomial distribution.
+
+If `flip` is true (default) every other pulse will be flipped (so that the total excitation is canceled).
+The `variables` are defined in [`CompositePulse`](@ref).
+"""
+function BinomialPulse(; npulses, flip=true, kwargs...)
+    weights = [binomial(npulses-1, index) * (flip && isone(index % 2) ? -1 : 1) for index in 0:npulses-1]
+    return CompositePulse(; kwargs..., weights=weights)
 end
 
 end

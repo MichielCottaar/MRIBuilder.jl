@@ -5,10 +5,11 @@ import ..Trapezoids: Trapezoid, opposite_kspace_lines, SliceSelect
 import ..SpoiltSliceSelects: SpoiltSliceSelect
 import ..SliceSelectRephases: SliceSelectRephase
 import ..EPIReadouts: EPIReadout
+import ..Repeats: Repeat
 import ...BuildSequences: build_sequence, global_scanner
 import ...Containers: Sequence
-import ...Components: SincPulse, ConstantPulse, InstantPulse, SingleReadout, InstantGradient
-import ...Variables: variables, apply_simple_constraint!
+import ...Components: SincPulse, ConstantPulse, InstantPulse, SingleReadout, InstantGradient, BinomialPulse
+import ...Variables: variables, apply_simple_constraint!, set_simple_constraints!
 
 
 function _get_pulse(shape, flip_angle, phase, frequency, Nzeros, group, bandwidth, duration)
@@ -304,6 +305,42 @@ function gradient_spoiler(; optimise=false, scanner=nothing, orientation=[0, 0, 
     build_sequence(scanner; optimise=optimise) do
         Trapezoid(; orientation=orientation, group=group, spoiler=spoiler, duration=duration, variables...)
     end
+end
+
+
+
+
+"""
+    saturation_pulse(; pulse=(), binomial_order=1, variables...)
+
+Creates a saturation pulse consisting of repeating instances of `pulse_type`.
+
+## Parameters
+- `pulse`: Parameters/variables used to define the basic RF pulse used in the saturation pulse. These can be:
+    - `type`: [`ConstantPulse`](@ref) (default), [`SincPulse`](@ref), [`InstantPulse`](@ref), etc.
+    - Variables describing that type (e.g., `flip_angle`, `duration`, `frequency`)
+- `binomial_order`: How many repeats of `pulse_type` there should be in a single binomial pulse.
+
+## Variables
+- `nrepeat`: number of repeats of the binomial pulse. This should typically be set by the user.
+- `interblock_delay`: time between the start of each pulse. Should be short compared with the T1, but long enough to limit SAR.
+- `duration`: total duration of the saturation pulse.
+"""
+function saturation_pulse_binomial(; pulse=(), binomial_order=1, nrepeat, variables...)
+
+    function base_pulse(; type=ConstantPulse, variables...)
+        return type(; variables...)
+    end
+    base = base_pulse(; pulse...)
+
+    if binomial_order > 1
+        composite = BinomialPulse(; base_pulse=base, npulses=binomial_order)
+    else
+        composite = base
+    end
+    res = Repeat(composite, nrepeat=nrepeat)
+    set_simple_constraints!(res, variables)
+    return res
 end
 
 end
