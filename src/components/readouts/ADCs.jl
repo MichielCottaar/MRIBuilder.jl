@@ -37,7 +37,8 @@ function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, c
         get_free_variable(oversample, integer=true),
     )
     apply_simple_constraint!(res.dwell_time, :>=, 0)
-    apply_simple_constraint!(res.oversample, :>=, 0)
+    apply_simple_constraint!(res.oversample, :>=, 1)
+    apply_simple_constraint!(res.resolution, :>=, 1)
     if center_halfway
         apply_simple_constraint!(variables.duration(res), 2 * res.time_to_center)
     else
