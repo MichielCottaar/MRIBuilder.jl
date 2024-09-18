@@ -99,17 +99,6 @@ variables.nsamples
     effective_time(adc::ADC) = variables.time_to_center(adc)
 end
 
-function fixed(adc::ADC)
-    # round nsamples during fixing
-    r = Int(round(value(variables.resolution(adc)), RoundNearest))
-    n = Int(round(value(variables.nsamples(adc)), RoundNearest))
-    if iszero(n)
-        return ADC(0, NaN, NaN, NaN)
-    end
-    oversample = n // r
-    return ADC(r, value(adc.dwell_time), value(adc.time_to_center), oversample)
-end
-
 make_generic(adc::ADC) = adc
 
 end
