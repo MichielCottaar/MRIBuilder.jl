@@ -31,10 +31,10 @@ end
 
 function ADC(; resolution=nothing, dwell_time=nothing, time_to_center=nothing, center_halfway=true, oversample=nothing, kwargs...)
     res = ADC(
-        get_free_variable(resolution),
+        get_free_variable(resolution; integer=true),
         get_free_variable(dwell_time),
         get_free_variable(time_to_center),
-        get_free_variable(oversample),
+        get_free_variable(oversample, integer=true),
     )
     apply_simple_constraint!(res.dwell_time, :>=, 0)
     apply_simple_constraint!(res.oversample, :>=, 0)
