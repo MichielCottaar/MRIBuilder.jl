@@ -57,7 +57,7 @@ As soon as the code block ends the sequence is optimised (if `optimise=true`) an
 ## Parameters
 - `scanner`: Set to a [`Scanner`](@ref) to limit the gradient strength and slew rate. When this call to `build_sequence` is embedded in another, this parameter can be set to `nothing` to indicate that the same scanner should be used. 
 - `optimise`: Whether to optimise and fix the sequence as soon as it is returned. This defaults to `true` if a scanner is provided and `false` if no scanner is provided.
-- `n_attempts`: How many times to restart the optimser (default: 100).
+- `n_attempts`: How many times to restart the optimiser (default: 20)? Decrease if you want to quickly check feasibility of a simple sequence. Increase if convergence fails for a complex sequence.
 - `kwargs...`: Other keywords are passed on as attributes to the `optimiser_constructor` (e.g., set `print_level=3` to make the Ipopt optimiser quieter).
 """
 function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tuple, optimise::Bool, n_attempts::Int)
@@ -73,6 +73,7 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
         sequence = f()
         if optimise
             jump_model = GLOBAL_MODEL[][1]
+            set_optimizer(jump_model, get_optimiser(jump_model))
             if !iszero(num_variables(jump_model))
                 optimise_with_cost_func!(jump_model, total_cost_func(), n_attempts)
                 prev_cost_func = nothing
@@ -97,6 +98,37 @@ end
 function number_equality_constraints(model::Model)
     sum([num_constraints(model, expr, comp) for (expr, comp) in JuMP.list_of_constraint_types(model) if comp <: MOI.EqualTo])
 end
+
+"""
+    model_has_integers(model)
+
+Returns true if the model contains integer variables.
+"""
+model_has_integers(model::Model) = (VariableRef, MOI.Integer) in list_of_constraint_types(model)
+
+"""
+    get_optimiser(model)
+
+Returns a JuMP solver (https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers) appropriate for this model.
+"""
+function get_optimiser(model::Model)
+    base_ipopt = optimizer_with_attributes(
+        Ipopt.Optimizer, 
+        "print_level"=>0, 
+        "mu_strategy"=>"adaptive", 
+        "max_iter"=>1000,
+    )
+    if model_has_integers(model)
+         optimizer_with_attributes(
+            Juniper.Optimizer, 
+            "nl_solver" => base_ipopt,
+            "log_levels" => [],
+        )
+    else
+        return base_ipopt
+    end
+end
+
 
 function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
     @objective jump_model Min cost_func
@@ -130,7 +162,7 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
                 nsuccess += 1
                 if objective_value(jump_model) < min_objective
                     min_objective = objective_value(jump_model)
-                    min_values = copy(backend(jump_model).optimizer.model.inner.x)
+                    min_values = copy(get_inner_state(jump_model))
                 end
                 break
             elseif sub_attempt == 3
@@ -150,20 +182,18 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
         end
         error("Optimisation failed to converge. The following errors were raised: $err_string. Example errors for each type are printed above.")
     end
-    backend(jump_model).optimizer.model.inner.x .= min_values
+    get_inner_state(jump_model) .= min_values
     @assert value(cost_func) ≈ min_objective eps(min_objective)
 end
 
-function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=20, print_level=0, mu_strategy="adaptive", max_iter=1000, kwargs...)
+get_inner_state(backend::Juniper.JuniperProblem) = backend.solution
+get_inner_state(backend::Ipopt.IpoptProblem) = backend.x
+get_inner_state(model::Model) = get_inner_state(backend(model).optimizer.model.inner)
+
+function build_sequence(f::Function, scanner::Union{Nothing, Scanner}=Default_Scanner; optimise=true, n_attempts=20)
     if optimise || GLOBAL_MODEL[] == IGNORE_MODEL
-        full_kwargs = Dict(
-            :print_level => print_level,
-            :mu_strategy => mu_strategy,
-            :max_iter => max_iter,
-            kwargs...
-        )
         model = (
-            Model(optimizer_with_attributes(Ipopt.Optimizer, [string(k) => v for (k, v) in full_kwargs]...)),
+            Model(),
             Tuple{Float64, AbstractJuMPScalar}[]
         )
     else
