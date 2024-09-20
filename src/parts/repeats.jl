@@ -1,5 +1,5 @@
 module Repeats
-import ...Containers: BaseSequence, get_index_single_TR, Wait
+import ...Containers: ContainerBlock, get_index_single_TR, Wait, BuildingBlock, BaseSequence
 import ...Variables: variables, VariableType, AbstractBlock, get_free_variable, set_simple_constraints!, apply_simple_constraint!, @defvar, get_pulse, get_gradient, get_readout
 
 """
@@ -15,19 +15,21 @@ import ...Variables: variables, VariableType, AbstractBlock, get_free_variable, 
 - `frequency`: temporal frequency of the block repeats (i.e., `1/interblock_delay`) in kHz.
 - `duration`: total duration of this sequence part all repeats in ms.
 """
-struct Repeat{T<:AbstractBlock} <: BaseSequence{1}
+struct Repeat{T<:ContainerBlock} <: BaseSequence{1}
     block :: T
     wait_time :: VariableType
     nrepeat :: VariableType
 end
 
-function Repeat(block::AbstractBlock; wait_time=nothing, nrepeat=nothing, variables...)
+function Repeat(block::ContainerBlock; wait_time=nothing, nrepeat=nothing, variables...)
     res = Repeat{typeof(block)}(block, get_free_variable(wait_time), get_free_variable(nrepeat, integer=true))
     set_simple_constraints!(res, variables)
     apply_simple_constraint!(res.wait_time, :>=, 0.)
     apply_simple_constraint!(res.nrepeat, :>=, 1)
     return res
 end
+
+Repeat(block::AbstractBlock; kwargs...) = Repeat(BuildingBlock(block); kwargs...)
 
 function get_index_single_TR(r::Repeat, i::Integer)
     if isone(i % 2)
