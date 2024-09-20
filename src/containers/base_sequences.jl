@@ -26,7 +26,8 @@ Sub-types need to implement:
 """
 abstract type BaseSequence{N} <: ContainerBlock end
 
-function Base.getindex(bs::BaseSequence{N}, index::Integer) where {N}
+function Base.getindex(bs::BaseSequence, index::Integer)
+    N = length(bs)
     if nrepeat(bs) > 0 && (index < 1 || index > length(bs))
         throw(BoundsError(bs, index))
     end
