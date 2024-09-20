@@ -30,7 +30,7 @@ function Repeat(block::AbstractBlock; wait_time=nothing, nrepeat=nothing, variab
 end
 
 function get_index_single_TR(r::Repeat, i::Integer)
-    if iszero(i % 2)
+    if isone(i % 2)
         return r.block
     else
         return Wait(r.wait_time)
