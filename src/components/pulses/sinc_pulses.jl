@@ -56,6 +56,7 @@ function SincPulse(;
     end
     set_simple_constraints!(res, kwargs)
     add_cost_function!(res.frequency^2 + res.phase^2)
+    add_cost_function!((res.flip_angle - 90)^2)
     return res
 end
 

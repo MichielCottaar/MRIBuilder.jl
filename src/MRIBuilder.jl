@@ -25,8 +25,8 @@ export Scanner, B0, Siemens_Connectom, Siemens_Prisma, Siemens_Terra, Default_Sc
 import .Variables: variables, make_generic, @defvar, get_pulse, get_readout, get_pathway, get_gradient, add_cost_function!, apply_simple_constraint!, set_simple_constraints!
 export variables, make_generic, @defvar, get_pulse, get_readout, get_pathway, get_gradient, add_cost_function!, apply_simple_constraint!, set_simple_constraints!
 
-import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse, edge_times
-export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse, edge_times
+import .Components: InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse, edge_times, BinomialPulse
+export InstantPulse, ConstantPulse, SincPulse, GenericPulse, InstantGradient, SingleReadout, ADC, CompositePulse, edge_times, BinomialPulse
 
 import .Containers: ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AbstractAlternativeBlocks, get_alternatives_name, get_alternatives_options, AlternativeBlocks, match_blocks!, get_index_single_TR, iter_blocks, iter_instant_gradients, iter_instant_pulses
 export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events, BaseBuildingBlock, BuildingBlock, Wait, BaseSequence, nrepeat, Sequence, AbstractAlternativeBlocks, get_alternatives_name, get_alternatives_options, AlternativeBlocks, match_blocks!, get_index_single_TR, iter_blocks, iter_instant_gradients, iter_instant_pulses
@@ -34,14 +34,14 @@ export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events
 import .Pathways: Pathway
 export Pathway
 
-import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
-export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size
+import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size, saturation_pulse_binomial
+export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size, saturation_pulse_binomial
 
 import .PostHoc: adjust, merge_sequences
 export adjust, merge_sequences
 
-import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
-export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI
+import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI, MagnetisationTransfer
+export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI, MagnetisationTransfer
 
 import .SequenceIO: read_sequence, write_sequence
 export read_sequence, write_sequence

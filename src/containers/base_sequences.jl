@@ -26,7 +26,8 @@ Sub-types need to implement:
 """
 abstract type BaseSequence{N} <: ContainerBlock end
 
-function Base.getindex(bs::BaseSequence{N}, index::Integer) where {N}
+function Base.getindex(bs::BaseSequence, index::Integer)
+    N = length(bs)
     if nrepeat(bs) > 0 && (index < 1 || index > length(bs))
         throw(BoundsError(bs, index))
     end
@@ -54,7 +55,8 @@ Base.length(bs::BaseSequence{N}) where {N} = iszero(nrepeat(bs)) ? N : (nrepeat(
 Base.eltype(::Type{<:BaseSequence}) = ContainerBlock
 Base.keys(seq::BaseSequence{N}) where {N} = 1:N
 
-function start_time(bs::BaseSequence{N}, index::Integer) where {N}
+function start_time(bs::BaseSequence, index::Integer)
+    N = length(bs)
     nTR = div(index-1, N, RoundDown)
     if 0 < nrepeat(bs) <= nTR
         throw(BoundsError(bs, index))
@@ -207,7 +209,7 @@ Converst object into something that can be included in the sequence:
 to_block(cb::ContainerBlock) = cb
 to_block(s::Symbol) = to_block(Val(s))
 to_block(s::Union{VariableType, Nothing, Val{:min}, Val{:max}}) = Wait(s)
-to_block(ec::EventComponent) = BuildingBlock([NoGradient(variables.duration(ec)), (0., ec)])
+to_block(ec::EventComponent) = BuildingBlock(ec)
 
 
 function make_generic(seq::BaseSequence)

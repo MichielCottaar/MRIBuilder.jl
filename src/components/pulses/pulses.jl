@@ -10,6 +10,6 @@ import .GenericPulses: GenericPulse
 import .InstantPulses: InstantPulse
 import .ConstantPulses: ConstantPulse
 import .SincPulses: SincPulse
-import .CompositePulses: CompositePulse
+import .CompositePulses: CompositePulse, BinomialPulse
 
 end

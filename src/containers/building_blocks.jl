@@ -352,6 +352,13 @@ function BuildingBlock(waveform::AbstractVector, events::AbstractVector; orienta
     return BuildingBlock(components)
 end
 
+"""
+    BuildingBlock(pulse/readout)
+
+Creates a `BuildingBlock` with no gradients and just the single [`EventComponent`]@(ref).
+"""
+BuildingBlock(ec::EventComponent) = BuildingBlock([NoGradient(variables.duration(ec)), (0., ec)])
+
 make_generic(other_block::BaseBuildingBlock) = BuildingBlock([other_block...])
 Base.keys(bb::BuildingBlock) = 1:length(bb.parts)
 Base.getindex(bb::BuildingBlock, i::Integer) = bb.parts[i]
