@@ -95,7 +95,7 @@ This only returns those [`Variable`](@ref) directly defined for this component/b
 If `T` is not provided, all [`Variable`](@ref) objects are returned.
 """
 function base_variables()
-    all_members = (s => getproperty(variables, s) for s in names(variables, all=true))
+    all_members = (s => getproperty(variables, s) for s in Base.unsorted_names(variables, all=true))
     return Dict{Symbol, Variable}(
         s => v for (s, v) in all_members if v isa Variable
     )
@@ -119,7 +119,7 @@ function Base.getproperty(block::T, v::Symbol) where T <: AbstractBlock
     if v in Base.fieldnames(T)
         return getfield(block, v)
     end
-    if v in names(variables; all=true)
+    if v in Base.unsorted_names(variables; all=true)
         var = getproperty(variables, v)
         if hasmethod(var.f, (T, ))
             return var.f(block)
