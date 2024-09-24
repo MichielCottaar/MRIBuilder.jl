@@ -28,8 +28,8 @@ function MagnetisationTransfer(; saturation=(), excitation=(), readout=(), optim
 end
 
 
-get_pulse(mt::MagnetisationTransfer) = (saturation=mt[:excitation].base_pulse, refocus=ge[:refocus])
-get_readout(mt::MagnetisationTransfer) = ge[:readout]
+get_pulse(mt::MagnetisationTransfer) = (saturation=mt[:saturation].base_pulse, excitation=mt[:excitation])
+get_readout(mt::MagnetisationTransfer) = mt[:readout]
 
 
 end
