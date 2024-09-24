@@ -119,9 +119,11 @@ function Base.getproperty(block::T, v::Symbol) where T <: AbstractBlock
     if v in Base.fieldnames(T)
         return getfield(block, v)
     end
-    vars = base_variables(T)
-    if v in keys(vars)
-        return vars[v](block)
+    if v in names(variables; all=true)
+        var = getproperty(variables, v)
+        if hasmethod(var.f, (T, ))
+            return var.f(block)
+        end
     end
     error("Type $(T) has no field or variable $(v)")
 end
