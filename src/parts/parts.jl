@@ -11,7 +11,7 @@ import .SpoiltSliceSelects: SpoiltSliceSelect
 import .SliceSelectRephases: SliceSelectRephase
 import .EPIReadouts: EPIReadout
 import .Repeats: Repeat
-import .HelperFunctions: excitation_pulse, refocus_pulse, readout_event, dwi_gradients, interpret_image_size, gradient_spoiler, saturation_pulse_binomial
+import .HelperFunctions: excitation_pulse, refocus_pulse, readout_event, dwi_gradients, interpret_image_size, gradient_spoiler, saturation_pulse
 
 
 end

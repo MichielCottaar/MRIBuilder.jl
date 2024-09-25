@@ -326,7 +326,7 @@ Creates a saturation pulse consisting of repeating instances of `pulse_type`.
 - `interblock_delay`: time between the start of each pulse. Should be short compared with the T1, but long enough to limit SAR.
 - `duration`: total duration of the saturation pulse.
 """
-function saturation_pulse_binomial(; pulse=(), binomial_order=1, nrepeat, variables...)
+function saturation_pulse(; pulse=(), binomial_order=1, nrepeat, variables...)
 
     function base_pulse(; type=ConstantPulse, variables...)
         return type(; variables...)
