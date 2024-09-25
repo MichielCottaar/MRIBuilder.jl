@@ -34,8 +34,8 @@ export ContainerBlock, start_time, end_time, waveform, waveform_sequence, events
 import .Pathways: Pathway
 export Pathway
 
-import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size, saturation_pulse_binomial
-export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size, saturation_pulse_binomial
+import .Parts: dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size, saturation_pulse
+export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid, SliceSelect, LineReadout, opposite_kspace_lines, SpoiltSliceSelect, SliceSelectRephase, EPIReadout, interpret_image_size, saturation_pulse
 
 import .PostHoc: adjust, merge_sequences
 export adjust, merge_sequences
