@@ -208,7 +208,7 @@ end
 Base.keys(::SliceSelect) = (Val(:rise), Val(:flat), Val(:pulse), Val(:fall))
 Base.getindex(pg::SliceSelect, ::Val{:pulse}) = (0., pg.pulse)
 
-@defvar pulse inverse_slice_thickness(ss::SliceSelect) = 1e3 * variables.gradient_strength_norm(ss.trapezoid) .* variables.inverse_bandwidth(ss.pulse)
+@defvar pulse inverse_slice_thickness(ss::SliceSelect) = 1e3 * variables.gradient_strength_norm(ss.trapezoid) * variables.inverse_bandwidth(ss.pulse)
 
 """
     slice_thickness(slice_select)
