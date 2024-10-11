@@ -187,7 +187,7 @@ function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs..
                 try
                     route, value = _get_variable(new_name, union(tried_names, [name]), args...; kwargs...)
                     pushfirst!(route, (:alternative, new_name))
-                    return route, converter(value)
+                    return route, apply_converter(converter, value)
                 catch e
                     if e isa InvalidRoute
                         continue
@@ -210,6 +210,10 @@ function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs..
 
     throw(InvalidRoute())
 end
+
+apply_converter(converter::Function, value) = converter(value)
+apply_converter(converter::Function, value::NamedTuple) = NamedTuple(k=>converter(v) for (k, v) in pairs(value))
+apply_converter(converter::Function, value::Tuple) = Tuple(converter(v) for v in value)
 
 """
 Helper to call the variable for a result of a getter. Used in [`_get_variable`](@ref).
