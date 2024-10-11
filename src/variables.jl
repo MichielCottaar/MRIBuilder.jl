@@ -217,6 +217,7 @@ This is a helper function, which is called by `@defvar` for any variable that do
 """
 function add_new_variable!(name::Symbol)
     @eval variables function $(name) end
+    @eval variables $(Expr(:public, name))
     @eval function variables.$(name)(ab::AbstractBlock, args...; kwargs...) 
         try
             return _get_variable($(QuoteNode(name)), Set{Symbol}(), ab, args...; kwargs...)
