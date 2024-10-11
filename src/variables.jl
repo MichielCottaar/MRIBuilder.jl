@@ -662,20 +662,20 @@ function set_simple_constraints!(block::AbstractBlock, kwargs)
 end
 
 apply_simple_constraint!(block, variable::Symbol, value::Nothing) = nothing
-apply_simple_constraint!(block::Union{NamedTuple, Tuple, AbstractArray}, variable::Symbol, value::Nothing) = nothing
+apply_simple_constraint!(block::Union{NamedTuple, Tuple}, variable::Symbol, value::Nothing) = nothing
 
 function apply_simple_constraint!(block::NamedTuple, variable::Symbol, value::NamedTuple)
     for (k, v) in pairs(value)
         apply_simple_constraint!(getproperty(block, k), variable, v)
     end
 end
-function apply_simple_constraint!(block::T, variable::Symbol, value::T) where {T <: Union{Tuple, AbstractArray}}
+function apply_simple_constraint!(block::Tuple, variable::Symbol, value::Tuple)
     @assert length(block) == length(value)
     for (b, v) in zip(block, value)
         apply_simple_constraint!(b, variable, v)
     end
 end
-function apply_simple_constraint!(block::Union{NamedTuple, Tuple, AbstractArray}, variable::Symbol, value)
+function apply_simple_constraint!(block::Union{NamedTuple, Tuple}, variable::Symbol, value)
     for b in block
         apply_simple_constraint!(b, variable, value)
     end
