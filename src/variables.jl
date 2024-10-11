@@ -70,13 +70,13 @@ If `T` is not provided, all [`Variable`](@ref) objects are returned.
 """
 function base_variables()
     return Dict{Symbol, Function}(
-        s => v for (s, v) in names(variables; all=true)
+        s => getproperty(variables, s) for s in names(variables) if s != :variables
     )
 end
 
 function base_variables(T::Type{<:AbstractBlock})
     return Dict(
-        s => v for (s, v) in base_variables() if which(v, T) !== default_generic_method[s]
+        s => v for (s, v) in base_variables() if which(v, (T, )) !== default_generic_method[v]
     )
 end
 
@@ -85,8 +85,11 @@ end
     variable_defined_for(variable, args...; kwargs...)
 """
 function variable_defined_for(name::Symbol, args...; kwargs...)
-    func = getproperty(variables, name)
-    return which(func, typeof.(args)) !== default_generic_method[name]
+    variable_defined_for(getproperty(variables, name), args...; kwargs...)
+end
+
+function variable_defined_for(func::Function, args...; kwargs...)
+    return which(func, typeof.(args)) !== default_generic_method[func]
 end
 
 
@@ -168,16 +171,17 @@ Tries to find a route to get values for the variable `name` with the given `args
 The route through `tried_names` has already been attempted.
 """
 function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs...)
-    if variable_defined_for(name, args...; kwargs...)
+    func = getproperty(variables, name)
+    if variable_defined_for(func, args...; kwargs...)
         return func(args...; kwargs...)
     end
 
     # alternative functions
-    if name in keys(alternative_functions)
-        for (new_name, converter) in alternative_functions[name]
+    if name in keys(alternative_variables)
+        for (new_name, converter) in alternative_variables[name]
             if !(new_name in tried_names)
                 try
-                    converter(_get_variable(new_name, Set(name, tried_names...), args...; kwargs...))
+                    return converter(_get_variable(new_name, Set(name, tried_names...), args...; kwargs...))
                 catch e
                     if e isa InvalidRoute
                         continue
@@ -193,9 +197,7 @@ function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs..
         # getters
         first, others = args[1], args[2:end]
         getter = getters[name]
-        if hasmethod(getter, (typeof(first), ))
-            _get_mult_variable(name, getter(first), others...; kwargs...)
-        end
+        return _get_mult_variable(name, getter(first), others...; kwargs...)
     end
 
     throw(InvalidRoute())
