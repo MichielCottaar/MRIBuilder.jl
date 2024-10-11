@@ -171,9 +171,11 @@ Tries to find a route to get values for the variable `name` with the given `args
 The route through `tried_names` has already been attempted.
 """
 function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs...)
-    func = getproperty(variables, name)
-    if variable_defined_for(func, args...; kwargs...)
-        return func(args...; kwargs...)
+    if hasproperty(variables, name)
+        func = getproperty(variables, name)
+        if variable_defined_for(func, args...; kwargs...)
+            return func(args...; kwargs...)
+        end
     end
 
     # alternative functions
@@ -181,7 +183,7 @@ function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs..
         for (new_name, converter) in alternative_variables[name]
             if !(new_name in tried_names)
                 try
-                    return converter(_get_variable(new_name, Set(name, tried_names...), args...; kwargs...))
+                    return converter(_get_variable(new_name, union(tried_names, [name]), args...; kwargs...))
                 catch e
                     if e isa InvalidRoute
                         continue
@@ -465,7 +467,16 @@ end
     function slew_rate_norm end
 end
 
-for name in [:slice_thickness, :bandwidth, :fov, :voxel_size]
+for name in [:fov, :voxel_size]
+    inv_name = Symbol("inverse_" * string(name))
+    mult_inv(x) = inv.(x)
+    add_alternative_variable!(name, inv_name, mult_inv)
+    add_alternative_variable!(inv_name, name, mult_inv)
+    add_new_variable!(name)
+    add_new_variable!(inv_name)
+end
+
+for name in [:slice_thickness, :bandwidth]
     inv_name = Symbol("inverse_" * string(name))
     add_alternative_variable!(name, inv_name, inv)
     add_alternative_variable!(inv_name, name, inv)
