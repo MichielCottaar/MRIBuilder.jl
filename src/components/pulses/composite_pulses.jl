@@ -87,7 +87,7 @@ for (fn, default) in [
     (:phase, NaN),
     (:frequency, NaN),
 ]
-    @eval function variables.$fn.f(pulse::CompositePulse, time::Number)
+    @eval function variables.$fn(pulse::CompositePulse, time::Number)
         (index, rtime) = get_pulse_index(pulse, time)
         if (
             index < 1 || index > length(pulse) ||

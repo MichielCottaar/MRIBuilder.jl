@@ -273,12 +273,12 @@ function get_pulse(bb::BaseBuildingBlock, time::Number)
 end
 
 for (fn, default_value) in ((:amplitude, 0.), (:phase, NaN), (:frequency, NaN))
-    @eval function variables.$fn.f(bb::BaseBuildingBlock, time::Number)
+    @eval function variables.$fn(bb::BaseBuildingBlock, time::Number)
         pulse = get_pulse(bb, time)
         if isnothing(pulse)
             return $default_value
         end
-        return variables.$fn.f(pulse[1], pulse[2])
+        return variables.$fn(pulse[1], pulse[2])
     end
 end
 
