@@ -169,12 +169,14 @@ const getters = Dict{Symbol, Function}()
 Tries to find a route to get values for the variable `name` with the given `args` and `kwargs`.
 
 The route through `tried_names` has already been attempted.
+
+This function returns the route to get to the value and the value itself.
 """
 function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs...)
     if hasproperty(variables, name)
         func = getproperty(variables, name)
         if variable_defined_for(func, args...; kwargs...)
-            return func(args...; kwargs...)
+            return Any[], func(args...; kwargs...)
         end
     end
 
@@ -183,7 +185,9 @@ function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs..
         for (new_name, converter) in alternative_variables[name]
             if !(new_name in tried_names)
                 try
-                    return converter(_get_variable(new_name, union(tried_names, [name]), args...; kwargs...))
+                    route, value = _get_variable(new_name, union(tried_names, [name]), args...; kwargs...)
+                    pushfirst!(route, (:alternative, new_name))
+                    return route, converter(value)
                 catch e
                     if e isa InvalidRoute
                         continue
@@ -199,7 +203,9 @@ function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs..
         # getters
         first, others = args[1], args[2:end]
         getter = getters[name]
-        return _get_mult_variable(name, getter(first), others...; kwargs...)
+        route, value = _get_mult_variable(name, getter(first), others...; kwargs...)
+        pushfirst!(route, (:getter, getter))
+        return route, value
     end
 
     throw(InvalidRoute())
@@ -209,15 +215,15 @@ end
 Helper to call the variable for a result of a getter. Used in [`_get_variable`](@ref).
 """
 _get_mult_variable(name, t, args...; kwargs...) = _get_variable(name, Set{Symbol}(), t, args...; kwargs...)
-_get_mult_variable(name, t::NamedTuple, args...; kwargs...) = NamedTuple(
-    key => _get_mult_variable(name, var, args...; kwargs...) for (key, var) in pairs(t)
-)
-_get_mult_variable(name, t::AbstractVector, args...; kwargs...) = [
-    _get_mult_variable(name, var, args...; kwargs...) for var in t
-]
-_get_mult_variable(name, t::Tuple, args...; kwargs...) = Tuple(
-    _get_mult_variable(name, var, args...; kwargs...) for var in t
-)
+_get_mult_variable(name, t::NamedTuple, args...; kwargs...) = (Any[], NamedTuple(
+    key => _get_mult_variable(name, var, args...; kwargs...) for (key, (_, var)) in pairs(t)
+))
+_get_mult_variable(name, t::AbstractVector, args...; kwargs...) = (Any[], [
+    _get_mult_variable(name, var, args...; kwargs...) for (_, var) in t
+])
+_get_mult_variable(name, t::Tuple, args...; kwargs...) = (Any[], Tuple(
+    _get_mult_variable(name, var, args...; kwargs...) for (_, var) in t
+))
 
 """
     add_new_variable!(name)
@@ -231,7 +237,7 @@ function add_new_variable!(name::Symbol)
     @eval variables $(Expr(:public, name))
     @eval function variables.$(name)(ab::AbstractBlock, args...; kwargs...) 
         try
-            return _get_variable($(QuoteNode(name)), Set{Symbol}(), ab, args...; kwargs...)
+            return _get_variable($(QuoteNode(name)), Set{Symbol}(), ab, args...; kwargs...)[2]
         catch e
             if e isa InvalidRoute
                 string_name = String($(QuoteNode(name)))
