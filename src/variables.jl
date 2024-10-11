@@ -151,7 +151,7 @@ const default_generic_method = IdDict{Function, Method}()
 """
 Mapping of variable names to alternative ways to compute that variables.
 """
-const alternative_variables = Dict{Symbol, Vector{Tuple{Symbol, Function}}}()
+const alternative_variables = Dict{Symbol, Vector{Tuple{Symbol, Function, Bool}}}()
 
 """
 Raised if there is no way to reach a valid function by the default, generic method ([`default_generic_method`](@ref)).
@@ -182,7 +182,7 @@ function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs..
 
     # alternative functions
     if name in keys(alternative_variables)
-        for (new_name, converter) in alternative_variables[name]
+        for (new_name, converter, _) in alternative_variables[name]
             if !(new_name in tried_names)
                 try
                     route, value = _get_variable(new_name, union(tried_names, [name]), args...; kwargs...)
@@ -216,13 +216,13 @@ Helper to call the variable for a result of a getter. Used in [`_get_variable`](
 """
 _get_mult_variable(name, t, args...; kwargs...) = _get_variable(name, Set{Symbol}(), t, args...; kwargs...)
 _get_mult_variable(name, t::NamedTuple, args...; kwargs...) = (Any[], NamedTuple(
-    key => _get_mult_variable(name, var, args...; kwargs...) for (key, (_, var)) in pairs(t)
+    key => _get_mult_variable(name, var, args...; kwargs...)[2] for (key, var) in pairs(t)
 ))
 _get_mult_variable(name, t::AbstractVector, args...; kwargs...) = (Any[], [
-    _get_mult_variable(name, var, args...; kwargs...) for (_, var) in t
+    _get_mult_variable(name, var, args...; kwargs...)[2] for var in t
 ])
 _get_mult_variable(name, t::Tuple, args...; kwargs...) = (Any[], Tuple(
-    _get_mult_variable(name, var, args...; kwargs...) for (_, var) in t
+    _get_mult_variable(name, var, args...; kwargs...)[2] for var in t
 ))
 
 """
@@ -400,11 +400,11 @@ Defines an alternative way to compute the variable with given `name`.
 If the variable `name` is not defined and `other_name` is,
 then the value of `name` is computed by applying `conversion` to the value of `other_name`.
 """
-function add_alternative_variable!(name::Symbol, other_name::Symbol, conversion)
+function add_alternative_variable!(name::Symbol, other_name::Symbol, conversion::Function, inverts::Bool)
     if !(name in keys(alternative_variables))
-        alternative_variables[name] = Tuple{Symbol, Function}[]
+        alternative_variables[name] = Tuple{Symbol, Function, Bool}[]
     end
-    push!(alternative_variables[name], (other_name, conversion))
+    push!(alternative_variables[name], (other_name, conversion, inverts))
 end
 
 @defvar begin
@@ -443,18 +443,20 @@ end
     function qvec end
 end
 
-add_alternative_variable!(:spoiler, :qval, q->1e-3 * 2π/q)
-add_alternative_variable!(:qval, :spoiler, l->1e-3 * 2π/l)
-add_alternative_variable!(:qval, :qval_square, sqrt)
-add_alternative_variable!(:qval_square, :qvec, qv -> sum(q -> q * q, qv))
+add_alternative_variable!(:spoiler, :qval, q->1e-3 * 2π/q, true)
+add_alternative_variable!(:qval, :spoiler, l->1e-3 * 2π/l, true)
+add_alternative_variable!(:qval, :qval_square, sqrt, false)
+add_alternative_variable!(:qval_square, :qval, q->q^2, false)
+add_alternative_variable!(:qval_square, :qvec, qv -> sum(q -> q * q, qv), false)
 
 
 
 for vec_variable in [:gradient_strength, :slew_rate]
     vec_square = Symbol(string(vec_variable) * "_square")
     vec_norm = Symbol(string(vec_variable) * "_norm")
-    add_alternative_variable!(vec_square, vec_variable, v -> v[1] * v[1] + v[2] * v[2] + v[3] * v[3])
-    add_alternative_variable!(vec_norm, vec_square, sqrt)
+    add_alternative_variable!(vec_square, vec_variable, v -> v[1] * v[1] + v[2] * v[2] + v[3] * v[3], false)
+    add_alternative_variable!(vec_norm, vec_square, sqrt, false)
+    add_alternative_variable!(vec_square, vec_norm, v->v^2, false)
 end
 
 @defvar begin
@@ -476,16 +478,16 @@ end
 for name in [:fov, :voxel_size]
     inv_name = Symbol("inverse_" * string(name))
     mult_inv(x) = inv.(x)
-    add_alternative_variable!(name, inv_name, mult_inv)
-    add_alternative_variable!(inv_name, name, mult_inv)
+    add_alternative_variable!(name, inv_name, mult_inv, true)
+    add_alternative_variable!(inv_name, name, mult_inv, true)
     add_new_variable!(name)
     add_new_variable!(inv_name)
 end
 
 for name in [:slice_thickness, :bandwidth]
     inv_name = Symbol("inverse_" * string(name))
-    add_alternative_variable!(name, inv_name, inv)
-    add_alternative_variable!(inv_name, name, inv)
+    add_alternative_variable!(name, inv_name, inv, true)
+    add_alternative_variable!(inv_name, name, inv, true)
     add_new_variable!(name)
     add_new_variable!(inv_name)
 end
@@ -518,6 +520,7 @@ end
     const TE = echo_time
     const TR = repetition_time
     const Δ = diffusion_time
+    $(Expr(:public, :TE, :TR, :Δ))
 end
 
 
@@ -653,11 +656,67 @@ function set_simple_constraints!(block::AbstractBlock, kwargs)
     real_kwargs = Dict(key => value for (key, value) in kwargs if !isnothing(value))
 
     for (key, value) in real_kwargs
-        var = getproperty(variables, key)
-        apply_simple_constraint!(var(block), value)
+        apply_simple_constraint!(block, key, value)
     end
     nothing
 end
+
+apply_simple_constraint!(block, variable::Symbol, value::Nothing) = nothing
+apply_simple_constraint!(block::Union{NamedTuple, Tuple, AbstractArray}, variable::Symbol, value::Nothing) = nothing
+
+function apply_simple_constraint!(block::NamedTuple, variable::Symbol, value::NamedTuple)
+    for (k, v) in pairs(value)
+        apply_simple_constraint!(getproperty(block, k), variable, v)
+    end
+end
+function apply_simple_constraint!(block::T, variable::Symbol, value::T) where {T <: Union{Tuple, AbstractArray}}
+    @assert length(block) == length(value)
+    for (b, v) in zip(block, value)
+        apply_simple_constraint!(b, variable, v)
+    end
+end
+function apply_simple_constraint!(block::Union{NamedTuple, Tuple, AbstractArray}, variable::Symbol, value)
+    for b in block
+        apply_simple_constraint!(b, variable, value)
+    end
+end
+
+function apply_simple_constraint!(block, variable::Symbol, value, previous_values=Set{Symbol}()::Set{Symbol})
+    route, to_set = try
+        _get_variable(variable, previous_values, block)
+    catch e
+        if e isa InvalidRoute
+            error("Variable `$(variable)` cannot be set to constrain a building block/sequence of type $(typeof(block)).")
+        end
+        rethrow()
+    end
+    if iszero(length(route))
+        return apply_simple_constraint!(to_set, value)
+    else
+        (step_type, step) = route[1]
+        if step_type == :alternative
+            if !(step in keys(alternative_variables))
+                return apply_simple_constraint!(to_set, value)
+            end
+            for (my_name, converter, invert) in alternative_variables[step]
+                if my_name == variable
+                    return apply_simple_constraint!(block, step, _adjust_value(value, converter, invert), union(previous_values, [variable]))
+                end
+            end
+            return apply_simple_constraint!(to_set, value)
+        elseif step_type == :getter
+            apply_simple_constraint!(step(block), variable, value)
+        else
+            error()
+        end
+    end
+end
+
+_adjust_value(value::Symbol, converter::Function, invert::Bool) = _adjust_value(Val(value), converter, invert)
+_adjust_value(::Val{:min}, ::Function, invert::Bool) = invert ? Val(:max) : Val(:min)
+_adjust_value(::Val{:max}, ::Function, invert::Bool) = invert ? Val(:min) : Val(:max)
+_adjust_value(value::VariableType, converter::Function, ::Bool) = converter(value)
+_adjust_value(value::AbstractArray, converter::Function, ::Bool) = converter(value)
 
 """
     apply_simple_constraint!(variable, value)
