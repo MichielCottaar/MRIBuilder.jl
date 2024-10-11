@@ -81,6 +81,15 @@ function base_variables(T::Type{<:AbstractBlock})
 end
 
 
+"""
+    variable_defined_for(variable, args...; kwargs...)
+"""
+function variable_defined_for(name::Symbol, args...; kwargs...)
+    func = getproperty(variables, name)
+    return which(func, typeof.(args)) !== default_generic_method[name]
+end
+
+
 # Add Variables to the individual sequence components/blocks properties
 function Base.propertynames(::T) where {T <: AbstractBlock}
     f = Base.fieldnames(T)
@@ -159,9 +168,7 @@ Tries to find a route to get values for the variable `name` with the given `args
 The route through `tried_names` has already been attempted.
 """
 function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs...)
-    func = getproperty(variables, name)
-    method = which(func, typeof.(args), )
-    if method !== default_generic_method[func]
+    if variable_defined_for(name, args...; kwargs...)
         return func(args...; kwargs...)
     end
 
@@ -459,6 +466,9 @@ end
 for name in [:slice_thickness, :bandwidth, :fov, :voxel_size]
     inv_name = Symbol("inverse_" * string(name))
     add_alternative_variable!(name, inv_name, inv)
+    add_alternative_variable!(inv_name, name, inv)
+    add_new_variable!(name)
+    add_new_variable!(inv_name)
 end
 
 
@@ -625,19 +635,7 @@ function set_simple_constraints!(block::AbstractBlock, kwargs)
 
     for (key, value) in real_kwargs
         var = getproperty(variables, key)
-        if var isa AlternateVariable
-            if var.other_var in keys(real_kwargs)
-                error("Set constraints on both $key and $(var.other_var), however they are equivalent.")
-            end
-            invert_value(value::VariableType) = var.to_other(value)
-            invert_value(value::Symbol) = invert_value(Val(value))
-            invert_value(::Val{:min}) = var.inverse ? Val(:max) : Val(:min)
-            invert_value(::Val{:max}) = var.inverse ? Val(:min) : Val(:max)
-            invert_value(value::AbstractVector) = invert_value.(value)
-            apply_simple_constraint!(getproperty(variables, var.other_var)(block), invert_value(value))
-        else
-            apply_simple_constraint!(var(block), value)
-        end
+        apply_simple_constraint!(var(block), value)
     end
     nothing
 end
