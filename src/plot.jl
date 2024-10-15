@@ -244,7 +244,7 @@ This function will only work if [`Makie`](https://makie.org) is installed and im
 - `font` sets whether the rendered text is :regular, :bold, or :italic.
 - `fontsize`: set the size of each character.
 
-$(Base.Docs.doc(generic_plot_attributes!))
+$(string(Base.Docs.@doc(generic_plot_attributes!)))
 """
 function plot_sequence end
 

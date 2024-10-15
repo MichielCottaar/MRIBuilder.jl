@@ -1,7 +1,7 @@
 module Printing
 import JuMP: value, AbstractJuMPScalar
 import Printf: @sprintf
-import ..Variables: VariableType, variables, AbstractBlock, Variable
+import ..Variables: VariableType, variables, AbstractBlock
 import ..Containers: BuildingBlock, waveform, events, start_time
 
 function _robust_value(possible_number::AbstractJuMPScalar)

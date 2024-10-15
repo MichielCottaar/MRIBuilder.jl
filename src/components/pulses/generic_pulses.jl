@@ -83,7 +83,7 @@ GenericPulse(pulse::RFPulseComponent, t1::Number, t2::Number) = GenericPulse(mak
 end
 
 for fn in (:amplitude, :phase)
-    @eval function variables.$fn.f(fp::GenericPulse, time::Number)
+    @eval function variables.$fn(fp::GenericPulse, time::Number)
         i2 = findfirst(t->t > time, fp.time)
         if isnothing(i2)
             @assert time ≈ fp.time[end]
