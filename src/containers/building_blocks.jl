@@ -284,10 +284,16 @@ end
 
 
 function get_gradient(bb::BaseBuildingBlock, time::Number)
-    for (key, block) in waveform_sequence(bb)
-        if (start_time(bb, key) <= time <= end_time(bb, key)) || isapprox(time, end_time(bb, key), atol=1e-6)
-            return (block, time - start_time(bb, key))
+    current_time = 0.
+    if time < -1e-6
+        error("$bb does not define a gradient at negative times.")
+    end
+    for (_, block) in waveform_sequence(bb)
+        duration = block.duration
+        if (time - current_time) <= duration || isapprox(time - current_time, duration, atol=1e-6)
+            return (block, time - current_time)
         end
+        current_time = current_time + duration
     end
     error("$bb with duration $(variables.duration(bb)) does not define a gradient at time $time.")
 end
