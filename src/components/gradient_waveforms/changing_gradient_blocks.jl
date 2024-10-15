@@ -1,7 +1,7 @@
 module ChangingGradientBlocks
 import StaticArrays: SVector
 import Rotations: RotMatrix3
-import LinearAlgebra: I
+import LinearAlgebra: I, norm
 import ....Variables: @defvar, VariableType, variables, get_free_variable, adjust_internal
 import ...AbstractTypes: GradientWaveform
 
@@ -42,7 +42,14 @@ end
     slew_rate(cgb::ChangingGradient1D) = cgb.slew_rate .* cgb.orientation
     slew_rate(cgb::ChangingGradient3D) = cgb.slew_rate
     grad_end(cgb::ChangingGradient) = variables.grad_start(cgb) .+ variables.slew_rate(cgb) .* variables.duration(cgb)
-    gradient_strength(cgb::ChangingGradient) = max.(variables.grad_start(cgb), variables.grad_end(cgb))
+    gradient_strength_norm(cgb::ChangingGradient1D) = max(
+        abs(cgb.gradient_strength_start),
+        abs(cgb.gradient_strength_start + cgb.slew_rate * cgb.duration)
+    )
+    gradient_strength_norm(cgb::ChangingGradient3D) = max(
+        norm(cgb.grad_start),
+        norm(cgb.grad_end)
+    )
     qvec(cgb::ChangingGradient) = (variables.grad_start(cgb) .+ variables.grad_end(cgb)) .* (variables.duration(cgb) * π)
 
     gradient_strength(cgb::ChangingGradient, time::Number) = variables.slew_rate(cgb) .* time .+ variables.grad_start(cgb)
