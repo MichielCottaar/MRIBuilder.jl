@@ -265,8 +265,9 @@ end
 
 function get_pulse(bb::BaseBuildingBlock, time::Number)
     for (key, component) in events(bb)
-        if component isa RFPulseComponent && (start_time(bb, key) <= time <= end_time(bb, key))
-            return (component, time - start_time(bb, key))
+        start = start_time(bb, key)
+        if component isa RFPulseComponent && (start <= time <= (start + variables.duration(component)))
+            return (component, time - start)
         end
     end
     return nothing
