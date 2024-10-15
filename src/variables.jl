@@ -173,12 +173,17 @@ The route through `tried_names` has already been attempted.
 This function returns the route to get to the value and the value itself.
 """
 function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs...)
-    if hasproperty(variables, name)
+    try
         func = getproperty(variables, name)
         if variable_defined_for(func, args...; kwargs...)
             return Any[], func(args...; kwargs...)
         end
+    catch e
+        if !(e isa UndefVarError)
+            rethrow()
+        end
     end
+
 
     # alternative functions
     if name in keys(alternative_variables)
