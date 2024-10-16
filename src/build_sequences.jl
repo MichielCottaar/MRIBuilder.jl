@@ -140,6 +140,7 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
     for _ in num_variables(jump_model):number_equality_constraints(jump_model)
         @variable(jump_model)
     end
+    consistent_minimum = false
     for attempt in 1:n_attempts
         if attempt != 1
             new_values = rand(length(all_variables(jump_model)))
@@ -160,6 +161,9 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
             #println(solution_summary(jump_model))
             if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
                 nsuccess += 1
+                if isapprox(objective_value(jump_model), min_objective, rtol=1e-3)
+                    consistent_minimum = true
+                end
                 if objective_value(jump_model) < min_objective
                     min_objective = objective_value(jump_model)
                     min_values = copy(get_inner_state(jump_model))
@@ -170,11 +174,11 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
                 sample_error[termination_status(jump_model)] = solution_summary(jump_model)
             end
         end
-        if nsuccess > 2
+        if consistent_minimum
             break
         end
     end
-    if iszero(nsuccess)
+    if !consistent_minimum
         err_string = join(["$(String(Symbol(err))) (x$(sum([e == err for e in errors])))" for err in unique(errors)], ", ", ", and ")
         for msg in values(sample_error)
             println(msg)
