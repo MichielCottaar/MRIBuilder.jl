@@ -163,6 +163,8 @@ Assigns getters to specific variables.
 """
 const getters = Dict{Symbol, Function}()
 
+const SkipGeneric = Ref{Bool}(false)
+
 """
     _get_variable(name, tried_names, args...; kwargs...)
 
@@ -172,13 +174,20 @@ The route through `tried_names` has already been attempted.
 
 This function returns the route to get to the value and the value itself.
 """
-function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; kwargs...)
-    if hasproperty(variables, name)
-        func = getproperty(variables, name)
-        if variable_defined_for(func, args...; kwargs...)
-            return Any[], func(args...; kwargs...)
+function _get_variable(name::Symbol, tried_names::Set{Symbol}, args...; _is_first_call=false, kwargs...)
+    if !(_is_first_call)
+        try
+            func = getproperty(variables, name)
+            if variable_defined_for(func, args...; kwargs...)
+                return Any[], func(args...; kwargs...)
+            end
+        catch e
+            if !(e isa UndefVarError)
+                rethrow()
+            end
         end
     end
+
 
     # alternative functions
     if name in keys(alternative_variables)
@@ -240,8 +249,11 @@ function add_new_variable!(name::Symbol)
     @eval variables function $(name) end
     @eval variables $(Expr(:public, name))
     @eval function variables.$(name)(ab::AbstractBlock, args...; kwargs...) 
+        if :_is_first_call in keys(kwargs)
+            error("Variables function definitions cannot use the keyword `_is_first_call`")
+        end
         try
-            return _get_variable($(QuoteNode(name)), Set{Symbol}(), ab, args...; kwargs...)[2]
+            return _get_variable($(QuoteNode(name)), Set{Symbol}(), ab, args...; _is_first_call=true, kwargs...)[2]
         catch e
             if e isa InvalidRoute
                 string_name = String($(QuoteNode(name)))
