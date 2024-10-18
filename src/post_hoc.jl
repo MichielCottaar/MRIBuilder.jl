@@ -145,13 +145,11 @@ Merge multiple sequences together.
 
 Sequences will be run one after each other with `wait_time` in between.
 """
-merge_sequences(sequences::Sequence{S}...; kwargs...) where {S} = merge_internal(sequences...; name=S, kwargs...)
-
 merge_sequences(sequences::Sequence...; kwargs...) = merge_internal(sequences...; kwargs...)
 
-function merge_internal(sequences...; name=:Sequence, wait_time=0.)
+function merge_internal(sequences...; name=:Merged, wait_time=0.)
     wb = Wait(wait_time)
-    new_blocks = ContainerBlock[sequences[1]]
+    new_blocks = Any[sequences[1]]
     for seq in sequences[2:end]
         if !iszero(wait_time)
             push!(new_blocks, wb)
