@@ -79,7 +79,8 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
                 prev_cost_func = nothing
                 for cost_func in iterate_cost()
                     if !isnothing(prev_cost_func)
-                        @constraint jump_model prev_cost_func <= value(prev_cost_func)
+                        prev_value = value(prev_cost_func)
+                        @constraint jump_model prev_cost_func <= prev_value
                     end
                     optimise_with_cost_func!(jump_model, cost_func, n_attempts)
                     prev_cost_func = cost_func
@@ -117,6 +118,7 @@ function get_optimiser(model::Model)
         "print_level"=>0, 
         "mu_strategy"=>"adaptive", 
         "max_iter"=>1000,
+        "acceptable_iter"=>0,
     )
     if model_has_integers(model)
          optimizer_with_attributes(
