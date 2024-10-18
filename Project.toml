@@ -1,7 +1,7 @@
 name = "MRIBuilder"
 uuid = "691e6122-0b62-4932-92e7-e4ff0ddaf3a0"
 authors = ["Michiel Cottaar <Michiel.Cottaar@ndcn.ox.ac.uk>"]
-version = "0.2.0"
+version = "0.3.0"
 
 [deps]
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
