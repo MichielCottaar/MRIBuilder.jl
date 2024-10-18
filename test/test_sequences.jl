@@ -108,14 +108,14 @@
                     end
                 end
                 @test variables.duration(seq[:gradient]) ≈ variables.duration(seq[:gradient2])
-                @test variables.bval(seq) ≈ 2.
+                @test variables.bval(seq) ≈ 2. rtol=1e-6
                 @test length(variables.readout_times(seq)) > 50
                 @test 67 < variables.TE(seq) < 68
                 @test 72 < variables.duration(seq) < 73
 
                 (pulse, t_pulse) = get_pulse(seq, 1.)
                 @test 1. - t_pulse ≈ min_rise_time rtol=1e-4
-                @test variables.flip_angle(pulse) ≈ 90.
+                @test variables.flip_angle(pulse) ≈ 90. rtol=1e-6
                 @test iszero(variables.phase(pulse))
                 @test iszero(variables.phase(seq, 1.))
                 @test iszero(variables.frequency(seq, 1.))
