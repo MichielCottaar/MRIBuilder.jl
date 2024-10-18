@@ -77,12 +77,15 @@ function build_sequence(f::Function, scanner::Union{Nothing, Scanner}, model::Tu
             if !iszero(num_variables(jump_model))
                 optimise_with_cost_func!(jump_model, total_cost_func(), n_attempts)
                 prev_cost_func = nothing
+                prev_variable = nothing
                 for cost_func in iterate_cost()
                     if !isnothing(prev_cost_func)
                         prev_value = value(prev_cost_func)
-                        @constraint jump_model prev_cost_func <= prev_value
+                        prev_variable = @variable(jump_model)
+                        fix(prev_variable, prev_value)
+                        @constraint jump_model prev_cost_func <= prev_variable
                     end
-                    optimise_with_cost_func!(jump_model, cost_func, n_attempts)
+                    optimise_with_cost_func!(jump_model, cost_func, n_attempts, prev_variable)
                     prev_cost_func = cost_func
                 end
             end
@@ -132,7 +135,7 @@ function get_optimiser(model::Model)
 end
 
 
-function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
+function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts, previous_value=nothing)
     @objective jump_model Min cost_func
     min_objective = Inf
     min_values = nothing
@@ -150,6 +153,11 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts)
                 set_start_value(var, v)
             end
         end
+        if !isnothing(previous_value) && (iszero(attempt % 2) && attempt > 4)
+            numeric_value = fix_value(previous_value)
+            fix(previous_value, numeric_value + abs(numeric_value) * 1e-8)
+        end
+
         for sub_attempt in 1:3
             if sub_attempt != 1
                 old_values = value.(all_variables(jump_model))
