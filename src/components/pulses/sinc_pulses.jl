@@ -134,7 +134,7 @@ function make_generic(block::SincPulse)
     normed_times = -variables.N_left(block):0.1:variables.N_right(block) + 1e-5
     times = max.(0., (normed_times .+ variables.N_left(block))) .* variables.lobe_duration(block)
     amplitudes = variables.amplitude(block) .* (normalised_function.(normed_times, variables.N_left(block), variables.N_right(block); apodise=block.apodise))
-    phases = [variables.frequency(block) .* variables.lobe_duration(block)] .* normed_times .* 360
+    phases = [variables.frequency(block) .* variables.lobe_duration(block)] .* normed_times .* 360 .+ variables.phase(block)
     return GenericPulse(times, amplitudes, phases, variables.effective_time(block))
 end
 
