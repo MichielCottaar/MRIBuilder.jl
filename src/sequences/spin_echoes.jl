@@ -11,9 +11,9 @@ const SpinEcho = Sequence{:SpinEcho}
 """
     SpinEcho(; echo_time, delay=0., excitation=(), refocus=(), readout=(), optim=(), resolution/fov/voxel_size/slice_thickness, scanner)
 
-Defines a gradient echo sequence with a single readout event.
+Defines a spin echo sequence with a single readout event.
 
-By default, an instant excitation pulse and readout event are used.
+By default, an instant excitation and refocus pulse and readout event are used.
 If image parameters are provided, this will switch to a sinc pulse and EPI readout.
 
 ## Parameters
