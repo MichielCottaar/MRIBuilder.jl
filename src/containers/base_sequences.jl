@@ -182,7 +182,7 @@ function Base.getproperty(seq::T, v::Symbol) where T <: Sequence
     if v in [k for (k, _) in values(seq.blocks)]
         return seq[v]
     end
-    error("Type $(T) has no field, block, or variable $(v)")
+    error("Type $(T) has no field, block, or variable called `$(v)`")
 end
 
 B0(sequence::Sequence) = B0(sequence.scanner)
