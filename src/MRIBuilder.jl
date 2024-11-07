@@ -40,8 +40,8 @@ export dwi_gradients, readout_event, excitation_pulse, refocus_pulse, Trapezoid,
 import .PostHoc: adjust, merge_sequences
 export adjust, merge_sequences
 
-import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI, MagnetisationTransfer
-export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI, MagnetisationTransfer
+import .Sequences: GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI, MagnetisationTransfer, MultiSpinEcho
+export GradientEcho, SpinEcho, DiffusionSpinEcho, DW_SE, DWI, MagnetisationTransfer, MultiSpinEcho
 
 import .SequenceIO: read_sequence, write_sequence
 export read_sequence, write_sequence
