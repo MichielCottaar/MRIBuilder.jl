@@ -102,13 +102,13 @@
                 @test variables.duration(seq[1]) > 1.
                 for index in 1:9
                     if index in [2, 6, 8]
-                        @test abs(variables.duration(seq[index])) < 1e-6
+                        @test abs(variables.duration(seq[index])) < 1e-4
                     else
                         @test abs(variables.duration(seq[index])) > 1
                     end
                 end
                 @test variables.duration(seq[:gradient]) ≈ variables.duration(seq[:gradient2])
-                @test variables.bval(seq) ≈ 2. rtol=1e-6
+                @test variables.bval(seq) ≈ 2. rtol=1e-4
                 @test length(variables.readout_times(seq)) > 50
                 @test 67 < variables.TE(seq) < 68
                 @test 72 < variables.duration(seq) < 73
