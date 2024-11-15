@@ -171,7 +171,7 @@ function optimise_with_cost_func!(jump_model::Model, cost_func, n_attempts, prev
             #println(solution_summary(jump_model))
             if termination_status(jump_model) in (LOCALLY_SOLVED, OPTIMAL)
                 nsuccess += 1
-                if isapprox(objective_value(jump_model), min_objective, rtol=1e-3)
+                if isapprox(objective_value(jump_model), min_objective, rtol=1e-3) || nsuccess > min(5, n_attempts)
                     consistent_minimum = true
                 end
                 if objective_value(jump_model) < min_objective
