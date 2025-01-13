@@ -111,6 +111,7 @@
         @testset "check that format $(format) works for some sequences with instant pulses/gradients/readouts" begin
             for seq_orig in [
                 DWI(TE=80., bval=2., scanner=Siemens_Connectom),
+                DWI(TE=80., bval=2., scanner=Siemens_Connectom, fov=(10, 10, 10), voxel_size=2.),
                 DWI(TE=80., bval=2., scanner=Siemens_Terra, gradient=(type=:instant, )),
                 SpinEcho(TE=30.),
             ]
