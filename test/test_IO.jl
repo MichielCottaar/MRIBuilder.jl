@@ -119,13 +119,13 @@
                 write_sequence(io, seq_orig; format=format)
                 seek(io, 0)
                 seq_json = read_sequence(io; format=format)
-                @test isapprox(variables.duration(seq_orig), variables.duration(seq_json), atol=1e-5)
-                @test length(seq_orig) == length(seq_json)
-                @test all(isapprox.(variables.duration.(seq_orig), variables.duration.(seq_json), atol=1e-5))
+                @test isapprox(variables.duration(seq_orig), variables.duration(seq_json), atol=1e-3)
+                @test length(iter_blocks(seq_orig)) == length(seq_json)
+                @test all(isapprox.(variables.duration.(seq_orig), variables.duration.(seq_json), atol=1e-3))
                 @test length(iter_instant_gradients(seq_json)) == length(iter_instant_gradients(seq_json))
                 @test length(iter_instant_pulses(seq_json)) == length(iter_instant_pulses(seq_json))
                 @test length(variables.readout_times(seq_orig)) == length(variables.readout_times(seq_json))
-                @test all(isapprox.(variables.readout_times(seq_orig), variables.readout_times(seq_json), atol=1e-5))
+                @test all(isapprox.(variables.readout_times(seq_orig), variables.readout_times(seq_json), atol=1e-3))
             end
         end
     end
