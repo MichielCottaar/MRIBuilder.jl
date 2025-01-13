@@ -1,6 +1,6 @@
 struct CompressedPulseqShape
     num :: Int
-    samples :: Vector{Float64}
+    samples :: Vector{Number}
 end
 
 
@@ -57,14 +57,47 @@ function uncompress(compressed::CompressedPulseqShape)
     return PulseqShape(amplitudes)
 end
 
+function compress(shape::PulseqShape)
+    amplitudes = shape.samples
+    derivative = amplitudes[2:end] - amplitudes[1:end-1]
+
+    current_value = amplitudes[1]
+    compressed = Number[amplitudes[1]]
+
+    nrepeats = -1
+    for sample in derivative
+        if sample ≈ current_value
+            nrepeats += 1
+            if iszero(nrepeats)
+                push!(compressed, current_value)
+            end
+        else
+            if nrepeats != -1
+                push!(compressed, nrepeats)
+                nrepeats = -1
+            end
+            current_value = sample
+            push!(compressed, current_value)
+        end
+    end
+    if nrepeats >= 0
+        push!(compressed, nrepeats)
+    end
+    if length(compressed) >= length(amplitudes)
+        return CompressedPulseqShape(length(amplitudes), amplitudes)
+    else
+        return CompressedPulseqShape(length(amplitudes), compressed)
+    end
+end
+
 function gen_section(comp:: PulseqComponents, ::Val{:shapes})
     res = PulseqSection{:shapes}(String[])
     for index in sort([keys(comp.shapes)...])
-        shape = comp.shapes[index]
+        shape = compress(comp.shapes[index])
         append!(res.content, [
             "",
             "shape_id $index",
-            "num_samples $(length(shape.samples))"
+            "num_samples $(shape.num)"
         ])
         for sample in shape.samples
             push!(res.content, string(sample))

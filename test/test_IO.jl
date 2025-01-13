@@ -128,4 +128,20 @@
             end
         end
     end
+    @testset "Test Pulseq shape compression" begin
+        import MRIBuilder.SequenceIO.PulseqIO.Parsers: compress, uncompress
+        import MRIBuilder.SequenceIO.PulseqIO.Types: PulseqShape
+
+        for (amplitudes, result) in [
+            ([0., 0.1, 0.25, 0.5, ones(7)..., 0.75, 0.5, 0.25, 0.], [0., 0.1, 0.15, 0.25, 0.5, 0., 0., 4, -0.25, -0.25, 2]),
+            (zeros(100), [0., 0., 98]),
+            (ones(100), [1., 0., 0., 97]),
+        ]
+            shape = PulseqShape(amplitudes)
+            res = compress(shape)
+            @test res.num == length(amplitudes)
+            @test all(res.samples == result)
+            @test all(uncompress(res).samples == amplitudes)
+        end
+    end
 end
