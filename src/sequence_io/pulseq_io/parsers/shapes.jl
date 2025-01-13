@@ -94,6 +94,7 @@ function gen_section(comp:: PulseqComponents, ::Val{:shapes})
     res = PulseqSection{:shapes}(String[])
     for index in sort([keys(comp.shapes)...])
         shape = compress(comp.shapes[index])
+        @assert all(isfinite.(shape.samples))
         append!(res.content, [
             "",
             "shape_id $index",
