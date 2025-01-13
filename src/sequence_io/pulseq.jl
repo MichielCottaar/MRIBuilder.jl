@@ -66,7 +66,7 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
     )
 
     if min_duration > stated_duration
-        if version == v"1.3.1"
+        if version == v"1.3.1" || isapprox(min_duration, stated_duration, rtol=1e-3)
             stated_duration = min_duration
         else
             error("Minimum duration to play all RF/gradient/ADC events exceeds stated duration.")
