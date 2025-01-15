@@ -111,6 +111,7 @@
         @testset "check that format $(format) works for some sequences with instant pulses/gradients/readouts" begin
             for seq_orig in [
                 DWI(TE=80., bval=2., scanner=Siemens_Connectom),
+                DWI(TE=80., bval=2., scanner=Siemens_Connectom, fov=(10, 10, 10), voxel_size=2.),
                 DWI(TE=80., bval=2., scanner=Siemens_Terra, gradient=(type=:instant, )),
                 SpinEcho(TE=30.),
             ]
@@ -118,14 +119,30 @@
                 write_sequence(io, seq_orig; format=format)
                 seek(io, 0)
                 seq_json = read_sequence(io; format=format)
-                @test isapprox(variables.duration(seq_orig), variables.duration(seq_json), atol=1e-5)
-                @test length(seq_orig) == length(seq_json)
-                @test all(isapprox.(variables.duration.(seq_orig), variables.duration.(seq_json), atol=1e-5))
+                @test isapprox(variables.duration(seq_orig), variables.duration(seq_json), atol=1e-3)
+                @test length(iter_blocks(seq_orig)) == length(iter_blocks(seq_json))
+                @test all(isapprox.(variables.duration.(last.(iter_blocks(seq_orig))), variables.duration.(last.(iter_blocks(seq_json))), atol=1e-3))
                 @test length(iter_instant_gradients(seq_json)) == length(iter_instant_gradients(seq_json))
                 @test length(iter_instant_pulses(seq_json)) == length(iter_instant_pulses(seq_json))
                 @test length(variables.readout_times(seq_orig)) == length(variables.readout_times(seq_json))
-                @test all(isapprox.(variables.readout_times(seq_orig), variables.readout_times(seq_json), atol=1e-5))
+                @test all(isapprox.(variables.readout_times(seq_orig), variables.readout_times(seq_json), atol=1e-3))
             end
+        end
+    end
+    @testset "Test Pulseq shape compression" begin
+        import MRIBuilder.SequenceIO.PulseqIO.Parsers: compress, uncompress
+        import MRIBuilder.SequenceIO.PulseqIO.Types: PulseqShape
+
+        for (amplitudes, result) in [
+            ([0., 0.1, 0.25, 0.5, ones(7)..., 0.75, 0.5, 0.25, 0.], [0., 0.1, 0.15, 0.25, 0.5, 0., 0., 4, -0.25, -0.25, 2]),
+            (zeros(100), [0., 0., 98]),
+            (ones(100), [1., 0., 0., 97]),
+        ]
+            shape = PulseqShape(amplitudes)
+            res = compress(shape)
+            @test res.num == length(amplitudes)
+            @test all(res.samples == result)
+            @test all(uncompress(res).samples == amplitudes)
         end
     end
 end

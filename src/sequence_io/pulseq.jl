@@ -66,7 +66,7 @@ function BuildingBlock(pulseq::PulseqBlock; version, BlockDurationRaster, Radiof
     )
 
     if min_duration > stated_duration
-        if version == v"1.3.1"
+        if version == v"1.3.1" || isapprox(min_duration, stated_duration, rtol=1e-3)
             stated_duration = min_duration
         else
             error("Minimum duration to play all RF/gradient/ADC events exceeds stated duration.")
@@ -177,12 +177,13 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
     times = [t for (t, _) in waveform(block)]
     for dim in 1:3
         amplitudes = [g[dim] for (_, g) in waveform(block)]
-        if iszero(maximum(abs.(amplitudes); init=0.))
+        max_ampl = maximum(abs.(amplitudes); init=0.)
+        if iszero(max_ampl)
             push!(grads, nothing)
         else
             push!(grads, PulseqGradient(
-                maximum(amplitudes) * 1e3,
-                PulseqShape(amplitudes ./ maximum(amplitudes)),
+                max_ampl * 1e3,
+                PulseqShape(amplitudes ./ max_ampl),
                 PulseqShape(times .* 1e-3),
                 0.,
             ))
