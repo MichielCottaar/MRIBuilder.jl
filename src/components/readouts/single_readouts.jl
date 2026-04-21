@@ -32,5 +32,5 @@ end
     readout_times(::SingleReadout) = [0.]
 end
 
-make_generic(::SingleReadout) = ADC(1, 0., 0., 0.)
+make_generic(::SingleReadout) = ADC(1, 0., 0., 1.)
 end
