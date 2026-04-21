@@ -182,7 +182,7 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
             push!(grads, nothing)
         else
             push!(grads, PulseqGradient(
-                max_ampl * 1e-3,
+                max_ampl * 1e9,
                 PulseqShape(amplitudes ./ max_ampl),
                 PulseqShape(Int.(div.(times, GradientRasterTime / 1e-3, RoundNearest))),
                 0,
