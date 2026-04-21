@@ -137,7 +137,7 @@ function PulseqSequence(seq::Sequence{S}) where {S}
     )
 end
 
-function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTime, kwargs...)
+function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTime, RadiofrequencyRasterTime, GradientRasterTime, kwargs...)
     rf = nothing
     adc = nothing
     ext = []
@@ -153,7 +153,7 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
                 maximum(gen.amplitude) * 1e3,
                 PulseqShape(gen.amplitude ./ maximum(gen.amplitude)),
                 PulseqShape(deg2rad.(gen.phase)),
-                PulseqShape(gen.time .* 1e-3),
+                PulseqShape(gen.time .* 1e-3 ./ RadiofrequencyRasterTime),
                 Int(div(start_time(block, key), 1e-3, RoundNearest)),
                 0., 
                 0.
@@ -182,9 +182,10 @@ function PulseqBlock(block::BaseBuildingBlock; BlockDurationRaster, AdcRasterTim
             push!(grads, nothing)
         else
             push!(grads, PulseqGradient(
-                max_ampl * 1e3,
+                max_ampl * 1e-3,
                 PulseqShape(amplitudes ./ max_ampl),
                 PulseqShape(times .* 1e-3),
+                PulseqShape(Int.(div.(times, GradientRasterTime / 1e-3, RoundNearest))),
                 0.,
             ))
         end
