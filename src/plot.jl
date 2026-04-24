@@ -1,5 +1,4 @@
 module Plot
-import MakieCore: generic_plot_attributes!
 import ..Containers: BaseBuildingBlock, BaseSequence, waveform, events, start_time, ndim_grad, waveform_sequence
 import ..Variables: make_generic, gradient_orientation, variables
 import ..Components: RFPulseComponent, ADC, InstantPulse, NoGradient, InstantGradient1D, InstantGradient3D
@@ -243,8 +242,6 @@ This function will only work if [`Makie`](https://makie.org) is installed and im
 - `textcolor` sets the color of the text. If you want to set the line color to the same value, you can also use `color=...`.
 - `font` sets whether the rendered text is :regular, :bold, or :italic.
 - `fontsize`: set the size of each character.
-
-$(string(Base.Docs.@doc(generic_plot_attributes!)))
 """
 function plot_sequence end
 
