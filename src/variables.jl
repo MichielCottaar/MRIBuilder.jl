@@ -70,7 +70,11 @@ If `T` is not provided, all [`Variable`](@ref) objects are returned.
 """
 function base_variables()
     return Dict{Symbol, Function}(
-        s => getproperty(variables, s) for s in names(variables) if s != :variables
+        name => getproperty(variables, name)
+        for name in names(variables; all=true)
+        if isdefined(variables, name) &&
+           getproperty(variables, name) isa Function &&
+           haskey(default_generic_method, getproperty(variables, name))
     )
 end
 
@@ -138,7 +142,29 @@ After sequence generation you can get the variable values by calling
 `variables.echo_time(seq)`.
 For the sequence defined above this would return 70. (or a number very close to that).
 """
-baremodule variables end
+module variables
+    # All package variables are declared before any methods are added by the
+    # component modules. This keeps their bindings stable during precompilation.
+    for name in (
+        :duration, :effective_time, :qval, :qval_square, :spoiler, :qvec,
+        :gradient_strength, :slew_rate, :gradient_strength_square,
+        :gradient_strength_norm, :slew_rate_norm, :slew_rate_square,
+        :fov, :inverse_fov, :voxel_size, :inverse_voxel_size,
+        :slice_thickness, :inverse_slice_thickness, :bandwidth,
+        :inverse_bandwidth, :echo_time, :repetition_time, :diffusion_time,
+        :TE, :TR, :Δ, :phase, :amplitude, :frequency, :flip_angle,
+        :readout_times, :nsamples, :dwell_time, :oversample, :time_to_center,
+        :time_halfway_flip, :resolution,
+        :N_left, :N_right, :lobe_duration, :interpulse_delay, :grad_start,
+        :grad_end, :bmat_gradient, :duration_state, :duration_transverse,
+        :duration_dephase, :net_dephasing, :area_under_curve, :bmat, :bval,
+        :rise_time, :flat_time, :fall_time, :δ, :ramp_overlap,
+        :duration_trap1, :duration_trap2, :all_gradient_strengths,
+        :nrepeat, :wait_time, :interblock_delay, :delay,
+    )
+        @eval function $(name) end
+    end
+end
 
 
 """
@@ -246,9 +272,14 @@ Adds a new variable in [`variables`](@ref).
 This is a helper function, which is called by `@defvar` for any variable that does not exist yet.
 """
 function add_new_variable!(name::Symbol)
-    @eval variables function $(name) end
-    @eval variables $(Expr(:public, name))
-    @eval function variables.$(name)(ab::AbstractBlock, args...; kwargs...) 
+    if isdefined(variables, name) && haskey(default_generic_method, getproperty(variables, name))
+        return
+    end
+    if !isdefined(variables, name)
+        @eval variables function $(name) end
+        @eval variables $(Expr(:public, name))
+    end
+    @eval function variables.$(name)(ab::AbstractBlock, args...; kwargs...)
         if :_is_first_call in keys(kwargs)
             error("Variables function definitions cannot use the keyword `_is_first_call`")
         end
@@ -359,9 +390,7 @@ function _defvar(func_def)
     expressions = Expr[]
     for func_name in func_names
         push!(expressions, quote
-            if !($(QuoteNode(func_name)) in names(variables; all=true))
-                add_new_variable!($(QuoteNode(func_name)))
-            end
+            add_new_variable!($(QuoteNode(func_name)))
         end
         )
     end
@@ -417,6 +446,8 @@ If the variable `name` is not defined and `other_name` is,
 then the value of `name` is computed by applying `conversion` to the value of `other_name`.
 """
 function add_alternative_variable!(name::Symbol, other_name::Symbol, conversion::Function, inverts::Bool)
+    add_new_variable!(name)
+    add_new_variable!(other_name)
     if !(name in keys(alternative_variables))
         alternative_variables[name] = Tuple{Symbol, Function, Bool}[]
     end

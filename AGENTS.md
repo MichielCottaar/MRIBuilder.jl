@@ -1,6 +1,6 @@
 # MRIBuilder
 
-- This repository is a single Julia package (`MRIBuilder`, v0.4.0), not a workspace. The package is discontinued; do not assume support for Julia 1.12+ (README says up to Julia 1.11).
+- This repository is a single Julia package (`MRIBuilder`, v0.4.0), not a workspace. The package is discontinued; Julia 1.12 is supported, but future Julia versions are not guaranteed to remain compatible.
 - Use the checked-in root `Project.toml` and `Manifest.toml`: instantiate with `julia --project=. -e 'using Pkg; Pkg.instantiate()'`.
 - Run the full test suite with `xvfb-run julia --project=. -e 'using Pkg; Pkg.test()'`; the plotting tests load CairoMakie/Gtk and need a display. CI uses `CI=true`, which skips the visual regression assertions while still loading the plotting stack.
 - For a focused non-plot test file, run from `test/` so fixture paths resolve, for example `cd test && julia --project=.. -e 'using MRIBuilder, Test; include("test_sequences.jl")'`. `test/runtests.jl` is the authoritative test order and includes IO, sequence, component, post-hoc, building-block, and plotting tests.

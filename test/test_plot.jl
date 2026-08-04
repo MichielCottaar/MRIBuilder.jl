@@ -1,6 +1,15 @@
 using CairoMakie
 using VisualRegressionTests
 using Gtk
+using FileIO
+using ColorTypes
+
+function save_rgb(fname, fig)
+    tmp = tempname() * ".png"
+    CairoMakie.save(tmp, fig)
+    FileIO.save(fname, RGB.(load(tmp)))
+end
+
 @testset "test_plot.jl" begin
     dir = @__DIR__
     isCI = get(ENV, "CI", "false") == "true"
@@ -11,7 +20,7 @@ using Gtk
             f = Figure()
             Axis(f[1, 1])
             plot!(sequence)
-            CairoMakie.save(fname, f)
+            save_rgb(fname, f)
         end
 
         @visualtest plot_press "$dir/plots/pulseq_press.png" !isCI
@@ -21,7 +30,7 @@ using Gtk
         function plot_perfect_dwi(fname)
             sequence = DWI(TE=80., bval=2., Δ=40., gradient=(type=:instant, ))
             f = plot_sequence(sequence)
-            CairoMakie.save(fname, f)
+            save_rgb(fname, f)
         end
     
         @visualtest plot_perfect_dwi "$dir/plots/perfect_dwi.png" !isCI 0.03
@@ -40,7 +49,7 @@ using Gtk
                 ) 
             end
             f = plot_sequence(sequence)
-            CairoMakie.save(fname, f)
+            save_rgb(fname, f)
         end
     
         @visualtest plot_finite_rf "$dir/plots/finite_rf.png" !isCI
@@ -50,7 +59,7 @@ using Gtk
         function plot_finite_dwi(fname)
             sequence = DWI(bval=2., TE=:min, voxel_size=2., scanner=Siemens_Prisma, fov=(10, 10, 10))
             f = plot_sequence(sequence)
-            CairoMakie.save(fname, f)
+            save_rgb(fname, f)
         end
     
         @visualtest plot_finite_dwi "$dir/plots/grad_dwi.png" !isCI 0.03
