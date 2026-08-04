@@ -102,6 +102,47 @@ For such a [`Pathway`](@ref) we can compute:
 - the diffusion weighting experienced ([`variables.bval`](@ref), [`variables.bmat`](@ref), and [`variables.net_dephasing`](@ref))
 By defining a default pathway for the sequence, the user can now put constraints on any or all of these variables.
 
+## Defining variables
+
+`@defvar` can be used both to add a method for an existing variable and to
+define a new variable. Existing variables include common component properties
+such as `duration`, `effective_time`, and `gradient_strength`:
+
+```julia
+@defvar duration(my_block::MyBlock) = my_block.duration
+```
+
+New variables are defined in exactly the same way:
+
+```julia
+@defvar my_metric(my_block::MyBlock) = my_block.duration / 2
+```
+
+The new variable can then be queried or constrained using the regular variable
+namespace:
+
+```julia
+variables.my_metric(my_block)
+my_block = MyBlock(my_metric=10)
+```
+
+When a variable is derived from a pulse, gradient, readout, or pathway, pass
+the corresponding getter to `@defvar`:
+
+```julia
+@defvar pulse function bandwidth(pulse::MyPulse)
+    # Return the bandwidth for this pulse.
+    pulse.bandwidth
+end
+```
+
+Several variables can be defined in one block, and additional methods can be
+added later for other block types. Define a new variable before using it in
+another variable definition.
+
+MRIBuilder's built-in variables are predeclared so that this mechanism works
+with Julia 1.12. MRIBuilder is discontinued, however, and custom extensions
+are not guaranteed to remain compatible with future Julia versions.
 
 ## [Component helper functions](@id helper_functions)
 ```@meta
