@@ -6,7 +6,6 @@
 
 MRIBuilder will be discontinued. V0.4.0 will be the latest version. Its functionality will be replaced by [decseq](https://git.fmrib.ox.ac.uk/ndcn0236/decseq).
 
-You can choose to continue to use MRIBuilder, but please note that it is only compatible up to Julia v1.11.
-Julia v1.12 and later are not supported.
+You can choose to continue to use MRIBuilder, including with Julia v1.12. However, the project is no longer actively maintained and future Julia versions are not guaranteed to remain compatible.
 
 The latest documentation can be found [here](https://open.win.ox.ac.uk/pages/ndcn0236/mribuilder.jl/dev).
