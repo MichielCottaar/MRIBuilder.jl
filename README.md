@@ -4,7 +4,7 @@
 [![Build Status](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl/badges/main/pipeline.svg)](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl/pipelines)
 [![Coverage](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl/badges/main/coverage.svg)](https://git.fmrib.ox.ac.uk/ndcn0236/mribuilder.jl/commits/main)
 
-MRIBuilder will be discontinued. V0.4.0 will be the latest version. Its functionality will be replaced by [decseq](https://git.fmrib.ox.ac.uk/ndcn0236/decseq).
+MRIBuilder will be discontinued. V0.4.1 will be the latest version. Its functionality will be replaced by [decseq](https://git.fmrib.ox.ac.uk/ndcn0236/decseq).
 
 You can choose to continue to use MRIBuilder, including with Julia v1.12. However, the project is no longer actively maintained and future Julia versions are not guaranteed to remain compatible.
 
